@@ -754,5 +754,10 @@
   "sort_latest": "最新",
   "sort_popular": "热门",
   "total_tags": "共 {{count}} 个标签",
-  "anonymous": "匿名"
+  "anonymous": "匿名",
+  "my_site": "我的网站",
+  "sponsor": {
+    "title": "赞助支持",
+    "btc": "比特币"
+  }
 }
