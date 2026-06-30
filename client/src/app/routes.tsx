@@ -27,6 +27,7 @@ import { SearchPage } from "../page/search";
 import { Settings } from "../page/settings";
 import { TimelinePage } from "../page/timeline";
 import { WritingPage } from "../page/writing";
+import { MySitePage } from "../page/my-site"; // ✅ 新增导入
 import { ProfileContext } from "../state/profile";
 import { tryInt } from "../utils/int";
 import { useTranslation } from "react-i18next";
@@ -62,6 +63,11 @@ export function AppRoutes() {
 
       <AppRoute path="/search/:keyword">
         {(params) => <SearchPage keyword={params.keyword || ""} />}
+      </AppRoute>
+
+      {/* ✅ 新增：我的网站路由 */}
+      <AppRoute path="/my-site">
+        <MySitePage />
       </AppRoute>
 
       <AdminRoute path="/admin/settings" requirePermission title={t("settings.title")} description={t("admin.settings_description")}>
@@ -213,4 +219,4 @@ function TocRoute({
       {(params) => children(params, TOC, cleanup)}
     </AppRoute>
   );
-}
+        }
