@@ -754,5 +754,10 @@
   "sort_latest": "Latest",
   "sort_popular": "Popular",
   "total_tags": "Total {{count}} tags",
-  "anonymous": "Anonymous"
+  "anonymous": "Anonymous",
+  "my_site": "My Site",
+"sponsor": {
+  "title": "Sponsor",
+  "btc": "Bitcoin"
+}
 }
