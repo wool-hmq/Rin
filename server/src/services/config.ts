@@ -56,7 +56,6 @@ export function ConfigService(): Hono {
         // 处理自定义供应商
         const provider = body.provider || config.provider;
         if (provider === 'custom') {
-            // 从请求或数据库获取配置
             const apiUrl = body.api_url || config.api_url;
             const apiKey = body.api_key || config.api_key || '';
             const model = body.model || config.model || 'custom-model';
@@ -77,7 +76,6 @@ export function ConfigService(): Hono {
             }
 
             try {
-                // 构造 OpenAI 兼容的请求
                 const requestUrl = `${apiUrl}/chat/completions`;
                 const requestBody = {
                     model: model,
@@ -108,7 +106,8 @@ export function ConfigService(): Hono {
                     }, 400);
                 }
 
-                const data = await response.json();
+                // ✅ 修复：将 data 断言为 any 以解决 TS18046 错误
+                const data = await response.json() as any;
                 const reply = data.choices?.[0]?.message?.content;
                 if (!reply) {
                     return c.json({
@@ -491,4 +490,4 @@ export function ConfigService(): Hono {
     });
 
     return app;
-                }
+                                             }
