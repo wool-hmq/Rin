@@ -27,7 +27,8 @@ import { SearchPage } from "../page/search";
 import { Settings } from "../page/settings";
 import { TimelinePage } from "../page/timeline";
 import { WritingPage } from "../page/writing";
-import { MySitePage } from "../page/my-site"; // ✅ 新增导入
+import { MySitePage } from "../page/my-site";
+import { R2ManagerPage } from "../page/r2-manager"; // ✅ 新增
 import { ProfileContext } from "../state/profile";
 import { tryInt } from "../utils/int";
 import { useTranslation } from "react-i18next";
@@ -65,7 +66,6 @@ export function AppRoutes() {
         {(params) => <SearchPage keyword={params.keyword || ""} />}
       </AppRoute>
 
-      {/* ✅ 新增：我的网站路由 */}
       <AppRoute path="/my-site">
         <MySitePage />
       </AppRoute>
@@ -92,6 +92,11 @@ export function AppRoutes() {
 
       <AdminRoute path="/admin/writing/:id" requirePermission title={t("writing")} description={t("admin.writing_description")}>
         {({ id }) => <WritingPage id={tryInt(0, id)} />}
+      </AdminRoute>
+
+      {/* ✅ 新增：R2文件管理路由 */}
+      <AdminRoute path="/admin/r2-manager" requirePermission title="R2文件管理" description="管理Cloudflare R2存储桶中的文件">
+        <R2ManagerPage />
       </AdminRoute>
 
       <AppRoute path="/callback">
@@ -219,4 +224,4 @@ function TocRoute({
       {(params) => children(params, TOC, cleanup)}
     </AppRoute>
   );
-        }
+      }
