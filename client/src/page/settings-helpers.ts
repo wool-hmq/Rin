@@ -23,6 +23,8 @@ export const AI_PROVIDER_PRESETS = [
   { value: "gemini", label: "Gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai", requiresApiKey: true, requiresApiUrl: true },
   { value: "deepseek", label: "DeepSeek", url: "https://api.deepseek.com/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "zhipu", label: "Zhipu", url: "https://open.bigmodel.cn/api/paas/v4", requiresApiKey: true, requiresApiUrl: true },
+  // ✅ 新增：自定义供应商
+  { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: false },
 ] as const;
 
 export const AI_MODEL_PRESETS: Record<string, string[]> = {
@@ -32,6 +34,8 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   gemini: ["gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-preview-09-2025", "gemini-2.5-flash-lite", "gemini-2.5-flash-lite-preview-09-2025", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-001", "gemini-2.0-flash-exp", "gemini-2.0-flash-lite", "gemini-2.0-flash-lite-001", "gemini-1.5-pro", "gemini-1.5-flash"],
   deepseek: ["deepseek-chat", "deepseek-reasoner"],
   zhipu: ["glm-4.7", "glm-4.6", "glm-4.5", "glm-4.5-air", "glm-4.5-airx", "glm-4.5-flash", "glm-4-long", "glm-4.6v", "glm-4.1v-thinking-flashx", "glm-4.6v-flash", "glm-4.1v-thinking-flash", "glm-4v-flash", "glm-4", "glm-4-plus", "glm-4-air", "glm-4-flash", "glm-4-flash-250414", "glm-4-flashx-250414", "glm-3-turbo"],
+  // ✅ 新增：自定义模型预设（仅占位）
+  custom: ["custom-model"],
 };
 
 export function mergeSessionConfig(updates: Record<string, unknown>) {
@@ -117,6 +121,8 @@ export function buildAIConfigUpdates(updates: Record<string, unknown>) {
   if (updates.model !== undefined) flatUpdates["ai_summary.model"] = updates.model;
   if (updates.api_url !== undefined) flatUpdates["ai_summary.api_url"] = updates.api_url;
   if (updates.api_key !== undefined) flatUpdates["ai_summary.api_key"] = updates.api_key;
+  // ✅ 新增：自定义代码存储（作为 server config 的一部分）
+  if (updates.custom_code !== undefined) flatUpdates["ai_summary.custom_code"] = updates.custom_code;
   return flatUpdates;
 }
 
@@ -128,6 +134,7 @@ export async function loadAIConfigState() {
     model: data?.["ai_summary.model"] ?? "gpt-4o-mini",
     apiKeySet: data?.["ai_summary.api_key"] === "••••••••",
     apiUrl: data?.["ai_summary.api_url"] ?? "",
+    customCode: data?.["ai_summary.custom_code"] ?? "", // ✅ 新增
   };
 }
 
@@ -165,6 +172,7 @@ export function getAIProviderFields(provider: string) {
   return {
     requiresApiKey: preset?.requiresApiKey ?? true,
     requiresApiUrl: preset?.requiresApiUrl ?? true,
+    requiresCustomCode: provider === "custom", // ✅ 新增：用于前端控制显示
   };
 }
 
@@ -196,6 +204,7 @@ export function buildAIConfigDraftValue(
     apiKey: String(serverConfig["ai_summary.api_key"] ?? ""),
     apiKeySet: hasStoredAiApiKey || String(serverConfig["ai_summary.api_key"] ?? "").trim().length > 0,
     apiUrl: String(serverConfig["ai_summary.api_url"] ?? ""),
+    customCode: String(serverConfig["ai_summary.custom_code"] ?? ""), // ✅ 新增
   };
 }
 
