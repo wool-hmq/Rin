@@ -29,7 +29,7 @@ export type AISettingsValue = {
   apiKey: string;
   apiKeySet: boolean;
   apiUrl: string;
-  customCode?: string; // ✅ 修复：添加 customCode 字段以匹配 settings.tsx 中的使用
+  customCode?: string;
 };
 
 export function AISummarySettings({
@@ -40,12 +40,24 @@ export function AISummarySettings({
   onChange: (updates: Partial<AISettingsValue>) => void;
 }) {
   const { t } = useTranslation();
-  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
-  const [testResult, setTestResult] = useState<{ success?: boolean; response?: string; error?: string; details?: string } | null>(null);
-  const { AlertUI } = useAlert();
-  const providerFields = getAIProviderFields(value.provider);
-  // 不再需要 isCustom 特殊处理
+  const [testStatus, setTestStatus] = useState<
+    "idle" | "testing" | "success" | "error"
+  >("idle");
 
+  const [testResult, setTestResult] = useState<{
+    success?: boolean;
+    response?: string;
+    error?: string;
+    details?: string;
+  } | null>(null);
+
+  const { AlertUI } = useAlert();
+
+  const providerFields = getAIProviderFields(value.provider);
+
+  /**
+   * 切换 provider 时重置 model
+   */
   const handleProviderChange = (nextProvider: string) => {
     const preset = getAIProviderPreset(nextProvider);
     const models = AI_MODEL_PRESETS[nextProvider] || [];
@@ -53,15 +65,18 @@ export function AISummarySettings({
     onChange({
       provider: nextProvider,
       apiUrl: preset?.url ?? "",
-      model: models[0] ?? value.model,
+      model: models[0]?.value ?? value.model,
     });
   };
 
+  /**
+   * 测试模型
+   */
   const handleTestModel = async () => {
     setTestStatus("testing");
     setTestResult(null);
+
     try {
-      // 所有供应商统一使用 buildAITestRequest
       const requestBody = buildAITestRequest({
         provider: value.provider,
         model: value.model,
@@ -76,13 +91,16 @@ export function AISummarySettings({
         setTestResult({
           success: false,
           error: error.value || t("settings.ai_summary.test.failed"),
-          details: t("settings.ai_summary.test.http_error$status", { status: error.status }),
+          details: t("settings.ai_summary.test.http_error$status", {
+            status: error.status,
+          }),
         });
       } else if (data?.success) {
         setTestStatus("success");
         setTestResult({
           success: true,
-          response: data.response || t("settings.ai_summary.test.success"),
+          response:
+            data.response || t("settings.ai_summary.test.success"),
         });
       } else {
         setTestStatus("error");
@@ -93,7 +111,9 @@ export function AISummarySettings({
         });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message =
+        err instanceof Error ? err.message : String(err);
+
       setTestStatus("error");
       setTestResult({
         success: false,
@@ -102,21 +122,37 @@ export function AISummarySettings({
     }
   };
 
-  const modelOptions = AI_MODEL_PRESETS[value.provider] || [];
+  /**
+   * 🔥 修复关键点：必须正确展开对象数组
+   */
+  const modelOptions =
+    AI_MODEL_PRESETS[value.provider] || [];
+
+  const normalizedModelOptions = modelOptions.map((m) => ({
+    label: m.label,
+    value: m.value,
+  }));
 
   return (
     <>
       <ItemTitle title={t("settings.ai_summary.title")} />
+
+      {/* enable */}
       <SettingsCard>
         <SettingsCardRow
-          header={<SettingsCardHeader title={t("settings.ai_summary.enable.title")} description={t("settings.ai_summary.enable.desc")} />}
+          header={
+            <SettingsCardHeader
+              title={t("settings.ai_summary.enable.title")}
+              description={t("settings.ai_summary.enable.desc")}
+            />
+          }
           action={
             <Switch.Root
               className="SwitchRoot"
               checked={value.enabled}
-              onCheckedChange={(checked) => {
-                onChange({ enabled: checked });
-              }}
+              onCheckedChange={(checked) =>
+                onChange({ enabled: checked })
+              }
             >
               <Switch.Thumb className="SwitchThumb" />
             </Switch.Root>
@@ -126,121 +162,183 @@ export function AISummarySettings({
 
       {value.enabled && (
         <>
+          {/* provider + model */}
           <SettingsCard>
             <SettingsCardRow
-              header={<SettingsCardHeader title={t("settings.ai_summary.provider.title")} description={t("settings.ai_summary.provider.desc")} />}
+              header={
+                <SettingsCardHeader
+                  title={t("settings.ai_summary.provider.title")}
+                  description={t("settings.ai_summary.provider.desc")}
+                />
+              }
               action={
                 <SearchableSelect
                   value={value.provider}
                   onChange={handleProviderChange}
-                  options={AI_PROVIDER_PRESETS.map((preset) => ({
-                    label: preset.label,
-                    value: preset.value,
+                  options={AI_PROVIDER_PRESETS.map((p) => ({
+                    label: p.label,
+                    value: p.value,
                   }))}
-                  placeholder={t("settings.ai_summary.provider.title")}
                   searchable={false}
                 />
               }
             />
+
             <SettingsCardBody>
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium t-primary">{t("settings.ai_summary.model.title")}</p>
+                  <p className="text-sm font-medium t-primary">
+                    {t("settings.ai_summary.model.title")}
+                  </p>
+
                   <SearchableSelect
                     value={value.model}
-                    onChange={(nextValue) => {
-                      onChange({ model: nextValue });
-                    }}
-                    options={modelOptions.map((option) => ({
-                      label: option,
-                      value: option,
-                    }))}
-                    placeholder={t("settings.ai_summary.model.desc")}
-                    searchPlaceholder={t("settings.ai_summary.model.desc")}
+                    onChange={(v) => onChange({ model: v })}
+                    options={normalizedModelOptions}
+                    placeholder={t(
+                      "settings.ai_summary.model.desc"
+                    )}
+                    searchPlaceholder={t(
+                      "settings.ai_summary.model.desc"
+                    )}
                     emptyLabel={t("no_more")}
                     allowCustomValue
-                    customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
+                    customValueLabel={(v) =>
+                      `${t("update.title")}: ${v}`
+                    }
                   />
                 </div>
-                {providerFields.requiresApiKey ? (
+
+                {/* API KEY */}
+                {providerFields.requiresApiKey && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium t-primary">
                       {t("settings.ai_summary.api_key.title")}
                       {value.apiKeySet && (
                         <span className="ml-2">
-                          <SettingsBadge tone="success">{t("settings.ai_summary.api_key.set")}</SettingsBadge>
+                          <SettingsBadge tone="success">
+                            {t(
+                              "settings.ai_summary.api_key.set"
+                            )}
+                          </SettingsBadge>
                         </span>
                       )}
                     </p>
+
                     <input
                       type="password"
-                      name="rin-ai-api-key"
-                      autoComplete="new-password"
-                      autoCapitalize="off"
-                      autoCorrect="off"
-                      spellCheck={false}
                       value={value.apiKey}
-                      onChange={(event) => {
-                        onChange({ apiKey: event.target.value });
-                      }}
-                      placeholder={value.apiKeySet ? t("settings.ai_summary.api_key.placeholder_set") : "sk-..."}
-                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:ring-2 focus:ring-theme/10 dark:border-white/10 dark:placeholder:text-neutral-500 dark:focus:border-white/20"
+                      onChange={(e) =>
+                        onChange({
+                          apiKey: e.target.value,
+                        })
+                      }
+                      placeholder={
+                        value.apiKeySet
+                          ? t(
+                              "settings.ai_summary.api_key.placeholder_set"
+                            )
+                          : "sk-..."
+                      }
+                      className="w-full rounded-xl border px-4 py-3 text-sm"
                     />
                   </div>
-                ) : null}
-                {providerFields.requiresApiUrl ? (
+                )}
+
+                {/* API URL */}
+                {providerFields.requiresApiUrl && (
                   <div className="space-y-2 lg:col-span-2">
-                    <p className="text-sm font-medium t-primary">{t("settings.ai_summary.api_url.title")}</p>
+                    <p className="text-sm font-medium t-primary">
+                      {t("settings.ai_summary.api_url.title")}
+                    </p>
+
                     <input
                       type="text"
                       value={value.apiUrl}
-                      onChange={(event) => {
-                        onChange({ apiUrl: event.target.value });
-                      }}
+                      onChange={(e) =>
+                        onChange({
+                          apiUrl: e.target.value,
+                        })
+                      }
                       placeholder="https://api.openai.com/v1"
-                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:ring-2 focus:ring-theme/10 dark:border-white/10 dark:placeholder:text-neutral-500 dark:focus:border-white/20"
+                      className="w-full rounded-xl border px-4 py-3 text-sm"
                     />
                   </div>
-                ) : null}
-                {/* 自定义代码输入框已移除 */}
+                )}
               </div>
             </SettingsCardBody>
           </SettingsCard>
 
-          <SettingsCard tone={testStatus === "error" ? "danger" : testStatus === "success" ? "success" : "default"}>
+          {/* test */}
+          <SettingsCard
+            tone={
+              testStatus === "error"
+                ? "danger"
+                : testStatus === "success"
+                ? "success"
+                : "default"
+            }
+          >
             <SettingsCardRow
-              header={<SettingsCardHeader title={t("settings.ai_summary.test.title")} description={t("settings.ai_summary.test.desc")} />}
+              header={
+                <SettingsCardHeader
+                  title={t("settings.ai_summary.test.title")}
+                  description={t("settings.ai_summary.test.desc")}
+                />
+              }
               action={
                 <>
-                  {testStatus === "testing" && <ReactLoading width="1em" height="1em" type="spin" color="#FC466B" />}
+                  {testStatus === "testing" && (
+                    <ReactLoading
+                      type="spin"
+                      width="1em"
+                      height="1em"
+                    />
+                  )}
                   <Button
-                    title={t("settings.ai_summary.test.button")}
+                    title={t(
+                      "settings.ai_summary.test.button"
+                    )}
                     onClick={handleTestModel}
                     disabled={testStatus === "testing"}
                   />
                 </>
               }
             />
+
             {testStatus === "success" && testResult && (
               <SettingsCardBody>
-                <p className="text-sm font-semibold text-green-700 dark:text-green-300">{t("settings.ai_summary.test.success")}</p>
-                <p className="mt-1 text-sm text-green-700/90 dark:text-green-300/90">{testResult.response}</p>
+                <p className="text-green-700 font-semibold">
+                  {t("settings.ai_summary.test.success")}
+                </p>
+                <p className="text-sm mt-1">
+                  {testResult.response}
+                </p>
               </SettingsCardBody>
             )}
+
             {testStatus === "error" && testResult && (
               <SettingsCardBody>
-                <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">{t("settings.ai_summary.test.failed")}</p>
-                {testResult.error && <p className="mt-1 text-xs font-medium text-red-700 dark:text-red-300">{testResult.error}</p>}
-                {testResult.details && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{testResult.details}</p>}
-                {!testResult.error && !testResult.details && (
-                  <p className="mt-1 text-xs text-red-700 dark:text-red-300">{JSON.stringify(testResult)}</p>
+                <p className="text-rose-700 font-semibold">
+                  {t("settings.ai_summary.test.failed")}
+                </p>
+                {testResult.error && (
+                  <p className="text-sm mt-1">
+                    {testResult.error}
+                  </p>
+                )}
+                {testResult.details && (
+                  <p className="text-xs mt-1">
+                    {testResult.details}
+                  </p>
                 )}
               </SettingsCardBody>
             )}
           </SettingsCard>
         </>
       )}
+
       <AlertUI />
     </>
   );
-                    }
+              }
