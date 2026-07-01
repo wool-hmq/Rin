@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { client } from "../app/runtime";
 import { useAlert } from "../components/dialog";
 import ReactLoading from "react-loading";
@@ -12,7 +11,6 @@ type R2File = {
 };
 
 export function R2ManagerPage() {
-  const { t } = useTranslation();
   const { showAlert, AlertUI } = useAlert();
   const [files, setFiles] = useState<R2File[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +117,7 @@ export function R2ManagerPage() {
               value={prefix}
               onChange={(e) => setPrefix(e.target.value)}
               placeholder="筛选前缀 (如: images/)"
-              className="rounded-xl border border-black/10 bg-w px-4 py-2 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 dark:border-white/10 dark:placeholder:text-neutral-500"
+              className="rounded-xl border border-black/10 bg-w px-4 py-2 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 dark:border-white/10 dark:focus:border-white/20"
             />
             <button
               onClick={loadFiles}
@@ -191,4 +189,4 @@ export function R2ManagerPage() {
       <AlertUI />
     </div>
   );
-    }
+}
