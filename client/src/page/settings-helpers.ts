@@ -39,12 +39,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   deepseek: ["deepseek-chat", "deepseek-reasoner"],
   zhipu: ["glm-4.7", "glm-4.6", "glm-4.5", "glm-4.5-air", "glm-4.5-airx", "glm-4.5-flash", "glm-4-long", "glm-4.6v", "glm-4.1v-thinking-flashx", "glm-4.6v-flash", "glm-4.1v-thinking-flash", "glm-4v-flash", "glm-4", "glm-4-plus", "glm-4-air", "glm-4-flash", "glm-4-flash-250414", "glm-4-flashx-250414", "glm-3-turbo"],
   // ✅ OpenRouter 模型列表（可在此增加或修改）
-  openrouter: [
-    "openai/gpt-oss-120b:free",
-    "openai/gpt-4o",
-    "anthropic/claude-3.5-sonnet",
-    "google/gemini-pro",
-  ],
+  openrouter: ["openai/gpt-oss-120b:free"],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
   Cerebras: ["gpt-oss-120b","gemma-4-31b","zai-glm-4.7"],
   // ✅ 自定义模型（保留，方便手动填任何模型）
