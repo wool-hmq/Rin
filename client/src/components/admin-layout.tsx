@@ -67,6 +67,8 @@ export function AdminLayout({
                 <AdminNavItem href="/admin/health" icon="ri-heart-pulse-line" label={t("health.title")} />
                 <AdminNavItem href="/admin/queue-status" icon="ri-todo-line" label={t("queue_status.title")} />
                 <AdminNavItem href="/admin/compat-tasks" icon="ri-history-line" label={t("compat_tasks.title")} />
+                {/* ✅ 新增：R2文件管理 */}
+                <AdminNavItem href="/admin/r2-manager" icon="ri-folder-2-line" label="R2文件管理" />
               </div>
             </div>
           </div>
