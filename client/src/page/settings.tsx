@@ -646,6 +646,9 @@ export function Settings() {
               if (updates.apiKey !== undefined) {
                 setConfigValue("server", "ai_summary.api_key", updates.apiKey);
               }
+              if (updates.customCode !== undefined) {
+                setConfigValue("server", "ai_summary.custom_code", updates.customCode);
+              }
             }}
           />
 
