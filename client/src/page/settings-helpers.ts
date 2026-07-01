@@ -46,7 +46,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
     "google/gemini-pro",
   ],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
-  Cerebars: ["gpt-oss-120b","gemma-4-31b","zai-glm-4.7"],
+  Cerebras: ["gpt-oss-120b","gemma-4-31b","zai-glm-4.7"],
   // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
 };
