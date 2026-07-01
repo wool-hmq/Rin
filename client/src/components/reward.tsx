@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
 import { fetchR2Json } from '../utils/r2';
-import { R2_ENDPOINTS } from '../config/r2';
 
 // 请替换为你的R2中存放的赞助信息JSON地址
 const SPONSOR_R2_URL = "https://r2page.jiaoblog.dpdns.org/sponsor.json";
@@ -32,7 +31,7 @@ export function Reward() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
+        className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
       >
         <span>☕</span> {t('sponsor.title')}
       </button>
@@ -79,7 +78,7 @@ export function Reward() {
               alt="BTC QR"
               className="w-48 h-48 object-contain mx-auto rounded-lg border border-gray-200 dark:border-gray-700"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"%3E%3Crect x="3" y="3" width="18" height="18" rx="2"/%3E%3Cpath d="M9 9h6v6H9z"/%3E%3C/svg%3E';
+                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"%3E%3Crect x="3" y="3" width="18" height="18" rx="2"/%3E%3Ccircle cx="9" cy="9" r="1"/%3E%3Cpath d="M9 9h6v6H9z"/%3E%3C/svg%3E';
               }}
             />
             <p className="text-xs text-gray-400 mt-2 break-all">{btc.address}</p>
