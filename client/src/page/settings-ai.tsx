@@ -29,6 +29,7 @@ export type AISettingsValue = {
   apiKey: string;
   apiKeySet: boolean;
   apiUrl: string;
+  customCode?: string; // ✅ 新增：自定义代码
 };
 
 export function AISummarySettings({
@@ -43,6 +44,7 @@ export function AISummarySettings({
   const [testResult, setTestResult] = useState<{ success?: boolean; response?: string; error?: string; details?: string } | null>(null);
   const { AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
+  const isCustom = value.provider === "custom";
 
   const handleProviderChange = (nextProvider: string) => {
     const preset = getAIProviderPreset(nextProvider);
@@ -52,6 +54,7 @@ export function AISummarySettings({
       provider: nextProvider,
       apiUrl: preset?.url ?? "",
       model: models[0] ?? value.model,
+      customCode: nextProvider === "custom" ? (value.customCode || "// 请在此输入你的自定义代码\n// 示例：\n// const response = await fetch('https://your-api.com/v1/chat', {\n//   method: 'POST',\n//   headers: { 'Authorization': `Bearer ${apiKey}` },\n//   body: JSON.stringify({ prompt: promptText })\n// });\n// return await response.json();") : undefined,
     });
   };
 
@@ -59,12 +62,25 @@ export function AISummarySettings({
     setTestStatus("testing");
     setTestResult(null);
     try {
-      const requestBody = buildAITestRequest({
-        provider: value.provider,
-        model: value.model,
-        apiUrl: value.apiUrl,
-        apiKey: value.apiKey,
-      });
+      let requestBody: any;
+
+      if (isCustom) {
+        // ✅ 自定义模式：直接传递代码
+        requestBody = {
+          provider: "custom",
+          apiKey: value.apiKey,
+          customCode: value.customCode || "",
+          model: value.model,
+        };
+      } else {
+        requestBody = buildAITestRequest({
+          provider: value.provider,
+          model: value.model,
+          apiUrl: value.apiUrl,
+          apiKey: value.apiKey,
+        });
+      }
+
       const { data, error } = await client.config.testAI(requestBody);
 
       if (error) {
@@ -198,6 +214,30 @@ export function AISummarySettings({
                     />
                   </div>
                 ) : null}
+                {/* ✅ 新增：自定义代码输入框 */}
+                {isCustom && (
+                  <div className="space-y-2 lg:col-span-2">
+                    <p className="text-sm font-medium t-primary">自定义调用代码</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      编写 JavaScript/TypeScript 代码，用于调用自定义 AI API。可用变量：<code className="rounded bg-black/5 px-1 py-0.5 text-xs">apiKey</code>、<code className="rounded bg-black/5 px-1 py-0.5 text-xs">promptText</code>、<code className="rounded bg-black/5 px-1 py-0.5 text-xs">model</code>
+                    </p>
+                    <textarea
+                      value={value.customCode || ""}
+                      onChange={(event) => {
+                        onChange({ customCode: event.target.value });
+                      }}
+                      placeholder="// 在此输入你的自定义调用代码"
+                      rows={12}
+                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 font-mono text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:ring-2 focus:ring-theme/10 dark:border-white/10 dark:placeholder:text-neutral-500 dark:focus:border-white/20"
+                    />
+                    <p className="text-xs text-neutral-400 dark:text-neutral-500">
+                      示例：<br />
+                      <code className="rounded bg-black/5 px-1 py-0.5 text-xs">
+                        const response = await fetch(&quot;https://your-api.com/v1/chat&quot;, &#123; method: &quot;POST&quot;, headers: &#123; &quot;Authorization&quot;: `Bearer $&#123;apiKey&#125;`, &quot;Content-Type&quot;: &quot;application/json&quot; &#125;, body: JSON.stringify(&#123; model, messages: [&#123; role: &quot;user&quot;, content: promptText &#125;] &#125;) &#125;); const data = await response.json(); return data.choices[0].message.content;
+                      </code>
+                    </p>
+                  </div>
+                )}
               </div>
             </SettingsCardBody>
           </SettingsCard>
@@ -238,4 +278,4 @@ export function AISummarySettings({
       <AlertUI />
     </>
   );
-}
+    }
