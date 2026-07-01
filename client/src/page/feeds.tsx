@@ -5,7 +5,7 @@ import { FeedCard } from "../components/feed_card"
 import { Waiting } from "../components/loading"
 import { client } from "../app/runtime"
 import { ProfileContext } from "../state/profile"
-import { Padding } from "../components/padding"  // ✅ 新增导入
+import { Padding } from "../components/padding"
 
 import { useSiteConfig } from "../hooks/useSiteConfig";
 import { siteName } from "../utils/constants"
@@ -80,7 +80,6 @@ export function FeedsPage() {
                 <meta property="og:url" content={document.URL} />
             </Helmet>
             <Waiting for={feeds.draft.size + feeds.normal.size + feeds.unlisted.size > 0 || status === 'idle'}>
-                {/* ✅ 改为 flex 行布局，左侧是文章列表，右侧是侧边栏挂件 */}
                 <main className="w-full flex flex-row justify-center items-start mb-8 gap-6 px-4">
                     {/* 左侧：文章列表区域 */}
                     <div className="flex-1 min-w-0 max-w-4xl">
@@ -128,9 +127,9 @@ export function FeedsPage() {
                         </Waiting>
                     </div>
 
-                    {/* ✅ 右侧：侧边栏挂件 */}
+                    {/* 右侧：侧边栏挂件 */}
                     <div className="hidden lg:block w-80 flex-shrink-0 sticky top-[5.5rem]">
-                        <Padding />
+                        <Padding mode="right" />
                     </div>
                 </main>
             </Waiting>
