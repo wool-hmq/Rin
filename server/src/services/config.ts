@@ -53,58 +53,82 @@ export function ConfigService(): Hono {
         // Get current AI config from database
         const config = await wrapTime(c, 'ai_config', getAIConfig(serverConfig));
 
-        // ✅ 新增：处理自定义供应商
+        // 处理自定义供应商
         const provider = body.provider || config.provider;
         if (provider === 'custom') {
-            const customCode = body.customCode as string;
+            // 从请求或数据库获取配置
+            const apiUrl = body.api_url || config.api_url;
             const apiKey = body.api_key || config.api_key || '';
             const model = body.model || config.model || 'custom-model';
             const testPrompt = body.testPrompt || "Hello! This is a test message. Please respond with a simple greeting.";
 
-            if (!customCode) {
+            if (!apiUrl) {
                 return c.json({
                     success: false,
-                    error: '缺少自定义代码',
+                    error: '缺少 API URL',
+                }, 400);
+            }
+
+            if (!apiKey) {
+                return c.json({
+                    success: false,
+                    error: '缺少 API Key',
                 }, 400);
             }
 
             try {
-                // 使用 Function 构造函数执行用户代码
-                // 注入 apiKey, promptText, model 作为变量
-                const fn = new Function(
-                    'apiKey',
-                    'promptText',
-                    'model',
-                    `
-                        return (async function() {
-                            ${customCode}
-                        })();
-                    `
-                );
-                
-                const result = await fn(apiKey, testPrompt, model);
-                
-                // 处理返回结果
-                let responseText = '';
-                if (typeof result === 'string') {
-                    responseText = result;
-                } else if (result && typeof result === 'object') {
-                    responseText = JSON.stringify(result, null, 2);
-                } else {
-                    responseText = String(result);
+                // 构造 OpenAI 兼容的请求
+                const requestUrl = `${apiUrl}/chat/completions`;
+                const requestBody = {
+                    model: model,
+                    messages: [
+                        { role: "user", content: testPrompt }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 500,
+                };
+
+                const response = await fetch(requestUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        // 可选：为 OpenRouter 添加 Referer
+                        ...(apiUrl.includes('openrouter') ? { 'HTTP-Referer': 'https://your-blog.com' } : {}),
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    return c.json({
+                        success: false,
+                        error: `API 请求失败 (${response.status})`,
+                        details: errorText,
+                    }, 400);
+                }
+
+                const data = await response.json();
+                const reply = data.choices?.[0]?.message?.content;
+                if (!reply) {
+                    return c.json({
+                        success: false,
+                        error: 'API 返回数据格式异常',
+                        details: JSON.stringify(data),
+                    }, 400);
                 }
 
                 return c.json({
                     success: true,
-                    response: responseText,
+                    response: reply,
                     provider: 'custom',
                     model: model,
                 });
             } catch (error: any) {
-                console.error('Custom AI execution error:', error);
+                console.error('Custom AI request error:', error);
                 return c.json({
                     success: false,
-                    error: error.message || '执行自定义代码失败',
+                    error: error.message || '请求自定义 AI 失败',
                     details: error.stack,
                 }, 500);
             }
