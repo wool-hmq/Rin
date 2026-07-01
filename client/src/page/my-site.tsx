@@ -6,7 +6,7 @@ import { fetchR2Text } from "../utils/r2";
 import { useSiteConfig } from "../hooks/useSiteConfig";
 
 // 请替换为你的R2中存放的HTML文件地址
-const MY_SITE_R2_URL = "https://你的R2域名/my-site.html";
+const MY_SITE_R2_URL = "https://r2page.jiaoblog.dpdns.org/my-site.html";
 
 export function MySitePage() {
   const { t } = useTranslation();
