@@ -24,7 +24,7 @@ export const AI_PROVIDER_PRESETS = [
   { value: "deepseek", label: "DeepSeek", url: "https://api.deepseek.com/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "zhipu", label: "Zhipu", url: "https://open.bigmodel.cn/api/paas/v4", requiresApiKey: true, requiresApiUrl: true },
   // ✅ 修改：自定义供应商现在需要 API URL 和 Key
-  { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: true },
+  { value: "openrouter", label: "openrouter", url: "https://openrouter.ai/api/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
 ] as const;
 
 export const AI_MODEL_PRESETS: Record<string, string[]> = {
@@ -35,7 +35,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   deepseek: ["deepseek-chat", "deepseek-reasoner"],
   zhipu: ["glm-4.7", "glm-4.6", "glm-4.5", "glm-4.5-air", "glm-4.5-airx", "glm-4.5-flash", "glm-4-long", "glm-4.6v", "glm-4.1v-thinking-flashx", "glm-4.6v-flash", "glm-4.1v-thinking-flash", "glm-4v-flash", "glm-4", "glm-4-plus", "glm-4-air", "glm-4-flash", "glm-4-flash-250414", "glm-4-flashx-250414", "glm-3-turbo"],
   // 自定义模型预设（仅占位）
-  custom: ["custom-model"],
+  custom: ["openai/gpt-oss-120b:free"],
 };
 
 export function mergeSessionConfig(updates: Record<string, unknown>) {
