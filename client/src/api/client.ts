@@ -522,6 +522,7 @@ class ConfigAPI {
     api_url?: string;
     api_key?: string;
     testPrompt?: string;
+    customCode?: string; // ✅ 新增：自定义代码
   }): Promise<ApiResponse<{ success: boolean; response?: string; error?: string; details?: string; provider?: string; model?: string }>> {
     return this.http.post<any>("/api/config/test-ai", body);
   }
@@ -646,6 +647,43 @@ class RSSAPI {
 }
 
 // ============================================================================
+// R2 API methods (新增)
+// ============================================================================
+
+type R2File = {
+  key: string;
+  size: number;
+  lastModified: string;
+  etag?: string;
+};
+
+class R2API {
+  constructor(private http: HttpClient) {}
+
+  // 获取文件列表
+  async list(params?: { prefix?: string; delimiter?: string }): Promise<ApiResponse<{ files: R2File[] }>> {
+    const searchParams = new URLSearchParams();
+    if (params?.prefix) searchParams.set("prefix", params.prefix);
+    if (params?.delimiter) searchParams.set("delimiter", params.delimiter);
+    const query = searchParams.toString();
+    return this.http.get<{ files: R2File[] }>(`/api/r2/list${query ? `?${query}` : ""}`);
+  }
+
+  // 上传文件
+  async upload(body: { file: File; key: string }): Promise<ApiResponse<{ key: string; url: string }>> {
+    const formData = new FormData();
+    formData.append("file", body.file);
+    formData.append("key", body.key);
+    return this.http.post<{ key: string; url: string }>("/api/r2/upload", formData);
+  }
+
+  // 删除文件
+  async delete(body: { key: string }): Promise<ApiResponse<void>> {
+    return this.http.delete<void>(`/api/r2/${encodeURIComponent(body.key)}`);
+  }
+}
+
+// ============================================================================
 // Main API Client Class
 // ============================================================================
 
@@ -664,6 +702,7 @@ export class ApiClient {
   auth: AuthAPI;
   wp: WordPressAPI;
   rss: RSSAPI;
+  r2: R2API; // ✅ 新增
 
   constructor(baseUrl: string) {
     this.http = new HttpClient(baseUrl);
@@ -680,6 +719,7 @@ export class ApiClient {
     this.auth = new AuthAPI(this.http);
     this.wp = new WordPressAPI(this.http);
     this.rss = new RSSAPI(baseUrl);
+    this.r2 = new R2API(this.http); // ✅ 新增
   }
 }
 
