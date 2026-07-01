@@ -128,12 +128,12 @@ export function FeedsPage() {
                         </Waiting>
                     </div>
 
-                    {/* ✅ 右侧：侧边栏挂件（仅当 mode='right' 时显示） */}
+                    {/* ✅ 右侧：侧边栏挂件 */}
                     <div className="hidden lg:block w-80 flex-shrink-0 sticky top-[5.5rem]">
-                        <Padding mode="right" />
+                        <Padding />
                     </div>
                 </main>
             </Waiting>
         </>
     )
-                                    }
+}
