@@ -5,6 +5,7 @@ import { FeedCard } from "../components/feed_card"
 import { Waiting } from "../components/loading"
 import { client } from "../app/runtime"
 import { ProfileContext } from "../state/profile"
+import { Padding } from "../components/padding"  // ✅ 新增导入
 
 import { useSiteConfig } from "../hooks/useSiteConfig";
 import { siteName } from "../utils/constants"
@@ -38,9 +39,8 @@ export function FeedsPage() {
     const page = tryInt(1, query.get("page"))
     const limit = tryInt(siteConfig.pageSize, query.get("limit"))
     const feedListClass = siteConfig.feedLayout === "masonry" ? "wauto columns-1 gap-5 ani-show md:columns-2" : "wauto flex flex-col ani-show";
-    const currentFeeds = feeds[listState] ?? { size: 0, data: [], hasNext: false };
-    const currentFeedData = Array.isArray(currentFeeds.data) ? currentFeeds.data : [];
     const ref = useRef("")
+    
     function fetchFeeds(type: FeedType) {
         client.feed.list({
             page: page,
@@ -56,6 +56,7 @@ export function FeedsPage() {
             }
         })
     }
+    
     useEffect(() => {
         const key = `${query.get("page")} ${query.get("type")} ${limit}`
         if (ref.current == key) return
@@ -67,6 +68,7 @@ export function FeedsPage() {
         fetchFeeds(type)
         ref.current = key
     }, [limit, query.get("page"), query.get("type")])
+    
     return (
         <>
             <Helmet>
@@ -78,51 +80,60 @@ export function FeedsPage() {
                 <meta property="og:url" content={document.URL} />
             </Helmet>
             <Waiting for={feeds.draft.size + feeds.normal.size + feeds.unlisted.size > 0 || status === 'idle'}>
-                <main className="w-full flex flex-col justify-center items-center mb-8">
-                    <div className="wauto text-start text-black dark:text-white py-4 text-4xl font-bold">
-                        <p>
-                            {listState === 'draft' ? t('draft_bin') : listState === 'normal' ? t('article.title') : t('unlisted')}
-                        </p>
-                        <div className="flex flex-row justify-between">
-                            <p className="text-sm mt-4 text-neutral-500 font-normal">
-                                {t('article.total$count', { count: currentFeeds.size })}
+                {/* ✅ 改为 flex 行布局，左侧是文章列表，右侧是侧边栏挂件 */}
+                <main className="w-full flex flex-row justify-center items-start mb-8 gap-6 px-4">
+                    {/* 左侧：文章列表区域 */}
+                    <div className="flex-1 min-w-0 max-w-4xl">
+                        <div className="wauto text-start text-black dark:text-white py-4 text-4xl font-bold">
+                            <p>
+                                {listState === 'draft' ? t('draft_bin') : listState === 'normal' ? t('article.title') : t('unlisted')}
                             </p>
-                            {profile?.permission &&
-                                <div className="flex flex-row space-x-4">
-                                    <Link href={listState === 'draft' ? '/?type=normal' : '/?type=draft'} className={`text-sm mt-4 text-neutral-500 font-normal ${listState === 'draft' ? "text-theme" : ""}`}>
-                                        {t('draft_bin')}
-                                    </Link>
-                                    <Link href={listState === 'unlisted' ? '/?type=normal' : '/?type=unlisted'} className={`text-sm mt-4 text-neutral-500 font-normal ${listState === 'unlisted' ? "text-theme" : ""}`}>
-                                        {t('unlisted')}
-                                    </Link>
-                                </div>
-                            }
+                            <div className="flex flex-row justify-between">
+                                <p className="text-sm mt-4 text-neutral-500 font-normal">
+                                    {t('article.total$count', { count: feeds[listState]?.size || 0 })}
+                                </p>
+                                {profile?.permission &&
+                                    <div className="flex flex-row space-x-4">
+                                        <Link href={listState === 'draft' ? '/?type=normal' : '/?type=draft'} className={`text-sm mt-4 text-neutral-500 font-normal ${listState === 'draft' ? "text-theme" : ""}`}>
+                                            {t('draft_bin')}
+                                        </Link>
+                                        <Link href={listState === 'unlisted' ? '/?type=normal' : '/?type=unlisted'} className={`text-sm mt-4 text-neutral-500 font-normal ${listState === 'unlisted' ? "text-theme" : ""}`}>
+                                            {t('unlisted')}
+                                        </Link>
+                                    </div>
+                                }
+                            </div>
                         </div>
+                        <Waiting for={status === 'idle'}>
+                            <div className={feedListClass}>
+                                {(feeds[listState]?.data || []).map(({ id, ...feed }: any) => (
+                                    <FeedCard key={id} id={id} {...feed} />
+                                ))}
+                            </div>
+                            <div className="wauto flex flex-row items-center mt-4 ani-show">
+                                {page > 1 &&
+                                    <Link href={`/?type=${listState}&page=${(page - 1)}`}
+                                        className={`text-sm font-normal rounded-full px-4 py-2 text-white bg-theme`}>
+                                        {t('previous')}
+                                    </Link>
+                                }
+                                <div className="flex-1" />
+                                {feeds[listState]?.hasNext &&
+                                    <Link href={`/?type=${listState}&page=${(page + 1)}`}
+                                        className={`text-sm font-normal rounded-full px-4 py-2 text-white bg-theme`}>
+                                        {t('next')}
+                                    </Link>
+                                }
+                            </div>
+                        </Waiting>
                     </div>
-                    <Waiting for={status === 'idle'}>
-                        <div className={feedListClass}>
-                            {currentFeedData.map(({ id, ...feed }: any) => (
-                                <FeedCard key={id} id={id} {...feed} />
-                            ))}
-                        </div>
-                        <div className="wauto flex flex-row items-center mt-4 ani-show">
-                            {page > 1 &&
-                                <Link href={`/?type=${listState}&page=${(page - 1)}`}
-                                    className={`text-sm font-normal rounded-full px-4 py-2 text-white bg-theme`}>
-                                    {t('previous')}
-                                </Link>
-                            }
-                            <div className="flex-1" />
-                            {currentFeeds.hasNext &&
-                                <Link href={`/?type=${listState}&page=${(page + 1)}`}
-                                    className={`text-sm font-normal rounded-full px-4 py-2 text-white bg-theme`}>
-                                    {t('next')}
-                                </Link>
-                            }
-                        </div>
-                    </Waiting>
+
+                    {/* ✅ 右侧：侧边栏挂件（仅当 mode='right' 时显示） */}
+                    <div className="hidden lg:block w-80 flex-shrink-0 sticky top-[5.5rem]">
+                        <Padding mode="right" />
+                    </div>
                 </main>
             </Waiting>
         </>
     )
-}
+                                    }
