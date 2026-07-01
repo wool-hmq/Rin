@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
 import { fetchR2Json } from '../utils/r2';
+import { R2_RNDPOINTS } from '../config/r2';
 
 // 请替换为你的R2中存放的赞助信息JSON地址
 const SPONSOR_R2_URL = "https://r2page.jiaoblog.dpdns.org/sponsor.json";
