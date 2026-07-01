@@ -53,6 +53,64 @@ export function ConfigService(): Hono {
         // Get current AI config from database
         const config = await wrapTime(c, 'ai_config', getAIConfig(serverConfig));
 
+        // ✅ 新增：处理自定义供应商
+        const provider = body.provider || config.provider;
+        if (provider === 'custom') {
+            const customCode = body.customCode as string;
+            const apiKey = body.api_key || config.api_key || '';
+            const model = body.model || config.model || 'custom-model';
+            const testPrompt = body.testPrompt || "Hello! This is a test message. Please respond with a simple greeting.";
+
+            if (!customCode) {
+                return c.json({
+                    success: false,
+                    error: '缺少自定义代码',
+                }, 400);
+            }
+
+            try {
+                // 使用 Function 构造函数执行用户代码
+                // 注入 apiKey, promptText, model 作为变量
+                const fn = new Function(
+                    'apiKey',
+                    'promptText',
+                    'model',
+                    `
+                        return (async function() {
+                            ${customCode}
+                        })();
+                    `
+                );
+                
+                const result = await fn(apiKey, testPrompt, model);
+                
+                // 处理返回结果
+                let responseText = '';
+                if (typeof result === 'string') {
+                    responseText = result;
+                } else if (result && typeof result === 'object') {
+                    responseText = JSON.stringify(result, null, 2);
+                } else {
+                    responseText = String(result);
+                }
+
+                return c.json({
+                    success: true,
+                    response: responseText,
+                    provider: 'custom',
+                    model: model,
+                });
+            } catch (error: any) {
+                console.error('Custom AI execution error:', error);
+                return c.json({
+                    success: false,
+                    error: error.message || '执行自定义代码失败',
+                    details: error.stack,
+                }, 500);
+            }
+        }
+
+        // 原有逻辑：非自定义供应商
         // Build test config with overrides
         const testConfig = {
             provider: body.provider || config.provider,
@@ -409,4 +467,4 @@ export function ConfigService(): Hono {
     });
 
     return app;
-}
+                }
