@@ -1,5 +1,4 @@
 import {
-  SearchableSelect,
   SettingsBadge,
   SettingsCard,
   SettingsCardBody,
@@ -29,8 +28,79 @@ export type AISettingsValue = {
   apiKey: string;
   apiKeySet: boolean;
   apiUrl: string;
-  customCode?: string; // ✅ 修复：添加 customCode 字段以匹配 settings.tsx 中的使用
+  customCode?: string;
 };
+
+function CustomSelectInput({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+
+  const filteredOptions = options.filter((opt) =>
+    opt.toLowerCase().includes(searchInput.toLowerCase())
+  );
+
+  const handleSelectOption = (option: string) => {
+    onChange(option);
+    setIsOpen(false);
+    setSearchInput("");
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    onChange(e.target.value);
+  };
+
+  return (
+    <div className="relative w-full">
+      <div className="relative">
+        <input
+          type="text"
+          value={searchInput || value}
+          onChange={handleInputChange}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20"
+        />
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400"
+        >
+          ▼
+        </button>
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-lg dark:bg-neutral-900">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option) => (
+              <div
+                key={option}
+                onClick={() => handleSelectOption(option)}
+                className="cursor-pointer px-4 py-2 hover:bg-black/5 dark:hover:bg-white/10 t-primary"
+              >
+                {option}
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-2 text-center text-sm text-neutral-400">
+              No options found
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function AISummarySettings({
   value,
@@ -44,7 +114,6 @@ export function AISummarySettings({
   const [testResult, setTestResult] = useState<{ success?: boolean; response?: string; error?: string; details?: string } | null>(null);
   const { AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
-  // 不再需要 isCustom 特殊处理
 
   const handleProviderChange = (nextProvider: string) => {
     const preset = getAIProviderPreset(nextProvider);
@@ -61,7 +130,6 @@ export function AISummarySettings({
     setTestStatus("testing");
     setTestResult(null);
     try {
-      // 所有供应商统一使用 buildAITestRequest
       const requestBody = buildAITestRequest({
         provider: value.provider,
         model: value.model,
@@ -103,6 +171,7 @@ export function AISummarySettings({
   };
 
   const modelOptions = AI_MODEL_PRESETS[value.provider] || [];
+  const providerOptions = AI_PROVIDER_PRESETS.map((preset) => preset.value);
 
   return (
     <>
@@ -130,15 +199,11 @@ export function AISummarySettings({
             <SettingsCardRow
               header={<SettingsCardHeader title={t("settings.ai_summary.provider.title")} description={t("settings.ai_summary.provider.desc")} />}
               action={
-                <SearchableSelect
+                <CustomSelectInput
                   value={value.provider}
                   onChange={handleProviderChange}
-                  options={AI_PROVIDER_PRESETS.map((preset) => ({
-                    label: preset.label,
-                    value: preset.value,
-                  }))}
+                  options={providerOptions}
                   placeholder={t("settings.ai_summary.provider.title")}
-                  searchable={false}
                 />
               }
             />
@@ -146,20 +211,13 @@ export function AISummarySettings({
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium t-primary">{t("settings.ai_summary.model.title")}</p>
-                  <SearchableSelect
+                  <CustomSelectInput
                     value={value.model}
                     onChange={(nextValue) => {
                       onChange({ model: nextValue });
                     }}
-                    options={modelOptions.map((option) => ({
-                      label: option,
-                      value: option,
-                    }))}
+                    options={modelOptions}
                     placeholder={t("settings.ai_summary.model.desc")}
-                    searchPlaceholder={t("settings.ai_summary.model.desc")}
-                    emptyLabel={t("no_more")}
-                    allowCustomValue
-                    customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
                   />
                 </div>
                 {providerFields.requiresApiKey ? (
@@ -184,7 +242,7 @@ export function AISummarySettings({
                         onChange({ apiKey: event.target.value });
                       }}
                       placeholder={value.apiKeySet ? t("settings.ai_summary.api_key.placeholder_set") : "sk-..."}
-                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:ring-2 focus:ring-theme/10 dark:border-white/10 dark:placeholder:text-neutral-500 dark:focus:border-white/20"
+                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
                     />
                   </div>
                 ) : null}
@@ -198,11 +256,10 @@ export function AISummarySettings({
                         onChange({ apiUrl: event.target.value });
                       }}
                       placeholder="https://api.openai.com/v1"
-                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:ring-2 focus:ring-theme/10 dark:border-white/10 dark:placeholder:text-neutral-500 dark:focus:border-white/20"
+                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
                     />
                   </div>
                 ) : null}
-                {/* 自定义代码输入框已移除 */}
               </div>
             </SettingsCardBody>
           </SettingsCard>
@@ -243,4 +300,4 @@ export function AISummarySettings({
       <AlertUI />
     </>
   );
-                    }
+}
