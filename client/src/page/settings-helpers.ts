@@ -23,8 +23,10 @@ export const AI_PROVIDER_PRESETS = [
   { value: "gemini", label: "Gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai", requiresApiKey: true, requiresApiUrl: true },
   { value: "deepseek", label: "DeepSeek", url: "https://api.deepseek.com/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "zhipu", label: "Zhipu", url: "https://open.bigmodel.cn/api/paas/v4", requiresApiKey: true, requiresApiUrl: true },
-  // ✅ 修改：自定义供应商现在需要 API URL 和 Key
-  { value: "openrouter", label: "openrouter", url: "https://openrouter.ai/api/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
+  // ✅ OpenRouter 作为独立供应商
+  { value: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
+  // ✅ 保留 custom 作为通用兜底（可手动填任何 URL 和模型）
+  { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: true },
 ] as const;
 
 export const AI_MODEL_PRESETS: Record<string, string[]> = {
@@ -34,7 +36,14 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   gemini: ["gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-preview-09-2025", "gemini-2.5-flash-lite", "gemini-2.5-flash-lite-preview-09-2025", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-001", "gemini-2.0-flash-exp", "gemini-2.0-flash-lite", "gemini-2.0-flash-lite-001", "gemini-1.5-pro", "gemini-1.5-flash"],
   deepseek: ["deepseek-chat", "deepseek-reasoner"],
   zhipu: ["glm-4.7", "glm-4.6", "glm-4.5", "glm-4.5-air", "glm-4.5-airx", "glm-4.5-flash", "glm-4-long", "glm-4.6v", "glm-4.1v-thinking-flashx", "glm-4.6v-flash", "glm-4.1v-thinking-flash", "glm-4v-flash", "glm-4", "glm-4-plus", "glm-4-air", "glm-4-flash", "glm-4-flash-250414", "glm-4-flashx-250414", "glm-3-turbo"],
-  // 自定义模型预设（仅占位）
+  // ✅ OpenRouter 模型列表（可在此增加或修改）
+  openrouter: [
+    "openai/gpt-oss-120b:free",
+    "openai/gpt-4o",
+    "anthropic/claude-3.5-sonnet",
+    "google/gemini-pro",
+  ],
+  // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
 };
 
@@ -121,7 +130,6 @@ export function buildAIConfigUpdates(updates: Record<string, unknown>) {
   if (updates.model !== undefined) flatUpdates["ai_summary.model"] = updates.model;
   if (updates.api_url !== undefined) flatUpdates["ai_summary.api_url"] = updates.api_url;
   if (updates.api_key !== undefined) flatUpdates["ai_summary.api_key"] = updates.api_key;
-  // 不再需要 custom_code
   return flatUpdates;
 }
 
@@ -133,7 +141,6 @@ export async function loadAIConfigState() {
     model: data?.["ai_summary.model"] ?? "gpt-4o-mini",
     apiKeySet: data?.["ai_summary.api_key"] === "••••••••",
     apiUrl: data?.["ai_summary.api_url"] ?? "",
-    // 不再读取 customCode
   };
 }
 
@@ -171,7 +178,6 @@ export function getAIProviderFields(provider: string) {
   return {
     requiresApiKey: preset?.requiresApiKey ?? true,
     requiresApiUrl: preset?.requiresApiUrl ?? true,
-    // 不再需要自定义代码标志
   };
 }
 
@@ -203,10 +209,9 @@ export function buildAIConfigDraftValue(
     apiKey: String(serverConfig["ai_summary.api_key"] ?? ""),
     apiKeySet: hasStoredAiApiKey || String(serverConfig["ai_summary.api_key"] ?? "").trim().length > 0,
     apiUrl: String(serverConfig["ai_summary.api_url"] ?? ""),
-    // 不再包含 customCode
   };
 }
 
 export function areSettingsDraftsEqual(left: SettingsDraft, right: SettingsDraft) {
   return JSON.stringify(left) === JSON.stringify(right);
-                                                                          }
+  }
