@@ -24,7 +24,7 @@ export const AI_PROVIDER_PRESETS = [
   { value: "deepseek", label: "DeepSeek", url: "https://api.deepseek.com/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "zhipu", label: "Zhipu", url: "https://open.bigmodel.cn/api/paas/v4", requiresApiKey: true, requiresApiUrl: true },
   // ✅ OpenRouter 作为独立供应商
-  { value: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
+  { value: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
   //新增的免费API供应商
   { value: "Zenmux", label: "Zenmux", url: "https://zenmux.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Cerebras", label: "Cerebras", url: "https://api.cerebras.ai/v1", requiresApiKey: true, requiresApiUrl: true },
