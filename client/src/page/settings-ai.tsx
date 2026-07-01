@@ -29,7 +29,7 @@ export type AISettingsValue = {
   apiKey: string;
   apiKeySet: boolean;
   apiUrl: string;
-  // 移除 customCode
+  customCode?: string; // ✅ 修复：添加 customCode 字段以匹配 settings.tsx 中的使用
 };
 
 export function AISummarySettings({
@@ -243,4 +243,4 @@ export function AISummarySettings({
       <AlertUI />
     </>
   );
-}
+                    }
