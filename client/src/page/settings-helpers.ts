@@ -23,9 +23,8 @@ export const AI_PROVIDER_PRESETS = [
   { value: "gemini", label: "Gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai", requiresApiKey: true, requiresApiUrl: true },
   { value: "deepseek", label: "DeepSeek", url: "https://api.deepseek.com/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "zhipu", label: "Zhipu", url: "https://open.bigmodel.cn/api/paas/v4", requiresApiKey: true, requiresApiUrl: true },
-  // ✅ OpenRouter 作为独立供应商
+  //以下为新增的免费API供应商
   { value: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
-  //新增的免费API供应商
   { value: "Zenmux", label: "Zenmux", url: "https://zenmux.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Cerebras", label: "Cerebras", url: "https://api.cerebras.ai/v1", requiresApiKey: true, requiresApiUrl: true },
   // ✅ 保留 custom 作为通用兜底（可手动填任何 URL 和模型）
