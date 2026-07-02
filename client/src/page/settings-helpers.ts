@@ -43,7 +43,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   openrouter: ["openai/gpt-oss-120b:free"],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
   Cerebras: ["gpt-oss-120b","gemma-4-31b","zai-glm-4.7"],
-  Cerebras: ["gemma3-270m:free"],
+  Airforce: ["gemma3-270m:free"],
   // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
 };
