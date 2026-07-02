@@ -27,6 +27,7 @@ export const AI_PROVIDER_PRESETS = [
   { value: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
   { value: "Zenmux", label: "Zenmux", url: "https://zenmux.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Cerebras", label: "Cerebras", url: "https://api.cerebras.ai/v1", requiresApiKey: true, requiresApiUrl: true },
+  { value: "Airforce", label: "Airforce", url: "https://api.airforce/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
   // ✅ 保留 custom 作为通用兜底（可手动填任何 URL 和模型）
   { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: true },
 ] as const;
@@ -42,6 +43,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   openrouter: ["openai/gpt-oss-120b:free"],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
   Cerebras: ["gpt-oss-120b","gemma-4-31b","zai-glm-4.7"],
+  Cerebras: ["gemma3-270m:free"],
   // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
 };
