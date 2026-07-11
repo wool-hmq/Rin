@@ -26,7 +26,7 @@ export const AI_PROVIDER_PRESETS = [
   //以下为新增的免费API供应商
   { value: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
   { value: "Zenmux", label: "Zenmux", url: "https://zenmux.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
-  { value: "Cerebras", label: "Cerebras", url: "https://api.cerebras.ai/v1", requiresApiKey: true, requiresApiUrl: true },
+  { value: "Omaleai", label: "Cerebras", url: "https://omaleai.qzz.io/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Airforce", label: "Airforce", url: "https://api.airforce/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
   // ✅ 保留 custom 作为通用兜底（可手动填任何 URL 和模型）
   { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: true },
@@ -42,7 +42,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   // ✅ OpenRouter 模型列表（可在此增加或修改）
   openrouter: ["openai/gpt-oss-120b:free"],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
-  Cerebras: ["gpt-oss-120b","gemma-4-31b","zai-glm-4.7"],
+  Omaleai: ["deepseek-v4-flash"],
   Airforce: ["gemma3-270m:free"],
   // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
