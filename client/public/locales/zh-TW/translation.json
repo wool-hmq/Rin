@@ -756,6 +756,8 @@
   "total_tags": "共 {{count}} 個標籤",
   "anonymous": "匿名",
   "my_site": "我的網站",
+  "my_activity": "我的活動",
+"terms": "服務條款",
 "sponsor": {
   "title": "贊助支持",
   "btc": "比特幣"
