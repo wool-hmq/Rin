@@ -21,6 +21,8 @@ export function NavBar({
       <NavItem menu={menu} onClick={onClick} itemClassName={itemClassName} title={t("hashtags")} selected={location === "/hashtags"} href="/hashtags" />
       <NavItem menu={menu} onClick={onClick} itemClassName={itemClassName} title={t("friends.title")} selected={location === "/friends"} href="/friends" />
       <NavItem menu={menu} onClick={onClick} itemClassName={itemClassName} title={t("about.title")} selected={location === "/about"} href="/about" />
+      <NavItem menu={menu} onClick={onClick} itemClassName={itemClassName} title={t("my_activity")} selected={location === "/my-activity"} href="/my-activity" />
+      <NavItem menu={menu} onClick={onClick} itemClassName={itemClassName} title={t("terms")} selected={location === "/terms"} href="/terms" />
       {/* 新增：我的网站（固定菜单项） */}
       <NavItem menu={menu} onClick={onClick} itemClassName={itemClassName} title={t("my_site")} selected={location === "/my-site"} href="/my-site" />
     </>
