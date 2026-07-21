@@ -756,6 +756,8 @@
   "total_tags": "共 {{count}} 个标签",
   "anonymous": "匿名",
   "my_site": "我的网站",
+  "my_activity": "我的活动",
+  "terms": "服务条款"
   "sponsor": {
     "title": "赞助支持",
     "btc": "比特币"
