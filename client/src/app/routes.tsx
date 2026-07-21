@@ -28,6 +28,8 @@ import { Settings } from "../page/settings";
 import { TimelinePage } from "../page/timeline";
 import { WritingPage } from "../page/writing";
 import { MySitePage } from "../page/my-site";
+import { MyActivityPage } from "../page/my-activity";
+import { TermsPage } from "../page/terms";
 import { R2ManagerPage } from "../page/r2-manager"; // ✅ 新增
 import { ProfileContext } from "../state/profile";
 import { tryInt } from "../utils/int";
@@ -68,6 +70,14 @@ export function AppRoutes() {
 
       <AppRoute path="/my-site">
         <MySitePage />
+      </AppRoute>
+
+      <AppRoute path="/my-activity">
+        <MyActivityPage />
+      </AppRoute>
+      
+      <AppRoute path="/terms">
+        <TermsPage />
       </AppRoute>
 
       <AdminRoute path="/admin/settings" requirePermission title={t("settings.title")} description={t("admin.settings_description")}>
