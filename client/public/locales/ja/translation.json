@@ -747,6 +747,8 @@
   "total_tags": "全 {{count}} 個のタグ",
   "anonymous": "匿名",
   "my_site": "自分のサイト",
+  "my_activity": "マイアクティビティ",
+"terms": "利用規約",
 "sponsor": {
   "title": "スポンサー",
   "btc": "ビットコイン"
