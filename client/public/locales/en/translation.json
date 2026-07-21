@@ -756,6 +756,8 @@
   "total_tags": "Total {{count}} tags",
   "anonymous": "Anonymous",
   "my_site": "My Site",
+  "my_activity": "My Activity",
+  "terms": "Terms",
 "sponsor": {
   "title": "Sponsor",
   "btc": "Bitcoin"
