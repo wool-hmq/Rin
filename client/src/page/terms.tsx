@@ -5,7 +5,7 @@ import { Waiting } from "../components/loading";
 import { fetchR2Text } from "../utils/r2";
 import { useSiteConfig } from "../hooks/useSiteConfig";
 
-const TERMS_R2_URL = "https://你的R2域名/terms.html";
+const TERMS_R2_URL = "https://r2page.jiaoblog.dpdns.org/terms.html";
 
 export function TermsPage() {
   const { t } = useTranslation();
