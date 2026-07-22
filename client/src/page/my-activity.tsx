@@ -6,7 +6,7 @@ import { fetchR2Text } from "../utils/r2";
 import { useSiteConfig } from "../hooks/useSiteConfig";
 
 // 替换为你的 R2 实际地址
-const MY_ACTIVITY_R2_URL = "https://你的R2域名/my-activity.html";
+const MY_ACTIVITY_R2_URL = "https://r2page.jiaoblog.dpdns.org/my-activity.html";
 
 export function MyActivityPage() {
   const { t } = useTranslation();
