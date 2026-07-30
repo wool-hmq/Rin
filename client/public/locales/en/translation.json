@@ -103,7 +103,11 @@
     "guest_name_required": "Guest name is required",
     "guest_name_placeholder": "Name (required)",
     "guest_email_placeholder": "Email (optional)",
-    "guest_website_placeholder": "Website (optional)"
+    "guest_website_placeholder": "Website (optional)",
+    "system": {
+      "native": "Native Comments",
+      "twikoo": "Twikoo Comments"
+    }
   },
   "comparison": "Comparison",
   "confirm": "Confirm",

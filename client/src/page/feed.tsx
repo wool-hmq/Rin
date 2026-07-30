@@ -20,6 +20,7 @@ import { Tips } from "../components/tips";
 import mermaid from "mermaid";
 import { AdjacentSection } from "../components/adjacent_feed.tsx";
 import { stripImageUrlMetadata } from "../utils/image-upload";
+import { TwikooComment } from "../components/twikoo_comment";
 
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
@@ -529,8 +530,11 @@ function Comments({ id }: { id: string }) {
   const config = useContext(ClientConfigContext);
   const [comments, setComments] = useState<Comment[]>([]);
   const [error, setError] = useState<string>();
+  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo">("native");
   const ref = useRef("");
   const { t } = useTranslation();
+
+  const twikooEnabled = config.getBoolean('twikoo.enabled');
 
   function loadComments() {
     client.comment
@@ -548,34 +552,71 @@ function Comments({ id }: { id: string }) {
     loadComments();
     ref.current = id;
   }, [id]);
+
+  const showNativeComments = config.getBoolean('comment.enabled') && activeSystem === "native";
+  const showTwikooComments = twikooEnabled && activeSystem === "twikoo";
+
   return (
     <>
-      {config.getBoolean('comment.enabled') &&
+      {(config.getBoolean('comment.enabled') || twikooEnabled) &&
         <div className="m-2 flex flex-col justify-center items-center">
-          <CommentInput id={id} onRefresh={loadComments} />
-          {error && (
+          {twikooEnabled && config.getBoolean('comment.enabled') && (
+            <div className="w-full mb-4 flex gap-2 justify-center">
+              <button
+                onClick={() => setActiveSystem("native")}
+                className={`px-4 py-2 rounded-full transition ${
+                  activeSystem === "native"
+                    ? "bg-theme text-white"
+                    : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <i className="ri-message-3-line mr-1"></i>
+                {t("comment.system.native")}
+              </button>
+              <button
+                onClick={() => setActiveSystem("twikoo")}
+                className={`px-4 py-2 rounded-full transition ${
+                  activeSystem === "twikoo"
+                    ? "bg-theme text-white"
+                    : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <i className="ri-chat-smile-2-line mr-1"></i>
+                {t("comment.system.twikoo")}
+              </button>
+            </div>
+          )}
+          {showNativeComments && (
             <>
-              <div className="flex flex-col wauto rounded-2xl bg-w t-primary m-2 p-6 items-center justify-center">
-                <h1 className="text-xl font-bold t-primary">{error}</h1>
-                <button
-                  className="mt-2 bg-theme text-white px-4 py-2 rounded-full"
-                  onClick={loadComments}
-                >
-                  {t("reload")}
-                </button>
-              </div>
+              <CommentInput id={id} onRefresh={loadComments} />
+              {error && (
+                <>
+                  <div className="flex flex-col wauto rounded-2xl bg-w t-primary m-2 p-6 items-center justify-center">
+                    <h1 className="text-xl font-bold t-primary">{error}</h1>
+                    <button
+                      className="mt-2 bg-theme text-white px-4 py-2 rounded-full"
+                      onClick={loadComments}
+                    >
+                      {t("reload")}
+                    </button>
+                  </div>
+                </>
+              )}
+              {comments.length > 0 && (
+                <div className="w-full">
+                  {comments.map((comment) => (
+                    <CommentItem
+                      key={comment.id}
+                      comment={comment}
+                      onRefresh={loadComments}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           )}
-          {comments.length > 0 && (
-            <div className="w-full">
-              {comments.map((comment) => (
-                <CommentItem
-                  key={comment.id}
-                  comment={comment}
-                  onRefresh={loadComments}
-                />
-              ))}
-            </div>
+          {showTwikooComments && (
+            <TwikooComment feedId={id} />
           )}
         </div>
       }

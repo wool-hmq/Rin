@@ -103,7 +103,11 @@
     "guest_name_required": "昵称不能为空",
     "guest_name_placeholder": "昵称（必填）",
     "guest_email_placeholder": "邮箱（可选）",
-    "guest_website_placeholder": "网站（可选）"
+    "guest_website_placeholder": "网站（可选）",
+    "system": {
+      "native": "本站评论",
+      "twikoo": "Twikoo 评论"
+    }
   },
   "comparison": "对比",
   "confirm": "确认",

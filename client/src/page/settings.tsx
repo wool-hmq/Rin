@@ -442,6 +442,25 @@ export function Settings() {
             }}
           />
           <ItemSwitch
+            title="启用 Twikoo 评论"
+            description="启用后可同时使用 Twikoo 评论系统（需要在 Vercel 部署 Twikoo）"
+            checked={clientConfig.getBoolean("twikoo.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "twikoo.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("twikoo.enabled") && (
+            <ItemInput
+              title="Twikoo 环境 ID"
+              description="Vercel 部署的 Twikoo 环境地址，如：https://xxx.vercel.app"
+              configKeyTitle="Twikoo 环境 ID"
+              value={String(clientConfig.get("twikoo.envId") ?? "")}
+              onChange={(value) => {
+                setConfigValue("client", "twikoo.envId", value);
+              }}
+            />
+          )}
+          <ItemSwitch
             title={t("settings.counter.enable.title")}
             description={t("settings.counter.enable.desc")}
             checked={clientConfig.getBoolean("counter.enabled")}
