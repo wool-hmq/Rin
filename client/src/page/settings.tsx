@@ -461,6 +461,54 @@ export function Settings() {
             />
           )}
           <ItemSwitch
+            title="启用 Giscus 评论"
+            description="启用后可同时使用 Giscus 评论系统（基于 GitHub Discussions）"
+            checked={clientConfig.getBoolean("giscus.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "giscus.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("giscus.enabled") && (
+            <>
+              <ItemInput
+                title="GitHub 仓库"
+                description="格式：username/repo，如：wool-hmq/Rin"
+                configKeyTitle="Giscus Repo"
+                value={String(clientConfig.get("giscus.repo") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "giscus.repo", value);
+                }}
+              />
+              <ItemInput
+                title="仓库 ID (Repo ID)"
+                description="在 giscus.app 获取的 REPO_ID"
+                configKeyTitle="Giscus Repo ID"
+                value={String(clientConfig.get("giscus.repoId") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "giscus.repoId", value);
+                }}
+              />
+              <ItemInput
+                title="讨论分类"
+                description="Announcements 或其他分类名称"
+                configKeyTitle="Giscus Category"
+                value={String(clientConfig.get("giscus.category") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "giscus.category", value);
+                }}
+              />
+              <ItemInput
+                title="分类 ID (Category ID)"
+                description="在 giscus.app 获取的 CATEGORY_ID"
+                configKeyTitle="Giscus Category ID"
+                value={String(clientConfig.get("giscus.categoryId") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "giscus.categoryId", value);
+                }}
+              />
+            </>
+          )}
+          <ItemSwitch
             title={t("settings.counter.enable.title")}
             description={t("settings.counter.enable.desc")}
             checked={clientConfig.getBoolean("counter.enabled")}

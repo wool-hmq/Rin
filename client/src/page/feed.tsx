@@ -21,6 +21,7 @@ import mermaid from "mermaid";
 import { AdjacentSection } from "../components/adjacent_feed.tsx";
 import { stripImageUrlMetadata } from "../utils/image-upload";
 import { TwikooComment } from "../components/twikoo_comment";
+import { GiscusComment } from "../components/giscus_comment";
 
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
@@ -530,11 +531,12 @@ function Comments({ id }: { id: string }) {
   const config = useContext(ClientConfigContext);
   const [comments, setComments] = useState<Comment[]>([]);
   const [error, setError] = useState<string>();
-  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo">("native");
+  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo" | "giscus">("native");
   const ref = useRef("");
   const { t } = useTranslation();
 
   const twikooEnabled = config.getBoolean('twikoo.enabled');
+  const giscusEnabled = config.getBoolean('giscus.enabled');
 
   function loadComments() {
     client.comment
@@ -555,35 +557,59 @@ function Comments({ id }: { id: string }) {
 
   const showNativeComments = config.getBoolean('comment.enabled') && activeSystem === "native";
   const showTwikooComments = twikooEnabled && activeSystem === "twikoo";
+  const showGiscusComments = giscusEnabled && activeSystem === "giscus";
+
+  const enabledSystems = [
+    config.getBoolean('comment.enabled') && "native",
+    twikooEnabled && "twikoo",
+    giscusEnabled && "giscus",
+  ].filter(Boolean) as string[];
 
   return (
     <>
-      {(config.getBoolean('comment.enabled') || twikooEnabled) &&
+      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled) &&
         <div className="m-2 flex flex-col justify-center items-center">
-          {twikooEnabled && config.getBoolean('comment.enabled') && (
-            <div className="w-full mb-4 flex gap-2 justify-center">
-              <button
-                onClick={() => setActiveSystem("native")}
-                className={`px-4 py-2 rounded-full transition ${
-                  activeSystem === "native"
-                    ? "bg-theme text-white"
-                    : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-              >
-                <i className="ri-message-3-line mr-1"></i>
-                {t("comment.system.native")}
-              </button>
-              <button
-                onClick={() => setActiveSystem("twikoo")}
-                className={`px-4 py-2 rounded-full transition ${
-                  activeSystem === "twikoo"
-                    ? "bg-theme text-white"
-                    : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-              >
-                <i className="ri-chat-smile-2-line mr-1"></i>
-                {t("comment.system.twikoo")}
-              </button>
+          {enabledSystems.length > 1 && (
+            <div className="w-full mb-4 flex gap-2 justify-center flex-wrap">
+              {config.getBoolean('comment.enabled') && (
+                <button
+                  onClick={() => setActiveSystem("native")}
+                  className={`px-4 py-2 rounded-full transition ${
+                    activeSystem === "native"
+                      ? "bg-theme text-white"
+                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <i className="ri-message-3-line mr-1"></i>
+                  {t("comment.system.native")}
+                </button>
+              )}
+              {twikooEnabled && (
+                <button
+                  onClick={() => setActiveSystem("twikoo")}
+                  className={`px-4 py-2 rounded-full transition ${
+                    activeSystem === "twikoo"
+                      ? "bg-theme text-white"
+                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <i className="ri-chat-smile-2-line mr-1"></i>
+                  {t("comment.system.twikoo")}
+                </button>
+              )}
+              {giscusEnabled && (
+                <button
+                  onClick={() => setActiveSystem("giscus")}
+                  className={`px-4 py-2 rounded-full transition ${
+                    activeSystem === "giscus"
+                      ? "bg-theme text-white"
+                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <i className="ri-github-line mr-1"></i>
+                  {t("comment.system.giscus")}
+                </button>
+              )}
             </div>
           )}
           {showNativeComments && (
@@ -617,6 +643,9 @@ function Comments({ id }: { id: string }) {
           )}
           {showTwikooComments && (
             <TwikooComment key={`twikoo-${id}`} feedId={id} />
+          )}
+          {showGiscusComments && (
+            <GiscusComment key={`giscus-${id}`} feedId={id} />
           )}
         </div>
       }
