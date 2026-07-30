@@ -616,7 +616,7 @@ function Comments({ id }: { id: string }) {
             </>
           )}
           {showTwikooComments && (
-            <TwikooComment feedId={id} />
+            <TwikooComment key={`twikoo-${id}`} feedId={id} />
           )}
         </div>
       }
