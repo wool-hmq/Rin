@@ -1,6 +1,5 @@
 import { useEffect, useRef, useContext, useState } from "react";
 import { ClientConfigContext } from "../state/config";
-import { useTranslation } from "react-i18next";
 
 declare global {
   interface Window {
@@ -27,7 +26,6 @@ export function TwikooComment({ feedId }: TwikooCommentProps) {
   const initializedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { t } = useTranslation();
 
   const twikooEnabled = config.getBoolean("twikoo.enabled");
   const twikooEnvId = config.get("twikoo.envId");

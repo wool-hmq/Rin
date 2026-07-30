@@ -5,13 +5,6 @@ interface GiscusCommentProps {
   feedId: string;
 }
 
-interface GiscusConfig {
-  repo: string | null;
-  repoId: string | null;
-  category: string | null;
-  categoryId: string | null;
-}
-
 export const GiscusComment = memo(function GiscusComment({ feedId }: GiscusCommentProps) {
   const config = useContext(ClientConfigContext);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,10 +12,10 @@ export const GiscusComment = memo(function GiscusComment({ feedId }: GiscusComme
 
   const giscusEnabled = config.getBoolean("giscus.enabled");
   
-  const giscusRepo = config.get("giscus.repo");
-  const giscusRepoId = config.get("giscus.repoId");
-  const giscusCategory = config.get("giscus.category");
-  const giscusCategoryId = config.get("giscus.categoryId");
+  const giscusRepo = String(config.get("giscus.repo") || "");
+  const giscusRepoId = String(config.get("giscus.repoId") || "");
+  const giscusCategory = String(config.get("giscus.category") || "");
+  const giscusCategoryId = String(config.get("giscus.categoryId") || "");
 
   useEffect(() => {
     if (!giscusEnabled || !containerRef.current || initializedRef.current) {
