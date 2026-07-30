@@ -1,29 +1,35 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, memo } from "react";
 import { ClientConfigContext } from "../state/config";
 
 interface GiscusCommentProps {
   feedId: string;
 }
 
-export function GiscusComment({ feedId }: GiscusCommentProps) {
+interface GiscusConfig {
+  repo: string | null;
+  repoId: string | null;
+  category: string | null;
+  categoryId: string | null;
+}
+
+export const GiscusComment = memo(function GiscusComment({ feedId }: GiscusCommentProps) {
   const config = useContext(ClientConfigContext);
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
   const giscusEnabled = config.getBoolean("giscus.enabled");
-  const giscusConfig = {
-    repo: config.get("giscus.repo") || "",
-    repoId: config.get("giscus.repoId") || "",
-    category: config.get("giscus.category") || "",
-    categoryId: config.get("giscus.categoryId") || "",
-  };
+  
+  const giscusRepo = config.get("giscus.repo");
+  const giscusRepoId = config.get("giscus.repoId");
+  const giscusCategory = config.get("giscus.category");
+  const giscusCategoryId = config.get("giscus.categoryId");
 
   useEffect(() => {
     if (!giscusEnabled || !containerRef.current || initializedRef.current) {
       return;
     }
 
-    if (!giscusConfig.repo || !giscusConfig.repoId) {
+    if (!giscusRepo || !giscusRepoId) {
       console.error("Giscus: Missing required configuration");
       return;
     }
@@ -38,10 +44,10 @@ export function GiscusComment({ feedId }: GiscusCommentProps) {
       script.src = "https://giscus.app/client.js";
       script.crossOrigin = "anonymous";
       script.async = true;
-      script.setAttribute("data-repo", giscusConfig.repo);
-      script.setAttribute("data-repo-id", giscusConfig.repoId);
-      script.setAttribute("data-category", giscusConfig.category);
-      script.setAttribute("data-category-id", giscusConfig.categoryId);
+      script.setAttribute("data-repo", giscusRepo);
+      script.setAttribute("data-repo-id", giscusRepoId);
+      script.setAttribute("data-category", giscusCategory || "Announcements");
+      script.setAttribute("data-category-id", giscusCategoryId || "");
       script.setAttribute("data-mapping", "url");
       script.setAttribute("data-strict", "0");
       script.setAttribute("data-reactions-enabled", "1");
@@ -75,7 +81,7 @@ export function GiscusComment({ feedId }: GiscusCommentProps) {
     return () => {
       initializedRef.current = false;
     };
-  }, [giscusEnabled, giscusConfig, feedId]);
+  }, [giscusEnabled, giscusRepo, giscusRepoId, giscusCategory, giscusCategoryId, feedId]);
 
   if (!giscusEnabled) {
     return null;
@@ -86,4 +92,4 @@ export function GiscusComment({ feedId }: GiscusCommentProps) {
       <div ref={containerRef} className="giscus-container" />
     </div>
   );
-}
+});
