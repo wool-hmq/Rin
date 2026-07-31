@@ -21,7 +21,7 @@ import mermaid from "mermaid";
 import { AdjacentSection } from "../components/adjacent_feed.tsx";
 import { stripImageUrlMetadata } from "../utils/image-upload";
 import { TwikooComment } from "../components/twikoo_comment";
-import { GiscusComment } from "../components/giscus_comment";
+import { GiscusCommentSection } from "../components/giscus_comment";
 
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
