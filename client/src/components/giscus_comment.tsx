@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { ClientConfigContext } from "../state/config";
 
 interface GiscusCommentSectionProps {
@@ -7,6 +7,7 @@ interface GiscusCommentSectionProps {
 
 export function GiscusCommentSection({ feedId }: GiscusCommentSectionProps) {
   const config = useContext(ClientConfigContext);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const giscusEnabled = config.getBoolean("giscus.enabled");
   const giscusRepo = String(config.get("giscus.repo") || "");
@@ -15,20 +16,19 @@ export function GiscusCommentSection({ feedId }: GiscusCommentSectionProps) {
   const giscusCategoryId = String(config.get("giscus.categoryId") || "");
 
   useEffect(() => {
-    if (!giscusEnabled || !giscusRepo || !giscusRepoId) {
+    if (!giscusEnabled || !giscusRepo || !giscusRepoId || !containerRef.current) {
       return;
     }
 
-    // Cleanup: Remove existing giscus elements
     const cleanup = () => {
-      document.querySelectorAll(".giscus").forEach(el => el.remove());
-      document.querySelectorAll("script[src*='giscus.app']").forEach(el => el.remove());
+      containerRef.current?.querySelectorAll(".giscus").forEach(el => el.remove());
     };
 
     cleanup();
 
-    // Load Giscus script after a short delay to ensure cleanup is complete
     const timer = setTimeout(() => {
+      if (!containerRef.current) return;
+
       const script = document.createElement("script");
       script.src = "https://giscus.app/client.js";
       script.crossOrigin = "anonymous";
@@ -48,13 +48,22 @@ export function GiscusCommentSection({ feedId }: GiscusCommentSectionProps) {
 
       script.onload = () => {
         console.log("Giscus script loaded successfully");
+        // Force re-render by toggling visibility
+        if (containerRef.current) {
+          containerRef.current.style.display = 'none';
+          setTimeout(() => {
+            if (containerRef.current) {
+              containerRef.current.style.display = 'block';
+            }
+          }, 50);
+        }
       };
 
       script.onerror = (err) => {
         console.error("Failed to load Giscus script:", err);
       };
 
-      document.body.appendChild(script);
+      containerRef.current.appendChild(script);
     }, 100);
 
     return () => {
@@ -80,7 +89,7 @@ export function GiscusCommentSection({ feedId }: GiscusCommentSectionProps) {
   }
 
   return (
-    <div className="w-full mt-4 min-h-[300px]">
+    <div className="w-full mt-4" ref={containerRef}>
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme"></div>
         <span className="ml-2 text-gray-500">加载 Giscus 评论中...</span>
