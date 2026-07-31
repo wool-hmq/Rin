@@ -181,6 +181,8 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
         RSS_DESCRIPTION: 'Test Environment',
         RIN_GITHUB_CLIENT_ID: 'test-client-id',
         RIN_GITHUB_CLIENT_SECRET: 'test-client-secret',
+        RIN_GITEE_CLIENT_ID: 'test-gitee-client-id',
+        RIN_GITEE_CLIENT_SECRET: 'test-gitee-client-secret',
         JWT_SECRET: 'test-jwt-secret',
         S3_ACCESS_KEY_ID: 'test-access-key',
         S3_SECRET_ACCESS_KEY: 'test-secret-key',
