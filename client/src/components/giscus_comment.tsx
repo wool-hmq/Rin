@@ -1,87 +1,67 @@
-import { useContext, useEffect, useRef, memo, useCallback } from "react";
+import { useContext, useEffect } from "react";
 import { ClientConfigContext } from "../state/config";
 
-interface GiscusCommentProps {
+interface GiscusCommentSectionProps {
   feedId: string;
 }
 
-declare global {
-  interface Window {
-    giscus?: {
-      config: Record<string, string>;
-    };
-  }
-}
-
-export const GiscusComment = memo(function GiscusComment({ feedId }: GiscusCommentProps) {
+export function GiscusCommentSection({ feedId }: GiscusCommentSectionProps) {
   const config = useContext(ClientConfigContext);
-  const scriptLoadedRef = useRef(false);
 
   const giscusEnabled = config.getBoolean("giscus.enabled");
-  
   const giscusRepo = String(config.get("giscus.repo") || "");
   const giscusRepoId = String(config.get("giscus.repoId") || "");
   const giscusCategory = String(config.get("giscus.category") || "");
   const giscusCategoryId = String(config.get("giscus.categoryId") || "");
 
-  const loadGiscus = useCallback(() => {
+  useEffect(() => {
     if (!giscusEnabled || !giscusRepo || !giscusRepoId) {
       return;
     }
 
-    // Remove existing giscus script and container if switching from another view
-    document.querySelectorAll("script[src*='giscus.app']").forEach(el => el.remove());
-    document.querySelectorAll(".giscus").forEach(el => el.remove());
-
-    const script = document.createElement("script");
-    script.src = "https://giscus.app/client.js";
-    script.crossOrigin = "anonymous";
-    script.async = true;
-    script.setAttribute("data-repo", giscusRepo);
-    script.setAttribute("data-repo-id", giscusRepoId);
-    script.setAttribute("data-category", giscusCategory || "Announcements");
-    script.setAttribute("data-category-id", giscusCategoryId || "");
-    script.setAttribute("data-mapping", "url");
-    script.setAttribute("data-strict", "0");
-    script.setAttribute("data-reactions-enabled", "1");
-    script.setAttribute("data-emit-metadata", "0");
-    script.setAttribute("data-input-position", "top");
-    script.setAttribute("data-theme", "preferred_color_scheme");
-    script.setAttribute("data-lang", "zh-CN");
-    script.setAttribute("data-loading", "lazy");
-
-    script.onload = () => {
-      console.log("Giscus script loaded successfully");
-      scriptLoadedRef.current = true;
+    // Cleanup: Remove existing giscus elements
+    const cleanup = () => {
+      document.querySelectorAll(".giscus").forEach(el => el.remove());
+      document.querySelectorAll("script[src*='giscus.app']").forEach(el => el.remove());
     };
 
-    script.onerror = (err) => {
-      console.error("Failed to load Giscus script:", err);
-    };
+    cleanup();
 
-    document.body.appendChild(script);
+    // Load Giscus script after a short delay to ensure cleanup is complete
+    const timer = setTimeout(() => {
+      const script = document.createElement("script");
+      script.src = "https://giscus.app/client.js";
+      script.crossOrigin = "anonymous";
+      script.async = true;
+      script.setAttribute("data-repo", giscusRepo);
+      script.setAttribute("data-repo-id", giscusRepoId);
+      script.setAttribute("data-category", giscusCategory || "Announcements");
+      script.setAttribute("data-category-id", giscusCategoryId || "");
+      script.setAttribute("data-mapping", "url");
+      script.setAttribute("data-strict", "0");
+      script.setAttribute("data-reactions-enabled", "1");
+      script.setAttribute("data-emit-metadata", "0");
+      script.setAttribute("data-input-position", "top");
+      script.setAttribute("data-theme", "preferred_color_scheme");
+      script.setAttribute("data-lang", "zh-CN");
+      script.setAttribute("data-loading", "lazy");
+
+      script.onload = () => {
+        console.log("Giscus script loaded successfully");
+      };
+
+      script.onerror = (err) => {
+        console.error("Failed to load Giscus script:", err);
+      };
+
+      document.body.appendChild(script);
+    }, 100);
 
     return () => {
-      script.remove();
+      clearTimeout(timer);
+      cleanup();
     };
-  }, [giscusEnabled, giscusRepo, giscusRepoId, giscusCategory, giscusCategoryId]);
-
-  useEffect(() => {
-    if (!giscusEnabled) {
-      return;
-    }
-
-    loadGiscus();
-
-    return () => {
-      // Cleanup giscus when component unmounts
-      document.querySelectorAll(".giscus").forEach(el => {
-        if (el.parentElement?.id !== 'giscus-comments-root') {
-          el.remove();
-        }
-      });
-    };
-  }, [giscusEnabled, loadGiscus, feedId]);
+  }, [giscusEnabled, giscusRepo, giscusRepoId, giscusCategory, giscusCategoryId, feedId]);
 
   if (!giscusEnabled) {
     return null;
@@ -100,8 +80,11 @@ export const GiscusComment = memo(function GiscusComment({ feedId }: GiscusComme
   }
 
   return (
-    <div className="w-full mt-4">
-      <div className="giscus-container min-h-[200px]" />
+    <div className="w-full mt-4 min-h-[300px]">
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme"></div>
+        <span className="ml-2 text-gray-500">加载 Giscus 评论中...</span>
+      </div>
     </div>
   );
-});
+}

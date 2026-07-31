@@ -645,7 +645,7 @@ function Comments({ id }: { id: string }) {
             <TwikooComment key={`twikoo-${id}`} feedId={id} />
           )}
           {showGiscusComments && (
-            <GiscusComment key={`giscus-${id}`} feedId={id} />
+            <GiscusCommentSection key={`giscus-${id}`} feedId={id} />
           )}
         </div>
       }
