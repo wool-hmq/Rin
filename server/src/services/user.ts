@@ -146,6 +146,136 @@ export function UserService(): Hono {
         return c.redirect(redirect_url.toString(), 302);
     });
 
+    // GET /user/gitee - Redirect to Gitee OAuth
+    app.get("/gitee", async (c: AppContext) => {
+        const oauth2 = c.get('oauth2');
+
+        if (!oauth2) {
+            throw new BadRequestError('Gitee OAuth is not configured');
+        }
+
+        const referer = c.req.header('referer');
+
+        if (!referer) {
+            throw new BadRequestError('Referer header is required');
+        }
+
+        // Build callback URL from referer
+        const refererUrl = new URL(referer);
+        const callbackUrl = new URL('/callback', refererUrl.origin);
+
+        setCookie(c, 'redirect_to', callbackUrl.toString(), {
+            path: '/',
+        });
+
+        const genState = await profileAsync(c, 'user_oauth_state_gitee', () => Promise.resolve(oauth2.generateState()));
+        setCookie(c, 'state', genState, {
+            path: '/',
+        });
+
+        return c.redirect(oauth2.createRedirectUrl(genState, "Gitee"), 302);
+    });
+
+    // GET /user/gitee/callback - Gitee OAuth callback
+    app.get("/gitee/callback", async (c: AppContext) => {
+        const oauth2 = c.get('oauth2');
+        const jwt = c.get('jwt');
+        const db = c.get('db');
+
+        if (!oauth2) {
+            throw new BadRequestError('Gitee OAuth is not configured');
+        }
+
+        const query = c.req.query();
+        const stateCookie = getCookie(c, 'state');
+
+        console.log('gitee param_state', query.state);
+        console.log('gitee cookie_state', stateCookie);
+
+        // Verify state to prevent CSRF attacks
+        if (query.state !== stateCookie) {
+            throw new BadRequestError('Invalid state parameter');
+        }
+
+        // Clear state cookie
+        deleteCookie(c, 'state');
+
+        // Exchange code for access token
+        const gitee_token = await profileAsync(c, 'user_gitee_authorize', () => oauth2.authorize("Gitee", query.code));
+        if (!gitee_token) {
+            throw new BadRequestError('Failed to authorize with Gitee');
+        }
+
+        // Request https://gitee.com/api/v5/user for user info
+        const response = await profileAsync(c, 'user_gitee_fetch', () => fetch("https://gitee.com/api/v5/user", {
+            headers: {
+                Authorization: `Bearer ${gitee_token.accessToken}`,
+                Accept: "application/json",
+            },
+        }));
+
+        const user: any = await profileAsync(c, 'user_gitee_parse', () => response.json());
+        const profile: {
+            openid: string;
+            username: string;
+            avatar: string;
+            permission: number | null;
+        } = {
+            openid: String(user.id),
+            username: user.name || user.login,
+            avatar: user.avatar_url,
+            permission: 0
+        };
+
+        let authToken: string | undefined;
+
+        // Check if user exists
+        const existingUser = await profileAsync(c, 'user_gitee_existing_lookup', () => db.query.users.findFirst({
+            where: eq(users.openid, profile.openid)
+        }));
+
+        if (existingUser) {
+            profile.permission = existingUser.permission;
+            await profileAsync(c, 'user_gitee_existing_update', () => db.update(users).set(profile).where(eq(users.id, existingUser.id)));
+            authToken = await profileAsync(c, 'user_gitee_existing_token', () => jwt.sign({ id: existingUser.id }));
+            setJWTCookie(c, authToken);
+            // Store token in cookie for frontend to read (not HttpOnly)
+            setCookie(c, 'auth_token', authToken, {
+                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                path: '/',
+                sameSite: 'Lax',
+            });
+        } else {
+            // If no user exists, check if this is the first user
+            const anyUserCheck = await profileAsync(c, 'user_gitee_first_lookup', () => db.query.users.findMany({ limit: 1 }));
+            if (anyUserCheck.length === 0) {
+                profile.permission = 1;
+            }
+
+            const result = await profileAsync(c, 'user_gitee_insert', () => db.insert(users).values(profile).returning({ insertedId: users.id }));
+            if (!result || result.length === 0) {
+                throw new InternalServerError('Failed to register user');
+            }
+
+            authToken = await profileAsync(c, 'user_gitee_insert_token', () => jwt.sign({ id: result[0].insertedId }));
+            setJWTCookie(c, authToken);
+            // Store token in cookie for frontend to read (not HttpOnly)
+            setCookie(c, 'auth_token', authToken, {
+                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                path: '/',
+                sameSite: 'Lax',
+            });
+        }
+
+        const redirectTo = getCookie(c, 'redirect_to');
+        const redirect_url = new URL(redirectTo || '/');
+        // Add token to URL for frontend to store (for cross-domain auth)
+        if (authToken) {
+            redirect_url.searchParams.set('token', authToken);
+        }
+        return c.redirect(redirect_url.toString(), 302);
+    });
+
     // GET /user/profile - Get user profile
     app.get('/profile', async (c: AppContext) => {
         const uid = c.get('uid');

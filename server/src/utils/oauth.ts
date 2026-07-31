@@ -22,6 +22,12 @@ export interface GitHubConfig {
     redirectUri?: string;
 }
 
+export interface GiteeConfig {
+    clientId: string;
+    clientSecret: string;
+    redirectUri?: string;
+}
+
 export class GitHubProvider implements OAuthProvider {
     name = "GitHub";
     clientId: string;
@@ -32,6 +38,22 @@ export class GitHubProvider implements OAuthProvider {
     scopes: string[] = ["read:user"];
 
     constructor(config: GitHubConfig) {
+        this.clientId = config.clientId;
+        this.clientSecret = config.clientSecret;
+        this.redirectUri = config.redirectUri;
+    }
+}
+
+export class GiteeProvider implements OAuthProvider {
+    name = "Gitee";
+    clientId: string;
+    clientSecret: string;
+    redirectUri?: string;
+    authorizeUrl = "https://gitee.com/oauth/authorize";
+    tokenUrl = "https://gitee.com/oauth/token";
+    scopes: string[] = ["user_info"];
+
+    constructor(config: GiteeConfig) {
         this.clientId = config.clientId;
         this.clientSecret = config.clientSecret;
         this.redirectUri = config.redirectUri;

@@ -11,7 +11,7 @@ import { getLoginRedirectPath } from "../utils/auth-redirect";
 export function LoginPage() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const [authStatus, setAuthStatus] = useState<{ github: boolean; password: boolean }>({ github: false, password: false });
+    const [authStatus, setAuthStatus] = useState<{ github: boolean, gitee: boolean, password: boolean }>({ github: false, gitee: false, password: false });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [, setLocation] = useLocation();
@@ -99,14 +99,21 @@ export function LoginPage() {
                 )}
 
                 {/* OAuth options */}
-                {authStatus.github && (
+                {(authStatus.github || authStatus.gitee) && (
                     <div className="flex flex-col justify-center items-center space-y-2 pt-2">
                         {authStatus.password && <p className="text-xs t-secondary">{t('login.or')}</p>}
-                        {!authStatus.password && <p className="text-xs t-secondary">{t('login.oauth_only')}</p>}
+                        {(!authStatus.password && !authStatus.github && !authStatus.gitee) && <p className="text-xs t-secondary">{t('login.oauth_only')}</p>}
                         <div className="flex flex-row items-center space-x-4">
-                            <Icon label={t('github_login')} name="ri-github-line" onClick={() => {
-                                window.location.href = `${oauth_url}`
-                            }} hover={true} />
+                            {authStatus.github && (
+                                <Icon label={t('github_login')} name="ri-github-line" onClick={() => {
+                                    window.location.href = `${oauth_url}`
+                                }} hover={true} />
+                            )}
+                            {authStatus.gitee && (
+                                <Icon label={t('gitee_login')} name="ri-git-merge-line" onClick={() => {
+                                    window.location.href = `${oauth_url}/gitee`
+                                }} hover={true} />
+                            )}
                         </div>
                     </div>
                 )}

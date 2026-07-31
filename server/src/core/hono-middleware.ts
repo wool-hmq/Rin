@@ -78,15 +78,29 @@ export const initContainerMiddleware = createMiddleware<{
         }));
 
         let oauth2: OAuth2Utils | undefined = undefined;
-        if (c.env.RIN_GITHUB_CLIENT_ID && c.env.RIN_GITHUB_CLIENT_SECRET) {
+        const hasGitHub = c.env.RIN_GITHUB_CLIENT_ID && c.env.RIN_GITHUB_CLIENT_SECRET;
+        const hasGitee = c.env.RIN_GITEE_CLIENT_ID && c.env.RIN_GITEE_CLIENT_SECRET;
+        
+        if (hasGitHub || hasGitee) {
             oauth2 = await container.get('oauth2', async () => profileAsync(c, "init_oauth2", async () => {
-                    const { createOAuthPlugin, GitHubProvider } = await import('../utils/oauth');
-                    return createOAuthPlugin({
-                        GitHub: new GitHubProvider({
+                    const { createOAuthPlugin, GitHubProvider, GiteeProvider } = await import('../utils/oauth');
+                    const providers: Record<string, any> = {};
+                    
+                    if (hasGitHub) {
+                        providers.GitHub = new GitHubProvider({
                             clientId: c.env.RIN_GITHUB_CLIENT_ID,
                             clientSecret: c.env.RIN_GITHUB_CLIENT_SECRET
-                        })
-                    });
+                        });
+                    }
+                    
+                    if (hasGitee) {
+                        providers.Gitee = new GiteeProvider({
+                            clientId: c.env.RIN_GITEE_CLIENT_ID,
+                            clientSecret: c.env.RIN_GITEE_CLIENT_SECRET
+                        });
+                    }
+                    
+                    return createOAuthPlugin(providers);
                 }));
         }
 
