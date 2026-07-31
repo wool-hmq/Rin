@@ -8,6 +8,8 @@ import { client, oauth_url } from "../app/runtime";
 import { setAuthToken } from "../utils/auth";
 import { getLoginRedirectPath } from "../utils/auth-redirect";
 
+const gitee_oauth_url = oauth_url.replace('/github', '/gitee');
+
 export function LoginPage() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -111,7 +113,7 @@ export function LoginPage() {
                             )}
                             {authStatus.gitee && (
                                 <Icon label={t('gitee_login')} name="ri-git-merge-line" onClick={() => {
-                                    window.location.href = `${oauth_url}/gitee`
+                                    window.location.href = `${gitee_oauth_url}`
                                 }} hover={true} />
                             )}
                         </div>
