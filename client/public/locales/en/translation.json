@@ -106,7 +106,7 @@
     "guest_website_placeholder": "Website (optional)",
     "system": {
       "native": "Native Comments",
-      "twikoo": "Twikoo Comments",
+      "twikoo": "Twikoo Comments (Recommended)",
       "giscus": "Giscus Comments"
     }
   },

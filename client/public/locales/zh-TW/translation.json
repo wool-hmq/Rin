@@ -103,7 +103,12 @@
     "guest_name_required": "暱稱不能為空",
     "guest_name_placeholder": "暱稱（必填）",
     "guest_email_placeholder": "郵箱（可選）",
-    "guest_website_placeholder": "網站（可選）"
+    "guest_website_placeholder": "網站（可選）",
+    "system": {
+      "native": "本站留言",
+      "twikoo": "Twikoo 留言 (推薦)",
+      "giscus": "Giscus 留言"
+    }
   },
   "comparison": "比較",
   "confirm": "確認",
@@ -191,6 +196,7 @@
     "title": "朋友們"
   },
   "github_login": "Github 登入",
+  "gitee_login": "Gitee 登入",
   "hashtags": "標籤",
   "home": "首頁",
   "index": {

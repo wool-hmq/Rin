@@ -106,7 +106,7 @@
     "guest_website_placeholder": "网站（可选）",
     "system": {
       "native": "本站评论",
-      "twikoo": "Twikoo 评论",
+      "twikoo": "Twikoo 评论 (推荐)",
       "giscus": "Giscus 评论"
     }
   },

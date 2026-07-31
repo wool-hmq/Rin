@@ -33,6 +33,8 @@ declare namespace Cloudflare {
 		RSS_DESCRIPTION: "Development Environment";
 		RIN_GITHUB_CLIENT_ID: string;
 		RIN_GITHUB_CLIENT_SECRET: string;
+		RIN_GITEE_CLIENT_ID: string;
+		RIN_GITEE_CLIENT_SECRET: string;
 		ADMIN_USERNAME: string;
 		ADMIN_PASSWORD: string;
 		JWT_SECRET: string;

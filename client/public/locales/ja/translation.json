@@ -103,7 +103,12 @@
     "guest_name_required": "ゲスト名は必須です",
     "guest_name_placeholder": "名前（必須）",
     "guest_email_placeholder": "メール（任意）",
-    "guest_website_placeholder": "ウェブサイト（任意）"
+    "guest_website_placeholder": "ウェブサイト（任意）",
+    "system": {
+      "native": "サイトコメント",
+      "twikoo": "Twikoo コメント (おすすめ)",
+      "giscus": "Giscus コメント"
+    }
   },
   "comparison": "対比",
   "confirm": "確認",
@@ -191,6 +196,7 @@
     "title": "友人"
   },
   "github_login": "Github ログイン",
+  "gitee_login": "Gitee ログイン",
   "hashtags": "ラベル",
   "home": "ホーム",
   "index": {
