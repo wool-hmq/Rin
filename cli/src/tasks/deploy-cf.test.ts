@@ -14,6 +14,8 @@ describe("collectWorkerSecrets", () => {
       ADMIN_PASSWORD: "password",
       RIN_GITHUB_CLIENT_ID: "client-id",
       RIN_GITHUB_CLIENT_SECRET: "client-secret",
+      RIN_GITEE_CLIENT_ID: "gitee-client-id",
+      RIN_GITEE_CLIENT_SECRET: "gitee-client-secret",
       S3_ACCESS_KEY_ID: "access-key",
       S3_SECRET_ACCESS_KEY: "secret-key",
       UNUSED: "ignored",
@@ -25,6 +27,8 @@ describe("collectWorkerSecrets", () => {
       ADMIN_PASSWORD: "password",
       RIN_GITHUB_CLIENT_ID: "client-id",
       RIN_GITHUB_CLIENT_SECRET: "client-secret",
+      RIN_GITEE_CLIENT_ID: "gitee-client-id",
+      RIN_GITEE_CLIENT_SECRET: "gitee-client-secret",
       S3_ACCESS_KEY_ID: "access-key",
       S3_SECRET_ACCESS_KEY: "secret-key",
     });
