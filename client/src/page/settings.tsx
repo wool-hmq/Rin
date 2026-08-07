@@ -735,6 +735,9 @@ export function Settings() {
               if (updates.customCode !== undefined) {
                 setConfigValue("server", "ai_summary.custom_code", updates.customCode);
               }
+              if (updates.failover !== undefined) {
+                setConfigValue("server", "ai_summary.failover", updates.failover);
+              }
             }}
           />
 

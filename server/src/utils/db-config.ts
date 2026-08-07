@@ -1,4 +1,4 @@
-import type { AIConfig } from "@rin/api";
+import type { AIConfig, AISummaryFailoverItem } from "@rin/api";
 import { AI_CONFIG_PREFIX, DEFAULT_AI_CONFIG } from "@rin/config";
 
 type ConfigReader = {
@@ -10,7 +10,51 @@ type ConfigWriter = ConfigReader & {
     save(): Promise<void>;
 };
 
-const AI_CONFIG_FIELDS = ["enabled", "provider", "model", "api_key", "api_url"] as const;
+const AI_CONFIG_FIELDS = ["enabled", "provider", "model", "api_key", "api_url", "failover"] as const;
+
+function parseFailover(value: unknown): AISummaryFailoverItem[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value
+        .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+        .map((item) => ({
+            provider: typeof item.provider === "string" ? item.provider : "",
+            model: typeof item.model === "string" ? item.model : "",
+        }))
+        .filter((item) => item.provider.length > 0 && item.model.length > 0);
+}
+
+function parseStoredFailover(value: unknown): AISummaryFailoverItem[] {
+    if (Array.isArray(value)) {
+        return parseFailover(value);
+    }
+
+    if (typeof value === "string" && value.trim().length > 0) {
+        try {
+            return parseFailover(JSON.parse(value));
+        } catch {
+            return [];
+        }
+    }
+
+    return [];
+}
+
+function serializeFailover(value: unknown): string {
+    const items = Array.isArray(value)
+        ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+        : [];
+    return JSON.stringify(
+        items
+            .map((item) => ({
+                provider: typeof item.provider === "string" ? item.provider : "",
+                model: typeof item.model === "string" ? item.model : "",
+            }))
+            .filter((item) => item.provider.length > 0 && item.model.length > 0),
+    );
+}
 
 export function readAIConfigFromValues(values: Record<string, unknown>): AIConfig {
     const config: AIConfig = { ...DEFAULT_AI_CONFIG };
@@ -38,6 +82,11 @@ export function readAIConfigFromValues(values: Record<string, unknown>): AIConfi
     const apiUrl = values[AI_CONFIG_PREFIX + "api_url"];
     if (typeof apiUrl === "string") {
         config.api_url = apiUrl;
+    }
+
+    const failover = values[AI_CONFIG_PREFIX + "failover"];
+    if (failover != null) {
+        config.failover = parseStoredFailover(failover);
     }
 
     return config;
@@ -73,7 +122,11 @@ export async function setAIConfig(config: ConfigWriter, updates: Partial<AIConfi
             continue;
         }
 
-        await config.set(AI_CONFIG_PREFIX + field, value, false);
+        await config.set(
+            AI_CONFIG_PREFIX + field,
+            field === "failover" ? serializeFailover(value) : value,
+            false,
+        );
     }
 
     await config.save();

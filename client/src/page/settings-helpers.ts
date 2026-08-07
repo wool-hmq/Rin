@@ -133,7 +133,22 @@ export function buildAIConfigUpdates(updates: Record<string, unknown>) {
   if (updates.model !== undefined) flatUpdates["ai_summary.model"] = updates.model;
   if (updates.api_url !== undefined) flatUpdates["ai_summary.api_url"] = updates.api_url;
   if (updates.api_key !== undefined) flatUpdates["ai_summary.api_key"] = updates.api_key;
+  if (updates.failover !== undefined) flatUpdates["ai_summary.failover"] = updates.failover;
   return flatUpdates;
+}
+
+export function normalizeAIFailover(value: unknown): { provider: string; model: string }[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    .map((item) => ({
+      provider: typeof item.provider === "string" ? item.provider : "",
+      model: typeof item.model === "string" ? item.model : "",
+    }))
+    .filter((item) => item.provider.length > 0 && item.model.length > 0);
 }
 
 export async function loadAIConfigState() {
@@ -144,6 +159,7 @@ export async function loadAIConfigState() {
     model: data?.["ai_summary.model"] ?? "gpt-4o-mini",
     apiKeySet: data?.["ai_summary.api_key"] === "••••••••",
     apiUrl: data?.["ai_summary.api_url"] ?? "",
+    failover: normalizeAIFailover(data?.["ai_summary.failover"]),
   };
 }
 
@@ -212,6 +228,7 @@ export function buildAIConfigDraftValue(
     apiKey: String(serverConfig["ai_summary.api_key"] ?? ""),
     apiKeySet: hasStoredAiApiKey || String(serverConfig["ai_summary.api_key"] ?? "").trim().length > 0,
     apiUrl: String(serverConfig["ai_summary.api_url"] ?? ""),
+    failover: normalizeAIFailover(serverConfig["ai_summary.failover"]),
   };
 }
 

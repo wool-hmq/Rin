@@ -30,6 +30,7 @@ export type AISettingsValue = {
   apiKeySet: boolean;
   apiUrl: string;
   customCode?: string;
+  failover: { provider: string; model: string }[];
 };
 
 export function AISummarySettings({
@@ -109,6 +110,8 @@ export function AISummarySettings({
     label: m,
     value: m,
   }));
+  const modelOptionsForProvider = (provider: string) =>
+    (AI_MODEL_PRESETS[provider] || []).map((m) => ({ label: m, value: m }));
 
   return (
     <>
@@ -236,6 +239,70 @@ export function AISummarySettings({
                 )}
               </SettingsCardBody>
             )}
+          </SettingsCard>
+
+          <SettingsCard>
+            <SettingsCardHeader
+              title={t("settings.ai_summary.failover.title")}
+              description={t("settings.ai_summary.failover.desc")}
+            />
+            <SettingsCardBody>
+              <div className="space-y-3">
+                {value.failover.map((item, index) => (
+                  <div key={index} className="flex flex-wrap items-center gap-2">
+                    <SearchableSelect
+                      value={item.provider}
+                      onChange={(nextProvider) => {
+                        const models = AI_MODEL_PRESETS[nextProvider] || [];
+                        const nextItems = [...value.failover];
+                        nextItems[index] = { provider: nextProvider, model: models[0] ?? item.model };
+                        onChange({ failover: nextItems });
+                      }}
+                      options={providerOptions}
+                      placeholder={t("settings.ai_summary.provider.title")}
+                      searchable={false}
+                    />
+                    <SearchableSelect
+                      value={item.model}
+                      onChange={(nextModel) => {
+                        const nextItems = [...value.failover];
+                        nextItems[index] = { ...item, model: nextModel };
+                        onChange({ failover: nextItems });
+                      }}
+                      options={modelOptionsForProvider(item.provider)}
+                      placeholder={t("settings.ai_summary.model.title")}
+                      searchPlaceholder={t("settings.ai_summary.model.desc")}
+                      emptyLabel={t("no_more")}
+                      allowCustomValue
+                      customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
+                    />
+                    <button
+                      type="button"
+                      title={t("delete.title")}
+                      onClick={() => {
+                        onChange({ failover: value.failover.filter((_, i) => i !== index) });
+                      }}
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 text-sm text-neutral-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    >
+                      <i className="ri-delete-bin-line" />
+                    </button>
+                  </div>
+                ))}
+                <Button
+                  secondary
+                  title={t("settings.ai_summary.failover.add")}
+                  onClick={() => {
+                    const defaultProvider = providerOptions[0]?.value ?? "openai";
+                    onChange({
+                      failover: [
+                        ...value.failover,
+                        { provider: defaultProvider, model: AI_MODEL_PRESETS[defaultProvider]?.[0] ?? "" },
+                      ],
+                    });
+                  }}
+                />
+              </div>
+            </SettingsCardBody>
           </SettingsCard>
         </>
       )}

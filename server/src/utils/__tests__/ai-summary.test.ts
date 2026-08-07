@@ -28,6 +28,7 @@ describe("generateAISummaryResult", () => {
       model: "llama-3-8b",
       api_key: "",
       api_url: "",
+      failover: [],
     });
 
     const { generateAISummaryResult } = await import("../ai");
@@ -50,6 +51,7 @@ describe("generateAISummaryResult", () => {
       model: "llama-3-8b",
       api_key: "",
       api_url: "",
+      failover: [],
     });
 
     const calls: Array<any> = [];
@@ -83,6 +85,7 @@ describe("generateAISummaryResult", () => {
       model: "gpt-4o-mini",
       api_key: "secret",
       api_url: "https://api.openai.com/v1",
+      failover: [],
     });
 
     const requests: Array<any> = [];

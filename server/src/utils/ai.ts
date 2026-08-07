@@ -229,46 +229,74 @@ export async function generateAISummaryResult(
         { role: "user" as const, content: truncatedContent },
     ];
 
-    try {
-        let result: string | null;
-
-        if (provider === 'worker-ai') {
-            const fullModelName = getWorkerAIModelId(model);
-            result = await executeWorkerAI(
-                env,
-                fullModelName,
-                summaryMessages,
-            );
-        } else {
-            result = await executeExternalAI(config, summaryMessages);
+    const attempts: Array<{ provider: string; model: string; apiUrl: string }> = [
+        { provider, model, apiUrl: config.api_url },
+    ];
+    for (const item of config.failover || []) {
+        if (!item.provider || !item.model) {
+            continue;
         }
-
-        if (!result || !result.trim()) {
-            return {
-                summary: null,
-                skipped: false,
-                error: `Empty response from AI provider "${provider}" using model "${model}"`,
-            };
+        if (item.provider === provider && item.model === model) {
+            continue;
         }
-
-        const cleaned = stripReasoningTags(result);
-        if (!cleaned.trim()) {
-            return {
-                summary: null,
-                skipped: false,
-                error: `AI response contained only reasoning tags with no final answer (provider "${provider}", model "${model}")`,
-            };
-        }
-
-        return { summary: cleaned, skipped: false };
-    } catch (error) {
-        console.error("[AI Summary] Failed to generate summary:", error);
-        return {
-            summary: null,
-            skipped: false,
-            error: error instanceof Error ? error.message : String(error),
-        };
+        attempts.push({
+            provider: item.provider,
+            model: item.model,
+            apiUrl: AI_PROVIDER_URLS[item.provider] || config.api_url,
+        });
     }
+
+    const errors: string[] = [];
+
+    for (const attempt of attempts) {
+        try {
+            let result: string | null;
+
+            if (attempt.provider === 'worker-ai') {
+                const fullModelName = getWorkerAIModelId(attempt.model);
+                result = await executeWorkerAI(env, fullModelName, summaryMessages);
+            } else {
+                result = await executeExternalAI(
+                    {
+                        provider: attempt.provider,
+                        model: attempt.model,
+                        api_key: config.api_key,
+                        api_url: attempt.apiUrl,
+                    },
+                    summaryMessages,
+                );
+            }
+
+            if (!result || !result.trim()) {
+                errors.push(`Empty response from AI provider "${attempt.provider}" using model "${attempt.model}"`);
+                continue;
+            }
+
+            const cleaned = stripReasoningTags(result);
+            if (!cleaned.trim()) {
+                errors.push(
+                    `AI response contained only reasoning tags with no final answer (provider "${attempt.provider}", model "${attempt.model}")`,
+                );
+                continue;
+            }
+
+            return { summary: cleaned, skipped: false };
+        } catch (error) {
+            console.error(
+                `[AI Summary] Attempt failed (provider "${attempt.provider}", model "${attempt.model}"):`,
+                error,
+            );
+            errors.push(
+                `provider "${attempt.provider}" model "${attempt.model}": ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
+    }
+
+    return {
+        summary: null,
+        skipped: false,
+        error: errors.length > 0 ? errors.join("; ") : "AI summary generation failed",
+    };
 }
 
 export function stripReasoningTags(text: string): string {

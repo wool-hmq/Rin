@@ -418,6 +418,11 @@
         "error": "測試出錯",
         "testing": "正在測試...",
         "http_error$status": "HTTP 錯誤 (狀態碼: {{status}})"
+      },
+      "failover": {
+        "title": "備選模型佇列",
+        "desc": "主模型無回應或出錯時，依序嘗試備選模型，直到有模型返回摘要（共用主配置的 API Key）",
+        "add": "新增備選模型"
       }
     },
     "get_config_failed$message": "獲取配置失敗，{{message}}",

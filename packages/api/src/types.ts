@@ -271,12 +271,18 @@ export interface ConfigResponse {
 // AI Config Types
 // ============================================================================
 
+export interface AISummaryFailoverItem {
+  provider: string;
+  model: string;
+}
+
 export interface AIConfig {
   enabled: boolean;
   provider: string;
   model: string;
   api_key: string;
   api_url: string;
+  failover: AISummaryFailoverItem[];
 }
 
 // ============================================================================

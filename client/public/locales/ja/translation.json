@@ -409,6 +409,11 @@
         "error": "テストエラー",
         "testing": "テスト中...",
         "http_error$status": "HTTPエラー (ステータス: {{status}})"
+      },
+      "failover": {
+        "title": "代替モデルキュー",
+        "desc": "メインモデルが応答しない場合、代替モデルを順番に試し、いずれかのモデルが要約を返すまで続けます（メインの API キーを共有）",
+        "add": "代替モデルを追加"
       }
     },
     "get_config_failed$message": "設定の取得に失敗しました: {{message}}",

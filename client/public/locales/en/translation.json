@@ -418,6 +418,11 @@
         "error": "Test error",
         "testing": "Testing...",
         "http_error$status": "HTTP Error (Status: {{status}})"
+      },
+      "failover": {
+        "title": "Fallback Model Queue",
+        "desc": "When the primary model has no response or fails, try each fallback model in order until one returns a summary (shares the primary API Key)",
+        "add": "Add Fallback Model"
       }
     },
     "get_config_failed$message": "Failed to get configuration, {{message}}",
