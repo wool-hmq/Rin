@@ -1,5 +1,6 @@
 import { useEffect, useRef, useContext, useState } from "react";
 import { ClientConfigContext } from "../state/config";
+import { useColorMode } from "../utils/darkModeUtils";
 
 declare global {
   interface Window {
@@ -26,6 +27,7 @@ export function TwikooComment({ feedId }: TwikooCommentProps) {
   const initializedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const colorMode = useColorMode();
 
   const twikooEnabled = config.getBoolean("twikoo.enabled");
   const twikooEnvId = config.get("twikoo.envId");
@@ -107,7 +109,7 @@ export function TwikooComment({ feedId }: TwikooCommentProps) {
   }
 
   return (
-    <div className="w-full mt-4">
+    <div className="w-full mt-4" data-theme={colorMode === "dark" ? "dark" : undefined}>
       {loading && (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme"></div>

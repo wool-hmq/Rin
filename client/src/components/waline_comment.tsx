@@ -41,6 +41,7 @@ export function WalineComment({ feedId }: WalineCommentProps) {
           serverURL: walineServerURL,
           path: `/feed/${feedId}`,
           lang: "zh-CN",
+          dark: 'html[data-color-mode="dark"]',
         });
         setLoading(false);
       })
