@@ -22,6 +22,7 @@ import { AdjacentSection } from "../components/adjacent_feed.tsx";
 import { stripImageUrlMetadata } from "../utils/image-upload";
 import { TwikooComment } from "../components/twikoo_comment";
 import { GiscusCommentSection } from "../components/giscus_comment";
+import { WalineComment } from "../components/waline_comment";
 
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
@@ -531,12 +532,13 @@ function Comments({ id }: { id: string }) {
   const config = useContext(ClientConfigContext);
   const [comments, setComments] = useState<Comment[]>([]);
   const [error, setError] = useState<string>();
-  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo" | "giscus">("native");
+  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo" | "giscus" | "waline">("native");
   const ref = useRef("");
   const { t } = useTranslation();
 
   const twikooEnabled = config.getBoolean('twikoo.enabled');
   const giscusEnabled = config.getBoolean('giscus.enabled');
+  const walineEnabled = config.getBoolean('waline.enabled');
 
   function loadComments() {
     client.comment
@@ -558,16 +560,18 @@ function Comments({ id }: { id: string }) {
   const showNativeComments = config.getBoolean('comment.enabled') && activeSystem === "native";
   const showTwikooComments = twikooEnabled && activeSystem === "twikoo";
   const showGiscusComments = giscusEnabled && activeSystem === "giscus";
+  const showWalineComments = walineEnabled && activeSystem === "waline";
 
   const enabledSystems = [
     config.getBoolean('comment.enabled') && "native",
     twikooEnabled && "twikoo",
     giscusEnabled && "giscus",
+    walineEnabled && "waline",
   ].filter(Boolean) as string[];
 
   return (
     <>
-      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled) &&
+      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled || walineEnabled) &&
         <div className="m-2 flex flex-col justify-center items-center">
           {enabledSystems.length > 1 && (
             <div className="w-full mb-4 flex gap-2 justify-center flex-wrap">
@@ -610,6 +614,19 @@ function Comments({ id }: { id: string }) {
                   {t("comment.system.giscus")}
                 </button>
               )}
+              {walineEnabled && (
+                <button
+                  onClick={() => setActiveSystem("waline")}
+                  className={`px-4 py-2 rounded-full transition ${
+                    activeSystem === "waline"
+                      ? "bg-theme text-white"
+                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <i className="ri-chat-3-line mr-1"></i>
+                  {t("comment.system.waline")}
+                </button>
+              )}
             </div>
           )}
           {showNativeComments && (
@@ -646,6 +663,9 @@ function Comments({ id }: { id: string }) {
           )}
           {showGiscusComments && (
             <GiscusCommentSection key={`giscus-${id}`} feedId={id} />
+          )}
+          {showWalineComments && (
+            <WalineComment key={`waline-${id}`} feedId={id} />
           )}
         </div>
       }

@@ -107,7 +107,8 @@
     "system": {
       "native": "Native Comments",
       "twikoo": "Twikoo Comments (Recommended)",
-      "giscus": "Giscus Comments"
+      "giscus": "Giscus Comments",
+      "waline": "Waline Comments"
     }
   },
   "comparison": "Comparison",

@@ -105,9 +105,10 @@
     "guest_email_placeholder": "メール（任意）",
     "guest_website_placeholder": "ウェブサイト（任意）",
     "system": {
-      "native": "サイトコメント",
+      "native": "本站コメント",
       "twikoo": "Twikoo コメント (おすすめ)",
-      "giscus": "Giscus コメント"
+      "giscus": "Giscus コメント",
+      "waline": "Waline コメント"
     }
   },
   "comparison": "対比",

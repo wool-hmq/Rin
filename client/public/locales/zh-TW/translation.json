@@ -107,7 +107,8 @@
     "system": {
       "native": "本站留言",
       "twikoo": "Twikoo 留言 (推薦)",
-      "giscus": "Giscus 留言"
+      "giscus": "Giscus 留言",
+      "waline": "Waline 留言"
     }
   },
   "comparison": "比較",

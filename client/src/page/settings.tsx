@@ -509,6 +509,25 @@ export function Settings() {
             </>
           )}
           <ItemSwitch
+            title="启用 Waline 评论"
+            description="启用后可同时使用 Waline 评论系统（需要在 Vercel 部署 Waline 服务端）"
+            checked={clientConfig.getBoolean("waline.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "waline.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("waline.enabled") && (
+            <ItemInput
+              title="Waline 服务端地址"
+              description="Vercel 部署的 Waline 服务端地址，如：https://xxx.vercel.app"
+              configKeyTitle="Waline ServerURL"
+              value={String(clientConfig.get("waline.serverURL") ?? "")}
+              onChange={(value) => {
+                setConfigValue("client", "waline.serverURL", value);
+              }}
+            />
+          )}
+          <ItemSwitch
             title={t("settings.counter.enable.title")}
             description={t("settings.counter.enable.desc")}
             checked={clientConfig.getBoolean("counter.enabled")}
