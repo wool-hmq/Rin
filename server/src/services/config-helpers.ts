@@ -219,7 +219,10 @@ export async function buildServerConfigResponse(
   configObj["ai_summary.model"] = aiConfig.model;
   configObj["ai_summary.api_url"] = aiConfig.api_url;
   configObj["ai_summary.api_key"] = aiConfig.api_key.length > 0 ? "••••••••" : "";
-  configObj["ai_summary.failover"] = aiConfig.failover;
+  configObj["ai_summary.failover"] = aiConfig.failover.map((item) => ({
+    ...item,
+    api_key: item.api_key.length > 0 ? "••••••••" : "",
+  }));
 
   return maskSensitiveFields(configObj);
 }

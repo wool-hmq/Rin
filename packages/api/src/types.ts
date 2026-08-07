@@ -274,6 +274,8 @@ export interface ConfigResponse {
 export interface AISummaryFailoverItem {
   provider: string;
   model: string;
+  /** 该条目独立的 API Key（服务端存储真实值，配置响应中掩码） */
+  api_key: string;
 }
 
 export interface AIConfig {

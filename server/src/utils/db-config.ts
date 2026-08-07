@@ -12,6 +12,8 @@ type ConfigWriter = ConfigReader & {
 
 const AI_CONFIG_FIELDS = ["enabled", "provider", "model", "api_key", "api_url", "failover"] as const;
 
+const MASKED_SECRET = "••••••••";
+
 function parseFailover(value: unknown): AISummaryFailoverItem[] {
     if (!Array.isArray(value)) {
         return [];
@@ -22,8 +24,25 @@ function parseFailover(value: unknown): AISummaryFailoverItem[] {
         .map((item) => ({
             provider: typeof item.provider === "string" ? item.provider : "",
             model: typeof item.model === "string" ? item.model : "",
+            api_key: typeof item.api_key === "string" ? item.api_key : "",
         }))
         .filter((item) => item.provider.length > 0 && item.model.length > 0);
+}
+
+function resolveFailoverApiKeys(
+    next: AISummaryFailoverItem[],
+    previous: AISummaryFailoverItem[],
+): AISummaryFailoverItem[] {
+    return next.map((item) => {
+        if (item.api_key !== MASKED_SECRET) {
+            return item;
+        }
+
+        const old = previous.find(
+            (prev) => prev.provider === item.provider && prev.model === item.model,
+        );
+        return { ...item, api_key: old?.api_key ?? "" };
+    });
 }
 
 function parseStoredFailover(value: unknown): AISummaryFailoverItem[] {
@@ -42,18 +61,22 @@ function parseStoredFailover(value: unknown): AISummaryFailoverItem[] {
     return [];
 }
 
-function serializeFailover(value: unknown): string {
+function serializeFailover(
+    value: unknown,
+    previous: AISummaryFailoverItem[] = [],
+): string {
     const items = Array.isArray(value)
         ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
         : [];
-    return JSON.stringify(
-        items
-            .map((item) => ({
-                provider: typeof item.provider === "string" ? item.provider : "",
-                model: typeof item.model === "string" ? item.model : "",
-            }))
-            .filter((item) => item.provider.length > 0 && item.model.length > 0),
+    const parsed = resolveFailoverApiKeys(
+        items.map((item) => ({
+            provider: typeof item.provider === "string" ? item.provider : "",
+            model: typeof item.model === "string" ? item.model : "",
+            api_key: typeof item.api_key === "string" ? item.api_key : "",
+        })),
+        previous,
     );
+    return JSON.stringify(parsed.filter((item) => item.provider.length > 0 && item.model.length > 0));
 }
 
 export function readAIConfigFromValues(values: Record<string, unknown>): AIConfig {
@@ -112,6 +135,8 @@ export async function getFrontendAIEnabled(config: ConfigReader): Promise<boolea
 }
 
 export async function setAIConfig(config: ConfigWriter, updates: Partial<AIConfig>): Promise<void> {
+    let previousFailover: AISummaryFailoverItem[] | null = null;
+
     for (const field of AI_CONFIG_FIELDS) {
         const value = updates[field];
         if (value === undefined) {
@@ -122,11 +147,15 @@ export async function setAIConfig(config: ConfigWriter, updates: Partial<AIConfi
             continue;
         }
 
-        await config.set(
-            AI_CONFIG_PREFIX + field,
-            field === "failover" ? serializeFailover(value) : value,
-            false,
-        );
+        if (field === "failover") {
+            if (previousFailover === null) {
+                previousFailover = parseStoredFailover(await config.get(AI_CONFIG_PREFIX + "failover"));
+            }
+            await config.set(AI_CONFIG_PREFIX + field, serializeFailover(value, previousFailover), false);
+            continue;
+        }
+
+        await config.set(AI_CONFIG_PREFIX + field, value, false);
     }
 
     await config.save();

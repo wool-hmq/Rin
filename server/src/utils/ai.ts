@@ -229,8 +229,8 @@ export async function generateAISummaryResult(
         { role: "user" as const, content: truncatedContent },
     ];
 
-    const attempts: Array<{ provider: string; model: string; apiUrl: string }> = [
-        { provider, model, apiUrl: config.api_url },
+    const attempts: Array<{ provider: string; model: string; apiUrl: string; apiKey: string }> = [
+        { provider, model, apiUrl: config.api_url, apiKey: config.api_key },
     ];
     for (const item of config.failover || []) {
         if (!item.provider || !item.model) {
@@ -243,6 +243,7 @@ export async function generateAISummaryResult(
             provider: item.provider,
             model: item.model,
             apiUrl: AI_PROVIDER_URLS[item.provider] || config.api_url,
+            apiKey: item.api_key || "",
         });
     }
 
@@ -260,7 +261,7 @@ export async function generateAISummaryResult(
                     {
                         provider: attempt.provider,
                         model: attempt.model,
-                        api_key: config.api_key,
+                        api_key: attempt.apiKey,
                         api_url: attempt.apiUrl,
                     },
                     summaryMessages,

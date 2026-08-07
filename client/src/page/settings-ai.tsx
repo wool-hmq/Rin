@@ -17,9 +17,11 @@ import { ItemTitle } from "./settings-items";
 import {
   AI_MODEL_PRESETS,
   AI_PROVIDER_PRESETS,
+  MASKED_SECRET,
   buildAITestRequest,
   getAIProviderFields,
   getAIProviderPreset,
+  type AIFailoverItem,
 } from "./settings-helpers";
 
 export type AISettingsValue = {
@@ -30,7 +32,7 @@ export type AISettingsValue = {
   apiKeySet: boolean;
   apiUrl: string;
   customCode?: string;
-  failover: { provider: string; model: string }[];
+  failover: AIFailoverItem[];
 };
 
 export function AISummarySettings({
@@ -255,7 +257,11 @@ export function AISummarySettings({
                       onChange={(nextProvider) => {
                         const models = AI_MODEL_PRESETS[nextProvider] || [];
                         const nextItems = [...value.failover];
-                        nextItems[index] = { provider: nextProvider, model: models[0] ?? item.model };
+                        nextItems[index] = {
+                          provider: nextProvider,
+                          model: models[0] ?? item.model,
+                          api_key: item.api_key === MASKED_SECRET ? "" : item.api_key,
+                        };
                         onChange({ failover: nextItems });
                       }}
                       options={providerOptions}
@@ -266,7 +272,11 @@ export function AISummarySettings({
                       value={item.model}
                       onChange={(nextModel) => {
                         const nextItems = [...value.failover];
-                        nextItems[index] = { ...item, model: nextModel };
+                        nextItems[index] = {
+                          ...item,
+                          model: nextModel,
+                          api_key: item.api_key === MASKED_SECRET ? "" : item.api_key,
+                        };
                         onChange({ failover: nextItems });
                       }}
                       options={modelOptionsForProvider(item.provider)}
@@ -276,6 +286,35 @@ export function AISummarySettings({
                       allowCustomValue
                       customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
                     />
+                    {getAIProviderFields(item.provider).requiresApiKey ? (
+                      <div className="relative">
+                        <input
+                          type="password"
+                          name="rin-ai-failover-api-key"
+                          autoComplete="new-password"
+                          autoCapitalize="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          value={item.api_key === MASKED_SECRET ? "" : item.api_key}
+                          onChange={(event) => {
+                            const nextItems = [...value.failover];
+                            nextItems[index] = { ...item, api_key: event.target.value };
+                            onChange({ failover: nextItems });
+                          }}
+                          placeholder={
+                            item.api_key === MASKED_SECRET
+                              ? t("settings.ai_summary.api_key.placeholder_set")
+                              : "sk-..."
+                          }
+                          className="w-56 rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                        />
+                        {item.api_key === MASKED_SECRET && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <SettingsBadge tone="success">{t("settings.ai_summary.api_key.set")}</SettingsBadge>
+                          </span>
+                        )}
+                      </div>
+                    ) : null}
                     <button
                       type="button"
                       title={t("delete.title")}
@@ -296,7 +335,11 @@ export function AISummarySettings({
                     onChange({
                       failover: [
                         ...value.failover,
-                        { provider: defaultProvider, model: AI_MODEL_PRESETS[defaultProvider]?.[0] ?? "" },
+                        {
+                          provider: defaultProvider,
+                          model: AI_MODEL_PRESETS[defaultProvider]?.[0] ?? "",
+                          api_key: "",
+                        },
                       ],
                     });
                   }}

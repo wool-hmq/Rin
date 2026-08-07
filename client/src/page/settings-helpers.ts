@@ -4,7 +4,7 @@ import { client, endpoint } from "../app/runtime";
 import { defaultClientConfig, defaultServerConfig } from "../state/config";
 import { headersWithAuth } from "../utils/auth";
 
-const MASKED_SECRET = "••••••••";
+export const MASKED_SECRET = "••••••••";
 
 export type ImportMessage = { title: string; reason: string };
 export type SettingsDraft = {
@@ -137,7 +137,9 @@ export function buildAIConfigUpdates(updates: Record<string, unknown>) {
   return flatUpdates;
 }
 
-export function normalizeAIFailover(value: unknown): { provider: string; model: string }[] {
+export type AIFailoverItem = { provider: string; model: string; api_key: string };
+
+export function normalizeAIFailover(value: unknown): AIFailoverItem[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -147,6 +149,7 @@ export function normalizeAIFailover(value: unknown): { provider: string; model: 
     .map((item) => ({
       provider: typeof item.provider === "string" ? item.provider : "",
       model: typeof item.model === "string" ? item.model : "",
+      api_key: typeof item.api_key === "string" ? item.api_key : "",
     }))
     .filter((item) => item.provider.length > 0 && item.model.length > 0);
 }
