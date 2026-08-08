@@ -23,6 +23,7 @@ import { stripImageUrlMetadata } from "../utils/image-upload";
 import { TwikooComment } from "../components/twikoo_comment";
 import { GiscusCommentSection } from "../components/giscus_comment";
 import { WalineComment } from "../components/waline_comment";
+import { CWDComment } from "../components/cwd_comment";
 
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
@@ -532,13 +533,14 @@ function Comments({ id }: { id: string }) {
   const config = useContext(ClientConfigContext);
   const [comments, setComments] = useState<Comment[]>([]);
   const [error, setError] = useState<string>();
-  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo" | "giscus" | "waline">("native");
+  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo" | "giscus" | "waline" | "cwd">("native");
   const ref = useRef("");
   const { t } = useTranslation();
 
   const twikooEnabled = config.getBoolean('twikoo.enabled');
   const giscusEnabled = config.getBoolean('giscus.enabled');
   const walineEnabled = config.getBoolean('waline.enabled');
+  const cwdEnabled = config.getBoolean('cwd.enabled');
 
   function loadComments() {
     client.comment
@@ -561,17 +563,19 @@ function Comments({ id }: { id: string }) {
   const showTwikooComments = twikooEnabled && activeSystem === "twikoo";
   const showGiscusComments = giscusEnabled && activeSystem === "giscus";
   const showWalineComments = walineEnabled && activeSystem === "waline";
+  const showCWDComments = cwdEnabled && activeSystem === "cwd";
 
   const enabledSystems = [
     config.getBoolean('comment.enabled') && "native",
     twikooEnabled && "twikoo",
     giscusEnabled && "giscus",
     walineEnabled && "waline",
+    cwdEnabled && "cwd",
   ].filter(Boolean) as string[];
 
   return (
     <>
-      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled || walineEnabled) &&
+      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled || walineEnabled || cwdEnabled) &&
         <div className="m-2 flex flex-col justify-center items-center">
           {enabledSystems.length > 1 && (
             <div className="w-full mb-4 flex gap-2 justify-center flex-wrap">
@@ -627,6 +631,19 @@ function Comments({ id }: { id: string }) {
                   {t("comment.system.waline")}
                 </button>
               )}
+              {cwdEnabled && (
+                <button
+                  onClick={() => setActiveSystem("cwd")}
+                  className={`px-4 py-2 rounded-full transition ${
+                    activeSystem === "cwd"
+                      ? "bg-theme text-white"
+                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <i className="ri-chat-2-line mr-1"></i>
+                  {t("comment.system.cwd")}
+                </button>
+              )}
             </div>
           )}
           {showNativeComments && (
@@ -666,6 +683,9 @@ function Comments({ id }: { id: string }) {
           )}
           {showWalineComments && (
             <WalineComment key={`waline-${id}`} feedId={id} />
+          )}
+          {showCWDComments && (
+            <CWDComment key={`cwd-${id}`} feedId={id} />
           )}
         </div>
       }

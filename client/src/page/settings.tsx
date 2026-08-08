@@ -528,6 +528,36 @@ export function Settings() {
             />
           )}
           <ItemSwitch
+            title="启用 CWD 评论"
+            description="启用后可同时使用 CWD 评论系统（基于 Cloudflare Workers 的免服务器评论系统）"
+            checked={clientConfig.getBoolean("cwd.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "cwd.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("cwd.enabled") && (
+            <>
+              <ItemInput
+                title="CWD API 地址"
+                description="CWD 评论系统 API 基础地址，如：https://your-api.example.com"
+                configKeyTitle="CWD API Base URL"
+                value={String(clientConfig.get("cwd.apiBaseUrl") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "cwd.apiBaseUrl", value);
+                }}
+              />
+              <ItemInput
+                title="站点 ID"
+                description="选填，用于多站点数据隔离"
+                configKeyTitle="CWD Site ID"
+                value={String(clientConfig.get("cwd.siteId") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "cwd.siteId", value);
+                }}
+              />
+            </>
+          )}
+          <ItemSwitch
             title={t("settings.counter.enable.title")}
             description={t("settings.counter.enable.desc")}
             checked={clientConfig.getBoolean("counter.enabled")}

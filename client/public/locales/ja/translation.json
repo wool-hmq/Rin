@@ -108,7 +108,8 @@
       "native": "本站コメント",
       "twikoo": "Twikoo コメント (おすすめ)",
       "giscus": "Giscus コメント",
-      "waline": "Waline コメント"
+      "waline": "Waline コメント",
+      "cwd": "CWD コメント"
     }
   },
   "comparison": "対比",

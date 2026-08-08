@@ -108,7 +108,8 @@
       "native": "Native Comments",
       "twikoo": "Twikoo Comments (Recommended)",
       "giscus": "Giscus Comments",
-      "waline": "Waline Comments"
+      "waline": "Waline Comments",
+      "cwd": "CWD Comments"
     }
   },
   "comparison": "Comparison",
