@@ -111,14 +111,17 @@ export function TwikooComment({ feedId }: TwikooCommentProps) {
   return (
     <div className="w-full mt-4" data-theme={colorMode === "dark" ? "dark" : undefined}>
       <style>{`
-        [data-theme="dark"] .tk-meta-input .el-input input,
-        [data-theme="dark"] .tk-input .el-textarea__inner {
+        [data-theme="dark"] #twikoo-container {
           color: #ffffff;
+        }
+        [data-theme="dark"] #twikoo-container .el-input__inner,
+        [data-theme="dark"] #twikoo-container .el-textarea__inner {
+          color: #ffffff !important;
           background-color: #26262a;
           border-color: #3a3a3e;
         }
-        [data-theme="dark"] .tk-meta-input .el-input input::placeholder,
-        [data-theme="dark"] .tk-input .el-textarea__inner::placeholder {
+        [data-theme="dark"] #twikoo-container .el-input__inner::placeholder,
+        [data-theme="dark"] #twikoo-container .el-textarea__inner::placeholder {
           color: #9ca3af;
         }
       `}</style>
