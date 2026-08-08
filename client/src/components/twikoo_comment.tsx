@@ -113,7 +113,7 @@ export function TwikooComment({ feedId }: TwikooCommentProps) {
       <style>{`
         [data-theme="dark"] .tk-meta-input .el-input input,
         [data-theme="dark"] .tk-input .el-textarea__inner {
-          color: #e5e7eb;
+          color: #ffffff;
           background-color: #26262a;
           border-color: #3a3a3e;
         }
