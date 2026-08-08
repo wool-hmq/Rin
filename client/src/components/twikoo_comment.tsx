@@ -110,20 +110,18 @@ export function TwikooComment({ feedId }: TwikooCommentProps) {
 
   return (
     <div className="w-full mt-4" data-theme={colorMode === "dark" ? "dark" : undefined}>
-      {colorMode === "dark" && (
-        <style>{`
-          [data-theme="dark"] .el-input__inner,
-          [data-theme="dark"] .el-textarea__inner {
-            color: #e5e7eb;
-            background-color: #26262a;
-            border-color: #3a3a3e;
-          }
-          [data-theme="dark"] .el-input__inner::placeholder,
-          [data-theme="dark"] .el-textarea__inner::placeholder {
-            color: #9ca3af;
-          }
-        `}</style>
-      )}
+      <style>{`
+        [data-theme="dark"] .tk-meta-input .el-input input,
+        [data-theme="dark"] .tk-input .el-textarea__inner {
+          color: #e5e7eb;
+          background-color: #26262a;
+          border-color: #3a3a3e;
+        }
+        [data-theme="dark"] .tk-meta-input .el-input input::placeholder,
+        [data-theme="dark"] .tk-input .el-textarea__inner::placeholder {
+          color: #9ca3af;
+        }
+      `}</style>
       {loading && (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme"></div>
