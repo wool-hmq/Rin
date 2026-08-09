@@ -276,6 +276,8 @@ export interface AISummaryFailoverItem {
   model: string;
   /** 该条目独立的 API Key（服务端存储真实值，配置响应中掩码） */
   api_key: string;
+  /** 该条目独立的 API URL（OpenAI 兼容 Base URL，custom provider 必填） */
+  api_url: string;
 }
 
 export interface AIConfig {

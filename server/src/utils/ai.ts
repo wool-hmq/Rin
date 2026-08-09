@@ -242,7 +242,7 @@ export async function generateAISummaryResult(
         attempts.push({
             provider: item.provider,
             model: item.model,
-            apiUrl: AI_PROVIDER_URLS[item.provider] || config.api_url,
+            apiUrl: item.api_url || AI_PROVIDER_URLS[item.provider] || "",
             apiKey: item.api_key || "",
         });
     }

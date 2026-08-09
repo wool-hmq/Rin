@@ -137,7 +137,7 @@ export function buildAIConfigUpdates(updates: Record<string, unknown>) {
   return flatUpdates;
 }
 
-export type AIFailoverItem = { provider: string; model: string; api_key: string };
+export type AIFailoverItem = { provider: string; model: string; api_key: string; api_url: string };
 
 export function normalizeAIFailover(value: unknown): AIFailoverItem[] {
   if (!Array.isArray(value)) {
@@ -150,6 +150,7 @@ export function normalizeAIFailover(value: unknown): AIFailoverItem[] {
       provider: typeof item.provider === "string" ? item.provider : "",
       model: typeof item.model === "string" ? item.model : "",
       api_key: typeof item.api_key === "string" ? item.api_key : "",
+      api_url: typeof item.api_url === "string" ? item.api_url : "",
     }))
     .filter((item) => item.provider.length > 0 && item.model.length > 0);
 }

@@ -309,11 +309,13 @@ export function AISummarySettings({
                     <SearchableSelect
                       value={item.provider}
                       onChange={(nextProvider) => {
+                        const preset = getAIProviderPreset(nextProvider);
                         const models = AI_MODEL_PRESETS[nextProvider] || [];
                         const nextItems = [...value.failover];
                         nextItems[index] = {
                           provider: nextProvider,
-                          model: models[0] ?? item.model,
+                          model: nextProvider === "custom" ? item.model : (models[0] ?? item.model),
+                          api_url: nextProvider === "custom" ? item.api_url : (preset?.url ?? item.api_url),
                           api_key: item.api_key === MASKED_SECRET ? "" : item.api_key,
                         };
                         onChange({ failover: nextItems });
@@ -322,53 +324,113 @@ export function AISummarySettings({
                       placeholder={t("settings.ai_summary.provider.title")}
                       searchable={false}
                     />
-                    <SearchableSelect
-                      value={item.model}
-                      onChange={(nextModel) => {
-                        const nextItems = [...value.failover];
-                        nextItems[index] = {
-                          ...item,
-                          model: nextModel,
-                          api_key: item.api_key === MASKED_SECRET ? "" : item.api_key,
-                        };
-                        onChange({ failover: nextItems });
-                      }}
-                      options={modelOptionsForProvider(item.provider)}
-                      placeholder={t("settings.ai_summary.model.title")}
-                      searchPlaceholder={t("settings.ai_summary.model.desc")}
-                      emptyLabel={t("no_more")}
-                      allowCustomValue
-                      customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
-                    />
-                    {getAIProviderFields(item.provider).requiresApiKey ? (
-                      <div className="relative">
+                    {item.provider === "custom" ? (
+                      <>
                         <input
-                          type="password"
-                          name="rin-ai-failover-api-key"
-                          autoComplete="new-password"
-                          autoCapitalize="off"
-                          autoCorrect="off"
-                          spellCheck={false}
-                          value={item.api_key === MASKED_SECRET ? "" : item.api_key}
+                          type="text"
+                          value={item.api_url}
                           onChange={(event) => {
                             const nextItems = [...value.failover];
-                            nextItems[index] = { ...item, api_key: event.target.value };
+                            nextItems[index] = { ...item, api_url: event.target.value };
                             onChange({ failover: nextItems });
                           }}
-                          placeholder={
-                            item.api_key === MASKED_SECRET
-                              ? t("settings.ai_summary.api_key.placeholder_set")
-                              : "sk-..."
-                          }
+                          placeholder={t("settings.ai_summary.custom.base_url")}
                           className="w-56 rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
                         />
-                        {item.api_key === MASKED_SECRET && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <SettingsBadge tone="success">{t("settings.ai_summary.api_key.set")}</SettingsBadge>
-                          </span>
-                        )}
-                      </div>
-                    ) : null}
+                        <input
+                          type="text"
+                          value={item.model}
+                          onChange={(event) => {
+                            const nextItems = [...value.failover];
+                            nextItems[index] = {
+                              ...item,
+                              model: event.target.value,
+                              api_key: item.api_key === MASKED_SECRET ? "" : item.api_key,
+                            };
+                            onChange({ failover: nextItems });
+                          }}
+                          placeholder={t("settings.ai_summary.custom.model_id")}
+                          className="w-56 rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                        />
+                        <div className="relative">
+                          <input
+                            type="password"
+                            name="rin-ai-failover-api-key"
+                            autoComplete="new-password"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            value={item.api_key === MASKED_SECRET ? "" : item.api_key}
+                            onChange={(event) => {
+                              const nextItems = [...value.failover];
+                              nextItems[index] = { ...item, api_key: event.target.value };
+                              onChange({ failover: nextItems });
+                            }}
+                            placeholder={
+                              item.api_key === MASKED_SECRET
+                                ? t("settings.ai_summary.api_key.placeholder_set")
+                                : "sk-..."
+                            }
+                            className="w-56 rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                          />
+                          {item.api_key === MASKED_SECRET && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <SettingsBadge tone="success">{t("settings.ai_summary.api_key.set")}</SettingsBadge>
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <SearchableSelect
+                          value={item.model}
+                          onChange={(nextModel) => {
+                            const nextItems = [...value.failover];
+                            nextItems[index] = {
+                              ...item,
+                              model: nextModel,
+                              api_key: item.api_key === MASKED_SECRET ? "" : item.api_key,
+                            };
+                            onChange({ failover: nextItems });
+                          }}
+                          options={modelOptionsForProvider(item.provider)}
+                          placeholder={t("settings.ai_summary.model.title")}
+                          searchPlaceholder={t("settings.ai_summary.model.desc")}
+                          emptyLabel={t("no_more")}
+                          allowCustomValue
+                          customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
+                        />
+                        {getAIProviderFields(item.provider).requiresApiKey ? (
+                          <div className="relative">
+                            <input
+                              type="password"
+                              name="rin-ai-failover-api-key"
+                              autoComplete="new-password"
+                              autoCapitalize="off"
+                              autoCorrect="off"
+                              spellCheck={false}
+                              value={item.api_key === MASKED_SECRET ? "" : item.api_key}
+                              onChange={(event) => {
+                                const nextItems = [...value.failover];
+                                nextItems[index] = { ...item, api_key: event.target.value };
+                                onChange({ failover: nextItems });
+                              }}
+                              placeholder={
+                                item.api_key === MASKED_SECRET
+                                  ? t("settings.ai_summary.api_key.placeholder_set")
+                                  : "sk-..."
+                              }
+                              className="w-56 rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                            />
+                            {item.api_key === MASKED_SECRET && (
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <SettingsBadge tone="success">{t("settings.ai_summary.api_key.set")}</SettingsBadge>
+                              </span>
+                            )}
+                          </div>
+                        ) : null}
+                      </>
+                    )}
                     <button
                       type="button"
                       title={t("delete.title")}
@@ -393,6 +455,7 @@ export function AISummarySettings({
                           provider: defaultProvider,
                           model: AI_MODEL_PRESETS[defaultProvider]?.[0] ?? "",
                           api_key: "",
+                          api_url: "",
                         },
                       ],
                     });

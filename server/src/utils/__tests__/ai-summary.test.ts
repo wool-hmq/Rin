@@ -123,7 +123,7 @@ describe("generateAISummaryResult", () => {
       model: "gpt-4o-mini",
       api_key: "primary-key",
       api_url: "https://api.openai.com/v1",
-      failover: [{ provider: "deepseek", model: "deepseek-chat", api_key: "failover-key" }],
+      failover: [{ provider: "deepseek", model: "deepseek-chat", api_key: "failover-key", api_url: "" }],
     });
 
     const calls: Array<{ headers: Record<string, string>; body: any }> = [];
@@ -151,5 +151,45 @@ describe("generateAISummaryResult", () => {
     expect(calls[0].headers["Authorization"]).toContain("primary-key");
     expect(calls[1].headers["Authorization"]).toContain("failover-key");
     expect(calls[1].body.model).toBe("deepseek-chat");
+  });
+
+  it("uses each failover item's own API URL for custom providers", async () => {
+    const serverConfig = createAIConfigReader({
+      enabled: true,
+      provider: "openai",
+      model: "gpt-4o-mini",
+      api_key: "primary-key",
+      api_url: "https://api.openai.com/v1",
+      failover: [{ provider: "custom", model: "my-model", api_key: "custom-key", api_url: "https://custom.example.com/v1" }],
+    });
+
+    const urls: string[] = [];
+    const calls: Array<{ headers: Record<string, string>; body: any }> = [];
+    globalThis.fetch = mock(async (url, init) => {
+      urls.push(String(url));
+      const headers = (init?.headers as Record<string, string>) ?? {};
+      const body = init?.body ? JSON.parse(String(init.body)) : null;
+      calls.push({ headers, body });
+      if (calls.length === 1) {
+        return new Response("server error", { status: 500 });
+      }
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "summary" } }],
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch;
+
+    const { generateAISummaryResult } = await import("../ai");
+
+    const result = await generateAISummaryResult({} as Env, serverConfig, "test content");
+
+    expect(result.summary).toBe("summary");
+    expect(urls).toHaveLength(2);
+    expect(urls[0]).toBe("https://api.openai.com/v1/chat/completions");
+    expect(urls[1]).toBe("https://custom.example.com/v1/chat/completions");
+    expect(calls[1].headers["Authorization"]).toContain("custom-key");
+    expect(calls[1].body.model).toBe("my-model");
   });
 });

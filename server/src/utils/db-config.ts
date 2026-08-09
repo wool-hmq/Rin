@@ -25,6 +25,7 @@ function parseFailover(value: unknown): AISummaryFailoverItem[] {
             provider: typeof item.provider === "string" ? item.provider : "",
             model: typeof item.model === "string" ? item.model : "",
             api_key: typeof item.api_key === "string" ? item.api_key : "",
+            api_url: typeof item.api_url === "string" ? item.api_url : "",
         }))
         .filter((item) => item.provider.length > 0 && item.model.length > 0);
 }
@@ -73,6 +74,7 @@ function serializeFailover(
             provider: typeof item.provider === "string" ? item.provider : "",
             model: typeof item.model === "string" ? item.model : "",
             api_key: typeof item.api_key === "string" ? item.api_key : "",
+            api_url: typeof item.api_url === "string" ? item.api_url : "",
         })),
         previous,
     );
