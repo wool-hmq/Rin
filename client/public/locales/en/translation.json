@@ -306,7 +306,14 @@
     "comment": {
       "enable": {
         "desc": "Open/close the comment entry and comment area at the bottom of the article",
-        "title": "Enable Comments"
+        "title": "Enable Native Comments"
+      },
+      "management": {
+        "title": "Comment Management"
+      },
+      "default": {
+        "title": "Default Comment System",
+        "desc": "Set the comment system shown by default when users read articles"
       }
     },
     "counter": {

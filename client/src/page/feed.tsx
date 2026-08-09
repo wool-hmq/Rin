@@ -529,11 +529,12 @@ type Comment = {
   guestWebsite?: string;
 };
 
+type CommentSystem = "native" | "twikoo" | "giscus" | "waline" | "cwd";
+
 function Comments({ id }: { id: string }) {
   const config = useContext(ClientConfigContext);
   const [comments, setComments] = useState<Comment[]>([]);
   const [error, setError] = useState<string>();
-  const [activeSystem, setActiveSystem] = useState<"native" | "twikoo" | "giscus" | "waline" | "cwd">("native");
   const ref = useRef("");
   const { t } = useTranslation();
 
@@ -541,6 +542,19 @@ function Comments({ id }: { id: string }) {
   const giscusEnabled = config.getBoolean('giscus.enabled');
   const walineEnabled = config.getBoolean('waline.enabled');
   const cwdEnabled = config.getBoolean('cwd.enabled');
+
+  const enabledSystems = [
+    config.getBoolean('comment.enabled') && "native",
+    twikooEnabled && "twikoo",
+    giscusEnabled && "giscus",
+    walineEnabled && "waline",
+    cwdEnabled && "cwd",
+  ].filter(Boolean) as CommentSystem[];
+
+  const [activeSystem, setActiveSystem] = useState<CommentSystem>(() => {
+    const preferred = String(config.get("comment.default") || "native") as CommentSystem;
+    return enabledSystems.includes(preferred) ? preferred : (enabledSystems[0] ?? "native");
+  });
 
   function loadComments() {
     client.comment
@@ -564,14 +578,6 @@ function Comments({ id }: { id: string }) {
   const showGiscusComments = giscusEnabled && activeSystem === "giscus";
   const showWalineComments = walineEnabled && activeSystem === "waline";
   const showCWDComments = cwdEnabled && activeSystem === "cwd";
-
-  const enabledSystems = [
-    config.getBoolean('comment.enabled') && "native",
-    twikooEnabled && "twikoo",
-    giscusEnabled && "giscus",
-    walineEnabled && "waline",
-    cwdEnabled && "cwd",
-  ].filter(Boolean) as string[];
 
   return (
     <>

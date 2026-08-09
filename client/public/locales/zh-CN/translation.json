@@ -306,7 +306,14 @@
     "comment": {
       "enable": {
         "desc": "开启/关闭文章底部评论入口与评论区",
-        "title": "启用评论"
+        "title": "启用本站评论"
+      },
+      "management": {
+        "title": "评论管理"
+      },
+      "default": {
+        "title": "默认评论系统",
+        "desc": "设置用户在阅读文章时默认展示的评论系统"
       }
     },
     "counter": {

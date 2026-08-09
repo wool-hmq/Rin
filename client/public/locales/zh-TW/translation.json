@@ -306,7 +306,14 @@
     "comment": {
       "enable": {
         "desc": "開啟/關閉文章底部留言入口與留言區",
-        "title": "啟用留言"
+        "title": "啟用本站留言"
+      },
+      "management": {
+        "title": "留言管理"
+      },
+      "default": {
+        "title": "預設留言系統",
+        "desc": "設定使用者閱讀文章時預設顯示的留言系統"
       }
     },
     "counter": {

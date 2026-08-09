@@ -13,6 +13,7 @@ export const CLIENT_CONFIG_DEFAULTS = new Map(
     "feed.card_variant": "default",
     "theme.color": "#fc466b",
     "comment.enabled": true,
+    "comment.default": "native",
     "login.enabled": true,
     "site.name": "Rin",
     "site.description": "A lightweight personal blogging system",

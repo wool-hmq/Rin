@@ -49,6 +49,8 @@ const THEME_COLOR_OPTIONS = [
   { label: "Orange", value: "#ea580c" },
 ];
 
+const COMMENT_SYSTEM_OPTIONS = ["native", "twikoo", "giscus", "waline", "cwd"];
+
 export function Settings() {
   const { t } = useTranslation();
   const siteConfig = useSiteConfig();
@@ -102,6 +104,9 @@ export function Settings() {
   const feedCardVariantValue = normalizeFeedCardVariant(String(clientConfig.get("feed.card_variant") ?? "default"));
   const previewSiteName = String(clientConfig.get("site.name") ?? clientConfig.default("site.name") ?? "Rin");
   const previewSiteAvatar = String(clientConfig.get("site.avatar") ?? clientConfig.default("site.avatar") ?? "");
+  const defaultCommentSystemValue = COMMENT_SYSTEM_OPTIONS.includes(String(clientConfig.get("comment.default") ?? "native"))
+    ? String(clientConfig.get("comment.default"))
+    : "native";
 
   function setConfigValue(type: "client" | "server", key: string, value: unknown) {
     setDraft((current) => updateDraftConfig(current, type, key, value));
@@ -434,6 +439,39 @@ export function Settings() {
             }}
           />
           <ItemSwitch
+            title={t("settings.counter.enable.title")}
+            description={t("settings.counter.enable.desc")}
+            checked={clientConfig.getBoolean("counter.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "counter.enabled", checked);
+            }}
+          />
+          <ItemSwitch
+            title={t("settings.rss.title")}
+            description={t("settings.rss.desc")}
+            checked={clientConfig.getBoolean("rss")}
+            onChange={(checked) => {
+              setConfigValue("client", "rss", checked);
+            }}
+          />
+          <ItemWithUpload
+            title={t("settings.favicon.title")}
+            description={t("settings.favicon.desc")}
+            accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+            onFileChange={handleFaviconChange}
+          />
+          <ItemInput
+            title={t("settings.footer.title")}
+            description={t("settings.footer.desc")}
+            configKeyTitle="Footer HTML"
+            value={String(clientConfig.get("footer") ?? "")}
+            onChange={(value) => {
+              setConfigValue("client", "footer", value);
+            }}
+          />
+
+          <ItemTitle title={t("settings.comment.management.title")} />
+          <ItemSwitch
             title={t("settings.comment.enable.title")}
             description={t("settings.comment.enable.desc")}
             checked={clientConfig.getBoolean("comment.enabled")}
@@ -441,6 +479,33 @@ export function Settings() {
               setConfigValue("client", "comment.enabled", checked);
             }}
           />
+          <div className="w-full">
+            <SettingsCard>
+              <SettingsCardRow
+                header={
+                  <SettingsCardHeader
+                    title={t("settings.comment.default.title")}
+                    description={t("settings.comment.default.desc")}
+                  />
+                }
+                action={
+                  <SearchableSelect
+                    value={defaultCommentSystemValue}
+                    onChange={(value) => {
+                      setConfigValue("client", "comment.default", value);
+                    }}
+                    options={COMMENT_SYSTEM_OPTIONS.map((value) => ({
+                      value,
+                      label: t(`comment.system.${value}`),
+                    }))}
+                    placeholder={t("settings.comment.default.title")}
+                    emptyLabel={t("no_more")}
+                    searchable={false}
+                  />
+                }
+              />
+            </SettingsCard>
+          </div>
           <ItemSwitch
             title="启用 Twikoo 评论"
             description="启用后可同时使用 Twikoo 评论系统（需要在 Vercel 部署 Twikoo）"
@@ -557,37 +622,6 @@ export function Settings() {
               />
             </>
           )}
-          <ItemSwitch
-            title={t("settings.counter.enable.title")}
-            description={t("settings.counter.enable.desc")}
-            checked={clientConfig.getBoolean("counter.enabled")}
-            onChange={(checked) => {
-              setConfigValue("client", "counter.enabled", checked);
-            }}
-          />
-          <ItemSwitch
-            title={t("settings.rss.title")}
-            description={t("settings.rss.desc")}
-            checked={clientConfig.getBoolean("rss")}
-            onChange={(checked) => {
-              setConfigValue("client", "rss", checked);
-            }}
-          />
-          <ItemWithUpload
-            title={t("settings.favicon.title")}
-            description={t("settings.favicon.desc")}
-            accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
-            onFileChange={handleFaviconChange}
-          />
-          <ItemInput
-            title={t("settings.footer.title")}
-            description={t("settings.footer.desc")}
-            configKeyTitle="Footer HTML"
-            value={String(clientConfig.get("footer") ?? "")}
-            onChange={(value) => {
-              setConfigValue("client", "footer", value);
-            }}
-          />
 
           <ItemTitle title={t("settings.webhook.title")} />
           <ItemInput
