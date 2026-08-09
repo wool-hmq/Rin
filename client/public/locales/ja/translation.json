@@ -401,6 +401,12 @@
         "title": "API URL",
         "desc": "カスタム API URL（OpenAI 互換形式）"
       },
+      "custom": {
+        "base_url": "Base URL",
+        "model_id": "Model ID",
+        "api_key": "API Key",
+        "hint": "OpenAI 互換の API ベース URL、モデル ID、API キーを入力してください"
+      },
       "save": {
         "title": "設定を保存",
         "desc": "AI 設定をデータベースに保存",

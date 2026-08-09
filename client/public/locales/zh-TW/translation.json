@@ -410,6 +410,12 @@
         "title": "API URL",
         "desc": "自訂 API 地址（OpenAI 相容格式）"
       },
+      "custom": {
+        "base_url": "Base URL",
+        "model_id": "Model ID",
+        "api_key": "API Key",
+        "hint": "請填寫 OpenAI 相容的 API 地址（Base URL）、模型 ID 與 API Key"
+      },
       "save": {
         "title": "儲存設定",
         "desc": "儲存 AI 設定到資料庫",

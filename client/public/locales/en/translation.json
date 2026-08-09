@@ -410,6 +410,12 @@
         "title": "API URL",
         "desc": "Custom API URL (OpenAI compatible format)"
       },
+      "custom": {
+        "base_url": "Base URL",
+        "model_id": "Model ID",
+        "api_key": "API Key",
+        "hint": "Enter an OpenAI-compatible API base URL, model ID and API key"
+      },
       "save": {
         "title": "Save Configuration",
         "desc": "Save AI configuration to database",

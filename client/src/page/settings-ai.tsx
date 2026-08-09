@@ -55,7 +55,7 @@ export function AISummarySettings({
     onChange({
       provider: nextProvider,
       apiUrl: preset?.url ?? "",
-      model: models[0] ?? value.model,
+      model: nextProvider === "custom" ? value.model : (models[0] ?? value.model),
     });
   };
 
@@ -151,7 +151,60 @@ export function AISummarySettings({
               }
             />
             <SettingsCardBody>
-              <div className="grid gap-4 lg:grid-cols-2">
+              {value.provider === "custom" ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium t-primary">{t("settings.ai_summary.custom.base_url")}</p>
+                    <input
+                      type="text"
+                      value={value.apiUrl}
+                      onChange={(event) => {
+                        onChange({ apiUrl: event.target.value });
+                      }}
+                      placeholder="https://api.openai.com/v1"
+                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium t-primary">{t("settings.ai_summary.custom.model_id")}</p>
+                    <input
+                      type="text"
+                      value={value.model}
+                      onChange={(event) => {
+                        onChange({ model: event.target.value });
+                      }}
+                      placeholder="gpt-4o-mini"
+                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2 lg:col-span-2">
+                    <p className="text-sm font-medium t-primary">
+                      {t("settings.ai_summary.custom.api_key")}
+                      {value.apiKeySet && (
+                        <span className="ml-2">
+                          <SettingsBadge tone="success">{t("settings.ai_summary.api_key.set")}</SettingsBadge>
+                        </span>
+                      )}
+                    </p>
+                    <input
+                      type="password"
+                      name="rin-ai-api-key"
+                      autoComplete="new-password"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      value={value.apiKey}
+                      onChange={(event) => {
+                        onChange({ apiKey: event.target.value });
+                      }}
+                      placeholder={value.apiKeySet ? t("settings.ai_summary.api_key.placeholder_set") : "sk-..."}
+                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                    />
+                    <p className="text-xs text-neutral-400 dark:text-neutral-500">{t("settings.ai_summary.custom.hint")}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium t-primary">{t("settings.ai_summary.model.title")}</p>
                   <SearchableSelect
@@ -207,7 +260,8 @@ export function AISummarySettings({
                     />
                   </div>
                 ) : null}
-              </div>
+                </div>
+              )}
             </SettingsCardBody>
           </SettingsCard>
 
