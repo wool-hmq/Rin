@@ -28,7 +28,8 @@ export const AI_PROVIDER_PRESETS = [
   { value: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
   { value: "Zenmux", label: "Zenmux", url: "https://zenmux.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Omaleai", label: "Cerebras", url: "https://omaleai.qzz.io/v1", requiresApiKey: true, requiresApiUrl: true },
-  { value: "Airforce", label: "Airforce", url: "https://api.airforce/v1/chat/completions", requiresApiKey: true, requiresApiUrl: true },
+  { value: "Agnes-ai", label: "Agnes-ai", url: "https://apihub.agnes-ai.com/v1", requiresApiKey: true, requiresApiUrl: true },
+  { value: "Opencode", label: "Opencode", url: "https://opencode.ai/zen/v1", requiresApiKey: true, requiresApiUrl: true },
   // ✅ 保留 custom 作为通用兜底（可手动填任何 URL 和模型）
   { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: true },
 ] as const;
@@ -45,7 +46,8 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   openrouter: ["openai/gpt-oss-120b:free"],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
   Omaleai: ["deepseek-v4-flash"],
-  Airforce: ["gemma3-270m:free"],
+  "Agnes-ai": ["agnes-2.0-flash", "agnes-2.5-flash"],
+  Opencode: ["deepseek-v4-flash-free", "mimo-v2.5-free", "longcat-2.0-free"],
   // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
 };

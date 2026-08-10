@@ -11,6 +11,8 @@ const AI_PROVIDER_URLS: Record<string, string> = {
     gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
     deepseek: "https://api.deepseek.com/v1",
     cerebras: "https://api.cerebras.ai/v1",
+    "Agnes-ai": "https://apihub.agnes-ai.com/v1",
+    "Opencode": "https://opencode.ai/zen/v1",
 };
 
 // Cloudflare Worker AI models mapping (short name -> full model ID)
