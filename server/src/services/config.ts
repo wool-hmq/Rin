@@ -55,9 +55,22 @@ export function ConfigService(): Hono {
 
         // 处理自定义供应商
         const provider = body.provider || config.provider;
+        // 前端在 API Key 已设置（掩码）时请求复用该条目存储在数据库中的真实 Key
+        const useStoredKey = body.use_stored_key === true || body.use_stored_key === "true";
+
+        let storedKey: string | undefined;
+        let storedUrl: string | undefined;
+        if (useStoredKey) {
+            const storedItem = config.failover.find(
+                (item) => item.provider === provider && item.model === (body.model || config.model),
+            );
+            storedKey = storedItem?.api_key;
+            storedUrl = storedItem?.api_url;
+        }
+
         if (provider === 'custom') {
-            const apiUrl = body.api_url !== undefined ? body.api_url : config.api_url;
-            const apiKey = body.api_key !== undefined ? body.api_key : config.api_key || '';
+            const apiUrl = body.api_url !== undefined ? body.api_url : (storedUrl !== undefined ? storedUrl : config.api_url);
+            const apiKey = body.api_key !== undefined ? body.api_key : (storedKey !== undefined ? storedKey : config.api_key || '');
             const model = body.model || config.model || 'custom-model';
             const testPrompt = body.testPrompt || "Hello! This is a test message. Please respond with a simple greeting.";
 
@@ -138,8 +151,8 @@ export function ConfigService(): Hono {
         const testConfig = {
             provider: body.provider || config.provider,
             model: body.model || config.model,
-            api_url: body.api_url !== undefined ? body.api_url : config.api_url,
-            api_key: body.api_key !== undefined ? body.api_key : config.api_key,
+            api_url: body.api_url !== undefined ? body.api_url : (storedUrl !== undefined ? storedUrl : config.api_url),
+            api_key: body.api_key !== undefined ? body.api_key : (storedKey !== undefined ? storedKey : config.api_key),
         };
 
         // Test prompt

@@ -10,6 +10,7 @@ describe("ConfigService", () => {
     let sqlite: Database;
     let env: Env;
     let app: Hono<{ Bindings: Env; Variables: Variables }>;
+    let serverConfig: any;
     const originalFetch = globalThis.fetch;
 
     beforeEach(async () => {
@@ -18,6 +19,7 @@ describe("ConfigService", () => {
         sqlite = ctx.sqlite;
         env = ctx.env;
         app = ctx.app;
+        serverConfig = ctx.serverConfig;
 
         // Create test user
         await createTestUser();
@@ -680,6 +682,92 @@ describe("ConfigService", () => {
             };
             expect(data.success).toBe(true);
             expect(data.response).toBe("Hello!");
+        });
+
+        it("should reuse a failover item's stored API key when use_stored_key is set", async () => {
+            await serverConfig.set("ai_summary.provider", "custom");
+            await serverConfig.set("ai_summary.model", "primary-model");
+            await serverConfig.set("ai_summary.api_url", "https://primary.example.com/v1");
+            await serverConfig.set("ai_summary.api_key", "primary-key");
+            await serverConfig.set("ai_summary.failover", [
+                {
+                    provider: "custom",
+                    model: "backup-model",
+                    api_key: "stored-failover-key",
+                    api_url: "https://backup.example.com/v1",
+                },
+            ]);
+
+            const urls: string[] = [];
+            globalThis.fetch = mock(async (url, init) => {
+                urls.push(String(url));
+                const headers = (init?.headers as Record<string, string>) ?? {};
+                const body = init?.body ? JSON.parse(String(init.body)) : null;
+                return new Response(JSON.stringify({
+                    choices: [{ message: { content: "backup ok" } }],
+                }), {
+                    status: 200,
+                    headers: { "Content-Type": "application/json" },
+                });
+            }) as typeof fetch;
+
+            const res = await app.request("/test-ai", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer mock_token_1",
+                },
+                body: JSON.stringify({
+                    provider: "custom",
+                    model: "backup-model",
+                    use_stored_key: "true",
+                }),
+            });
+
+            expect(res.status).toBe(200);
+
+            const data = await res.json() as {
+                success: boolean;
+                response?: string;
+            };
+            expect(data.success).toBe(true);
+            expect(data.response).toBe("backup ok");
+            expect(urls).toHaveLength(1);
+            expect(urls[0]).toBe("https://backup.example.com/v1/chat/completions");
+            expect((globalThis.fetch as any).mock.calls[0][1].headers["Authorization"]).toContain("stored-failover-key");
+        });
+
+        it("should return a readable error when a stored failover key is empty", async () => {
+            await serverConfig.set("ai_summary.provider", "custom");
+            await serverConfig.set("ai_summary.model", "primary-model");
+            await serverConfig.set("ai_summary.api_url", "https://primary.example.com/v1");
+            await serverConfig.set("ai_summary.api_key", "primary-key");
+            await serverConfig.set("ai_summary.failover", [
+                {
+                    provider: "custom",
+                    model: "backup-model",
+                    api_key: "",
+                    api_url: "https://backup.example.com/v1",
+                },
+            ]);
+
+            const res = await app.request("/test-ai", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer mock_token_1",
+                },
+                body: JSON.stringify({
+                    provider: "custom",
+                    model: "backup-model",
+                    use_stored_key: "true",
+                }),
+            });
+
+            expect(res.status).toBe(400);
+
+            const data = await res.json() as { error?: string };
+            expect(data.error).toBe("缺少 API Key");
         });
     });
 

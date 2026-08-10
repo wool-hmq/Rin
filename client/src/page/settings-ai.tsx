@@ -116,14 +116,18 @@ export function AISummarySettings({
 
     setFailoverTest({ index, status: "testing", result: null });
     try {
+      const useStoredKey = item.api_key === MASKED_SECRET;
       const requestBody = buildAITestRequest({
         provider: item.provider,
         model: item.model,
         apiUrl: item.api_url,
-        apiKey: item.api_key === MASKED_SECRET ? "" : item.api_key,
+        apiKey: useStoredKey ? "" : item.api_key,
       });
       if (item.provider === "custom") {
         requestBody.api_url = item.api_url;
+      }
+      if (useStoredKey) {
+        requestBody.use_stored_key = "true";
       }
 
       const { data, error } = await client.config.testAI(requestBody);

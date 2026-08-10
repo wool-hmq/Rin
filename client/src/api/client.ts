@@ -523,6 +523,7 @@ class ConfigAPI {
     api_key?: string;
     testPrompt?: string;
     customCode?: string; // ✅ 新增：自定义代码
+    use_stored_key?: string; // 已设置（掩码）时复用该条目数据库中的真实 Key
   }): Promise<ApiResponse<{ success: boolean; response?: string; error?: string; details?: string; provider?: string; model?: string }>> {
     return this.http.post<any>("/api/config/test-ai", body);
   }
