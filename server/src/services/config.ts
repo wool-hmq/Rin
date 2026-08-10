@@ -56,8 +56,8 @@ export function ConfigService(): Hono {
         // 处理自定义供应商
         const provider = body.provider || config.provider;
         if (provider === 'custom') {
-            const apiUrl = body.api_url || config.api_url;
-            const apiKey = body.api_key || config.api_key || '';
+            const apiUrl = body.api_url !== undefined ? body.api_url : config.api_url;
+            const apiKey = body.api_key !== undefined ? body.api_key : config.api_key || '';
             const model = body.model || config.model || 'custom-model';
             const testPrompt = body.testPrompt || "Hello! This is a test message. Please respond with a simple greeting.";
 

@@ -45,6 +45,11 @@ export function AISummarySettings({
   const { t } = useTranslation();
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [testResult, setTestResult] = useState<{ success?: boolean; response?: string; error?: string; details?: string } | null>(null);
+  const [failoverTest, setFailoverTest] = useState<{
+    index: number;
+    status: "idle" | "testing" | "success" | "error";
+    result: { success?: boolean; response?: string; error?: string; details?: string } | null;
+  } | null>(null);
   const { AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
 
@@ -99,6 +104,69 @@ export function AISummarySettings({
       setTestResult({
         success: false,
         error: message || t("settings.ai_summary.test.error"),
+      });
+    }
+  };
+
+  const handleTestFailover = async (index: number) => {
+    const item = value.failover[index];
+    if (!item) {
+      return;
+    }
+
+    setFailoverTest({ index, status: "testing", result: null });
+    try {
+      const requestBody = buildAITestRequest({
+        provider: item.provider,
+        model: item.model,
+        apiUrl: item.api_url,
+        apiKey: item.api_key === MASKED_SECRET ? "" : item.api_key,
+      });
+      if (item.provider === "custom") {
+        requestBody.api_url = item.api_url;
+      }
+
+      const { data, error } = await client.config.testAI(requestBody);
+
+      if (error) {
+        setFailoverTest({
+          index,
+          status: "error",
+          result: {
+            success: false,
+            error: error.value || t("settings.ai_summary.test.failed"),
+            details: t("settings.ai_summary.test.http_error$status", { status: error.status }),
+          },
+        });
+      } else if (data?.success) {
+        setFailoverTest({
+          index,
+          status: "success",
+          result: {
+            success: true,
+            response: data.response || t("settings.ai_summary.test.success"),
+          },
+        });
+      } else {
+        setFailoverTest({
+          index,
+          status: "error",
+          result: {
+            success: false,
+            error: data?.error || t("settings.ai_summary.test.failed"),
+            details: data?.details,
+          },
+        });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setFailoverTest({
+        index,
+        status: "error",
+        result: {
+          success: false,
+          error: message || t("settings.ai_summary.test.error"),
+        },
       });
     }
   };
@@ -433,14 +501,43 @@ export function AISummarySettings({
                     )}
                     <button
                       type="button"
+                      title={t("settings.ai_summary.test.button")}
+                      onClick={() => {
+                        handleTestFailover(index);
+                      }}
+                      disabled={failoverTest?.index === index && failoverTest.status === "testing"}
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 text-sm text-neutral-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-600 disabled:opacity-50 dark:border-white/10 dark:hover:border-green-800 dark:hover:bg-green-900/20 dark:hover:text-green-400"
+                    >
+                      <i
+                        className={
+                          failoverTest?.index === index && failoverTest.status === "testing"
+                            ? "ri-loader-4-line animate-spin"
+                            : "ri-flask-line"
+                        }
+                      />
+                    </button>
+                    <button
+                      type="button"
                       title={t("delete.title")}
                       onClick={() => {
                         onChange({ failover: value.failover.filter((_, i) => i !== index) });
+                        setFailoverTest(null);
                       }}
                       className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 text-sm text-neutral-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                     >
                       <i className="ri-delete-bin-line" />
                     </button>
+                    {failoverTest?.index === index && failoverTest.status === "success" && (
+                      <span className="w-full text-sm font-medium text-green-600 dark:text-green-400">
+                        {failoverTest.result?.response}
+                      </span>
+                    )}
+                    {failoverTest?.index === index && failoverTest.status === "error" && (
+                      <span className="w-full text-sm text-red-600 dark:text-red-400">
+                        {failoverTest.result?.error}
+                        {failoverTest.result?.details ? ` — ${failoverTest.result.details}` : ""}
+                      </span>
+                    )}
                   </div>
                 ))}
                 <Button
@@ -448,6 +545,7 @@ export function AISummarySettings({
                   title={t("settings.ai_summary.failover.add")}
                   onClick={() => {
                     const defaultProvider = providerOptions[0]?.value ?? "openai";
+                    setFailoverTest(null);
                     onChange({
                       failover: [
                         ...value.failover,
