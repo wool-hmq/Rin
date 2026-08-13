@@ -802,6 +802,9 @@ export function Settings() {
               if (updates.failover !== undefined) {
                 setConfigValue("server", "ai_summary.failover", updates.failover);
               }
+              if (updates.aiSearchEnabled !== undefined) {
+                setConfigValue("server", "ai_search.enabled", updates.aiSearchEnabled);
+              }
             }}
           />
 

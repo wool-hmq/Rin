@@ -68,7 +68,18 @@
     "search": {
       "placeholder": "キーワードを入力してください",
       "title": "検索",
-      "title$keyword": "検索: {{keyword}}"
+      "title$keyword": "検索: {{keyword}}",
+      "mode": {
+        "keyword": "キーワード",
+        "ai": "AI 強化"
+      },
+      "ai_unavailable": "管理者が AI 検索を有効にしていません",
+      "fallback": "キーワード検索にフォールバックしました（{{reason}}）",
+      "reason": {
+        "ai_search.disabled": "AI 検索が有効になっていません",
+        "ai_unconfigured": "AI モデルが設定されていません",
+        "llm_failed": "AI サービスの呼び出しに失敗しました"
+      }
     },
     "title": "記事",
     "top": {
@@ -428,6 +439,12 @@
         "title": "代替モデルキュー",
         "desc": "メインモデルが応答しない場合、代替モデルを順番に試し、いずれかのモデルが要約を返すまで続けます（各代替エントリは独自の API キーを使用）",
         "add": "代替モデルを追加"
+      },
+      "search": {
+        "enable": {
+          "title": "AI 検索を有効にする",
+          "desc": "検索ページで AI 強化検索を提供。AI 要約のモデル設定を再利用します"
+        }
       }
     },
     "get_config_failed$message": "設定の取得に失敗しました: {{message}}",
@@ -774,9 +791,9 @@
   "anonymous": "匿名",
   "my_site": "自分のサイト",
   "my_activity": "マイアクティビティ",
-"terms": "利用規約",
-"sponsor": {
-  "title": "スポンサー",
-  "btc": "ビットコイン"
-}
+  "terms": "利用規約",
+  "sponsor": {
+    "title": "スポンサー",
+    "btc": "ビットコイン"
+  }
 }

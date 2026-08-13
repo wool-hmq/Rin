@@ -68,7 +68,18 @@
     "search": {
       "placeholder": "請輸入關鍵字",
       "title": "搜尋",
-      "title$keyword": "搜尋：{{keyword}}"
+      "title$keyword": "搜尋：{{keyword}}",
+      "mode": {
+        "keyword": "關鍵字",
+        "ai": "AI 增強"
+      },
+      "ai_unavailable": "管理員未啟用 AI 搜尋",
+      "fallback": "已回退至關鍵字搜尋（{{reason}}）",
+      "reason": {
+        "ai_search.disabled": "AI 搜尋未啟用",
+        "ai_unconfigured": "未設定 AI 模型",
+        "llm_failed": "AI 服務呼叫失敗"
+      }
     },
     "title": "文章",
     "top": {
@@ -437,6 +448,12 @@
         "title": "備選模型佇列",
         "desc": "主模型無回應或出錯時，依序嘗試備選模型，直到有模型返回摘要（每個備選條目使用各自的 API Key）",
         "add": "新增備選模型"
+      },
+      "search": {
+        "enable": {
+          "title": "啟用 AI 搜尋",
+          "desc": "在搜尋頁提供 AI 增強搜尋，重用 AI 總結的模型設定"
+        }
       }
     },
     "get_config_failed$message": "獲取配置失敗，{{message}}",
@@ -783,9 +800,9 @@
   "anonymous": "匿名",
   "my_site": "我的網站",
   "my_activity": "我的活動",
-"terms": "服務條款",
-"sponsor": {
-  "title": "贊助支持",
-  "btc": "比特幣"
-}
+  "terms": "服務條款",
+  "sponsor": {
+    "title": "贊助支持",
+    "btc": "比特幣"
+  }
 }

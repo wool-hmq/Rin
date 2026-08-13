@@ -68,7 +68,18 @@
     "search": {
       "placeholder": "Please enter keywords",
       "title": "Search",
-      "title$keyword": "Search: {{keyword}}"
+      "title$keyword": "Search: {{keyword}}",
+      "mode": {
+        "keyword": "Keyword",
+        "ai": "AI Enhanced"
+      },
+      "ai_unavailable": "AI search is not enabled by the admin",
+      "fallback": "Fell back to keyword search ({{reason}})",
+      "reason": {
+        "ai_search.disabled": "AI search is not enabled",
+        "ai_unconfigured": "AI model is not configured",
+        "llm_failed": "AI service call failed"
+      }
     },
     "title": "Articles",
     "top": {
@@ -437,6 +448,12 @@
         "title": "Fallback Model Queue",
         "desc": "When the primary model has no response or fails, try each fallback model in order until one returns a summary (each fallback entry uses its own API Key)",
         "add": "Add Fallback Model"
+      },
+      "search": {
+        "enable": {
+          "title": "Enable AI Search",
+          "desc": "Provide AI-enhanced search on the search page, reusing the AI summary model config"
+        }
       }
     },
     "get_config_failed$message": "Failed to get configuration, {{message}}",
@@ -784,8 +801,8 @@
   "my_site": "My Site",
   "my_activity": "My Activity",
   "terms": "Terms",
-"sponsor": {
-  "title": "Sponsor",
-  "btc": "Bitcoin"
-}
+  "sponsor": {
+    "title": "Sponsor",
+    "btc": "Bitcoin"
+  }
 }

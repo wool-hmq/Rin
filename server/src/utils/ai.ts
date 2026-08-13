@@ -1,3 +1,4 @@
+import type { AIConfig } from "@rin/api";
 import { getAIConfig } from "./db-config";
 
 type ConfigReader = {
@@ -116,7 +117,8 @@ async function executeExternalAI(
         api_key: string;
         api_url: string;
     },
-    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+    options: { maxTokens?: number; temperature?: number } = {},
 ): Promise<string | null> {
     const { provider, model, api_key, api_url } = config;
 
@@ -135,8 +137,8 @@ async function executeExternalAI(
         body: JSON.stringify({
             model: model,
             messages,
-            max_tokens: 500,
-            temperature: 0.3,
+            max_tokens: options.maxTokens ?? 500,
+            temperature: options.temperature ?? 0.3,
         }),
     });
 
@@ -210,27 +212,18 @@ export async function generateAISummary(
     return result.summary;
 }
 
-export async function generateAISummaryResult(
-    env: Env,
-    serverConfig: ConfigReader,
-    content: string
-): Promise<{ summary: string | null; skipped: boolean; error?: string }> {
-    const config = await getAIConfig(serverConfig);
+export type AICompletionResult = {
+    content: string | null;
+    skipped: boolean;
+    error?: string;
+    provider?: string;
+    model?: string;
+};
 
-    if (!config.enabled) {
-        return { summary: null, skipped: true };
-    }
-
+function buildAIAttempts(
+    config: AIConfig,
+): Array<{ provider: string; model: string; apiUrl: string; apiKey: string }> {
     const { provider, model } = config;
-    const maxContentLength = 8000;
-    const truncatedContent = content.length > maxContentLength
-        ? content.slice(0, maxContentLength) + "..."
-        : content;
-    const summaryMessages = [
-        { role: "system" as const, content: AI_SUMMARY_SYSTEM_PROMPT },
-        { role: "user" as const, content: truncatedContent },
-    ];
-
     const attempts: Array<{ provider: string; model: string; apiUrl: string; apiKey: string }> = [
         { provider, model, apiUrl: config.api_url, apiKey: config.api_key },
     ];
@@ -248,7 +241,26 @@ export async function generateAISummaryResult(
             apiKey: item.api_key || "",
         });
     }
+    return attempts;
+}
 
+/**
+ * Execute an AI completion using the primary provider and failover chain.
+ * Shared by article AI summaries and AI-enhanced search.
+ */
+export async function executeAICompletion(
+    env: Env,
+    serverConfig: ConfigReader,
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+    options: { maxTokens?: number; temperature?: number } = {},
+): Promise<AICompletionResult> {
+    const config = await getAIConfig(serverConfig);
+
+    if (!config.enabled) {
+        return { content: null, skipped: true };
+    }
+
+    const attempts = buildAIAttempts(config);
     const errors: string[] = [];
 
     for (const attempt of attempts) {
@@ -257,7 +269,7 @@ export async function generateAISummaryResult(
 
             if (attempt.provider === 'worker-ai') {
                 const fullModelName = getWorkerAIModelId(attempt.model);
-                result = await executeWorkerAI(env, fullModelName, summaryMessages);
+                result = await executeWorkerAI(env, fullModelName, messages);
             } else {
                 result = await executeExternalAI(
                     {
@@ -266,7 +278,8 @@ export async function generateAISummaryResult(
                         api_key: attempt.apiKey,
                         api_url: attempt.apiUrl,
                     },
-                    summaryMessages,
+                    messages,
+                    options,
                 );
             }
 
@@ -283,10 +296,10 @@ export async function generateAISummaryResult(
                 continue;
             }
 
-            return { summary: cleaned, skipped: false };
+            return { content: cleaned, skipped: false, provider: attempt.provider, model: attempt.model };
         } catch (error) {
             console.error(
-                `[AI Summary] Attempt failed (provider "${attempt.provider}", model "${attempt.model}"):`,
+                `[AI] Attempt failed (provider "${attempt.provider}", model "${attempt.model}"):`,
                 error,
             );
             errors.push(
@@ -296,9 +309,32 @@ export async function generateAISummaryResult(
     }
 
     return {
-        summary: null,
+        content: null,
         skipped: false,
-        error: errors.length > 0 ? errors.join("; ") : "AI summary generation failed",
+        error: errors.length > 0 ? errors.join("; ") : "AI generation failed",
+    };
+}
+
+export async function generateAISummaryResult(
+    env: Env,
+    serverConfig: ConfigReader,
+    content: string
+): Promise<{ summary: string | null; skipped: boolean; error?: string }> {
+    const maxContentLength = 8000;
+    const truncatedContent = content.length > maxContentLength
+        ? content.slice(0, maxContentLength) + "..."
+        : content;
+    const summaryMessages = [
+        { role: "system" as const, content: AI_SUMMARY_SYSTEM_PROMPT },
+        { role: "user" as const, content: truncatedContent },
+    ];
+
+    const result = await executeAICompletion(env, serverConfig, summaryMessages);
+
+    return {
+        summary: result.content,
+        skipped: result.skipped,
+        error: result.error,
     };
 }
 

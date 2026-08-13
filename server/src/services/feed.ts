@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gt, like, lt, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, like, lt, or } from "drizzle-orm";
 import { Hono } from "hono";
 import type { Variables } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
@@ -6,6 +6,7 @@ import { feeds, visits, visitStats } from "../db/schema";
 import { HyperLogLog } from "../utils/hyperloglog";
 import { extractImageWithMetadata } from "../utils/image";
 import { stripMarkdown } from "../utils/markdown";
+import { runAISearch } from "../utils/ai-search";
 import { syncFeedAISummaryQueueState } from "./feed-ai-summary";
 import { bindTagToPost } from "./tag";
 import { clearFeedCache } from "./clear-feed-cache";
@@ -511,6 +512,56 @@ export function SearchService(): Hono<{
             return c.json({ size: 0, data: [], hasNext: false });
         }
 
+        const mode = c.req.query('mode');
+        let aiFallbackReason: string | undefined;
+
+        if (mode === 'ai') {
+            const aiResult = await runAISearch(c.get('env'), c.get('serverConfig'), db, keyword);
+
+            if (aiResult.mode === 'ai') {
+                const numericIds = (aiResult.ids ?? [])
+                    .map(Number)
+                    .filter((id) => Number.isInteger(id) && id > 0);
+                if (numericIds.length === 0) {
+                    return c.json({ size: 0, data: [], hasNext: false, mode: 'ai' });
+                }
+
+                const aiFeedList = (await db.query.feeds.findMany({
+                    where: and(eq(feeds.draft, 0), inArray(feeds.id, numericIds)),
+                    columns: { draft: false, listed: false },
+                    with: {
+                        hashtags: {
+                            columns: {},
+                            with: { hashtag: { columns: { id: true, name: true } } }
+                        },
+                        user: { columns: { id: true, username: true, avatar: true } }
+                    },
+                })).map(({ content, hashtags, summary, ...other }: any) => {
+                    const plainText = stripMarkdown(content);
+                    return {
+                        summary: summary.length > 0 ? summary : plainText.length > 100 ? plainText.slice(0, 100) : plainText,
+                        hashtags: hashtags.map(({ hashtag }: any) => hashtag),
+                        ...other
+                    };
+                });
+
+                const aiIds = aiResult.ids ?? [];
+                const byId = new Map(aiFeedList.map((feed: any) => [String(feed.id), feed]));
+                const ordered = aiIds
+                    .map((id) => byId.get(id))
+                    .filter((feed: any) => feed !== undefined);
+
+                return c.json({
+                    size: ordered.length,
+                    data: ordered.slice(0, limit_num),
+                    hasNext: false,
+                    mode: 'ai',
+                });
+            }
+
+            aiFallbackReason = aiResult.fallbackReason;
+        }
+
         const cacheKey = `search_${keyword}`;
         const searchKeyword = `%${keyword}%`;
         const whereClause = or(
@@ -540,15 +591,20 @@ export function SearchService(): Hono<{
             };
         });
 
+        const fallbackFields = aiFallbackReason
+            ? { mode: 'keyword' as const, fallbackReason: aiFallbackReason }
+            : {};
+
         if (feed_list.length <= page_num * limit_num) {
-            return c.json({ size: feed_list.length, data: [], hasNext: false });
+            return c.json({ size: feed_list.length, data: [], hasNext: false, ...fallbackFields });
         } else if (feed_list.length <= page_num * limit_num + limit_num) {
-            return c.json({ size: feed_list.length, data: feed_list.slice(page_num * limit_num), hasNext: false });
+            return c.json({ size: feed_list.length, data: feed_list.slice(page_num * limit_num), hasNext: false, ...fallbackFields });
         } else {
             return c.json({
                 size: feed_list.length,
                 data: feed_list.slice(page_num * limit_num, page_num * limit_num + limit_num),
-                hasNext: true
+                hasNext: true,
+                ...fallbackFields
             });
         }
     });

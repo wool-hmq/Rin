@@ -301,6 +301,13 @@ export interface UploadResponse {
 // Search Types
 // ============================================================================
 
+export type SearchMode = "keyword" | "ai";
+
+export type SearchResponse = FeedListResponse & {
+  mode?: SearchMode;
+  fallbackReason?: string;
+};
+
 // Uses FeedListResponse
 
 // ============================================================================

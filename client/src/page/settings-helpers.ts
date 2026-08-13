@@ -235,6 +235,8 @@ export function buildAIConfigDraftValue(
     apiKeySet: hasStoredAiApiKey || String(serverConfig["ai_summary.api_key"] ?? "").trim().length > 0,
     apiUrl: String(serverConfig["ai_summary.api_url"] ?? ""),
     failover: normalizeAIFailover(serverConfig["ai_summary.failover"]),
+    aiSearchEnabled:
+      serverConfig["ai_search.enabled"] === true || serverConfig["ai_search.enabled"] === "true",
   };
 }
 

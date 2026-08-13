@@ -33,6 +33,8 @@ import type {
   AuthStatus,
   LoginRequest,
   LoginResponse,
+  SearchResponse,
+  SearchMode,
 } from "@rin/api";
 
 export interface SettingsConfigResponse {
@@ -132,6 +134,8 @@ export type {
   RequestOptions,
   Feed,
   FeedListResponse,
+  SearchResponse,
+  SearchMode,
   TimelineItem,
   CreateFeedRequest,
   UpdateFeedRequest,
@@ -583,13 +587,14 @@ class SearchAPI {
   constructor(private http: HttpClient) {}
 
   // GET /api/search/:keyword
-  async search(keyword: string, params?: { page?: number; limit?: number }): Promise<ApiResponse<FeedListResponse>> {
+  async search(keyword: string, params?: { page?: number; limit?: number; mode?: SearchMode }): Promise<ApiResponse<SearchResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", params.page.toString());
     if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.mode) searchParams.set("mode", params.mode);
 
     const query = searchParams.toString();
-    return this.http.get<FeedListResponse>(`/api/search/${encodeURIComponent(keyword)}${query ? `?${query}` : ""}`);
+    return this.http.get<SearchResponse>(`/api/search/${encodeURIComponent(keyword)}${query ? `?${query}` : ""}`);
   }
 }
 

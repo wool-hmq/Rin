@@ -19,6 +19,7 @@ export const CLIENT_CONFIG_DEFAULTS = new Map(
     "site.description": "A lightweight personal blogging system",
     "site.avatar": "",
     "site.page_size": 5,
+    "ai_search.enabled": false,
   }),
 );
 
@@ -40,6 +41,9 @@ export const CLIENT_CONFIG_ENV_DEFAULTS: Record<string, string> = {
   "site.avatar": "AVATAR",
   "site.page_size": "PAGE_SIZE",
 };
+
+export const AI_SEARCH_ENABLED_KEY = "ai_search.enabled";
+export const DEFAULT_AI_SEARCH_ENABLED = false;
 
 export const AI_CONFIG_PREFIX = "ai_summary.";
 

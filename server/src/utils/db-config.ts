@@ -1,5 +1,5 @@
 import type { AIConfig, AISummaryFailoverItem } from "@rin/api";
-import { AI_CONFIG_PREFIX, DEFAULT_AI_CONFIG } from "@rin/config";
+import { AI_CONFIG_PREFIX, AI_SEARCH_ENABLED_KEY, DEFAULT_AI_CONFIG, DEFAULT_AI_SEARCH_ENABLED } from "@rin/config";
 
 type ConfigReader = {
     get(key: string): Promise<unknown>;
@@ -134,6 +134,11 @@ export async function getAIConfig(config: ConfigReader): Promise<AIConfig> {
 export async function getFrontendAIEnabled(config: ConfigReader): Promise<boolean> {
     const enabled = await config.get(AI_CONFIG_PREFIX + "enabled");
     return enabled == null ? DEFAULT_AI_CONFIG.enabled : enabled === true || enabled === "true";
+}
+
+export async function getAISearchEnabled(config: ConfigReader): Promise<boolean> {
+    const enabled = await config.get(AI_SEARCH_ENABLED_KEY);
+    return enabled == null ? DEFAULT_AI_SEARCH_ENABLED : enabled === true || enabled === "true";
 }
 
 export async function setAIConfig(config: ConfigWriter, updates: Partial<AIConfig>): Promise<void> {

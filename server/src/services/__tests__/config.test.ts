@@ -522,6 +522,31 @@ describe("ConfigService", () => {
             expect(data["ai_summary.model"]).toBe("gpt-4o-mini");
         });
 
+        it("should save AI search switch to server config storage", async () => {
+            const res = await app.request("/server", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer mock_token_1",
+                },
+                body: JSON.stringify({
+                    "ai_search.enabled": "true",
+                }),
+            });
+
+            expect(res.status).toBe(200);
+
+            const getRes = await app.request("/server", {
+                method: "GET",
+                headers: {
+                    Authorization: "Bearer mock_token_1",
+                },
+            });
+            expect(getRes.status).toBe(200);
+            const data = await getRes.json() as Record<string, any>;
+            expect(data["ai_search.enabled"]).toBe("true");
+        });
+
         it("should return 400 for invalid config type", async () => {
             const res = await app.request("/invalid", {
                 method: "POST",

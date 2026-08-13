@@ -33,6 +33,7 @@ export type AISettingsValue = {
   apiUrl: string;
   customCode?: string;
   failover: AIFailoverItem[];
+  aiSearchEnabled: boolean;
 };
 
 export function AISummarySettings({
@@ -199,6 +200,25 @@ export function AISummarySettings({
               checked={value.enabled}
               onCheckedChange={(checked) => {
                 onChange({ enabled: checked });
+              }}
+            >
+              <Switch.Thumb className="SwitchThumb" />
+            </Switch.Root>
+          }
+        />
+        <SettingsCardRow
+          header={
+            <SettingsCardHeader
+              title={t("settings.ai_summary.search.enable.title")}
+              description={t("settings.ai_summary.search.enable.desc")}
+            />
+          }
+          action={
+            <Switch.Root
+              className="SwitchRoot"
+              checked={value.aiSearchEnabled}
+              onCheckedChange={(checked) => {
+                onChange({ aiSearchEnabled: checked });
               }}
             >
               <Switch.Thumb className="SwitchThumb" />

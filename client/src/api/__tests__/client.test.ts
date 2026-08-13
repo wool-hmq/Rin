@@ -110,6 +110,69 @@ describe('API Client', () => {
     })
   })
 
+  describe('Search API', () => {
+    it('should search feeds in keyword mode by default', async () => {
+      const mockResponse = { size: 1, data: [{ id: 1, title: 'TypeScript Tips' }], hasNext: false }
+
+      mockFetch.mockResolvedValueOnce(createMockResponse({
+        ok: true,
+        headers: new Map([['content-type', 'application/json']]),
+        json: async () => mockResponse,
+      }))
+
+      const result = await api.search.search('TypeScript')
+
+      expect(result.data).toEqual(mockResponse)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost/api/search/TypeScript',
+        expect.any(Object)
+      )
+    })
+
+    it('should search feeds in AI mode with mode query parameter', async () => {
+      const mockResponse = {
+        size: 1,
+        data: [{ id: 2, title: 'Alpha Beta' }],
+        hasNext: false,
+        mode: 'ai',
+      }
+
+      mockFetch.mockResolvedValueOnce(createMockResponse({
+        ok: true,
+        headers: new Map([['content-type', 'application/json']]),
+        json: async () => mockResponse,
+      }))
+
+      const result = await api.search.search('Alpha', { mode: 'ai' })
+
+      expect(result.data).toEqual(mockResponse)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost/api/search/Alpha?mode=ai',
+        expect.any(Object)
+      )
+    })
+
+    it('should surface fallback reason from the server', async () => {
+      const mockResponse = {
+        size: 1,
+        data: [{ id: 1, title: 'TypeScript Tips' }],
+        hasNext: false,
+        mode: 'keyword',
+        fallbackReason: 'ai_search.disabled',
+      }
+
+      mockFetch.mockResolvedValueOnce(createMockResponse({
+        ok: true,
+        headers: new Map([['content-type', 'application/json']]),
+        json: async () => mockResponse,
+      }))
+
+      const result = await api.search.search('TypeScript', { mode: 'ai' })
+
+      expect(result.data).toMatchObject({ mode: 'keyword', fallbackReason: 'ai_search.disabled' })
+    })
+  })
+
   describe('Tag API', () => {
     it('should fetch all tags', async () => {
       const mockResponse = [

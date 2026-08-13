@@ -4,7 +4,7 @@ import {
   SENSITIVE_SERVER_CONFIG_FIELDS,
   WEBHOOK_URL_KEY,
 } from "@rin/config";
-import { getFrontendAIEnabled, readAIConfigFromMap } from "../utils/db-config";
+import { getAISearchEnabled, getFrontendAIEnabled, readAIConfigFromMap } from "../utils/db-config";
 
 type ConfigMapLike = {
   all(): Promise<Map<string, unknown>>;
@@ -239,10 +239,14 @@ export async function buildClientConfigResponse(
   const aiEnabled = profile
     ? await profile("client_ai_enabled", () => getFrontendAIEnabled(serverConfig))
     : await getFrontendAIEnabled(serverConfig);
+  const aiSearchEnabled = profile
+    ? await profile("client_ai_search_enabled", () => getAISearchEnabled(serverConfig))
+    : await getAISearchEnabled(serverConfig);
 
   return {
     ...clientConfigData,
     "ai_summary.enabled": aiEnabled,
+    "ai_search.enabled": aiSearchEnabled,
   };
 }
 

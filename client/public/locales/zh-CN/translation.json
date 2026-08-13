@@ -68,7 +68,18 @@
     "search": {
       "placeholder": "请输入关键字",
       "title": "搜索",
-      "title$keyword": "搜索：{{keyword}}"
+      "title$keyword": "搜索：{{keyword}}",
+      "mode": {
+        "keyword": "关键字",
+        "ai": "AI 增强"
+      },
+      "ai_unavailable": "管理员未启用 AI 搜索",
+      "fallback": "已回退到关键字搜索（{{reason}}）",
+      "reason": {
+        "ai_search.disabled": "AI 搜索未启用",
+        "ai_unconfigured": "未配置 AI 模型",
+        "llm_failed": "AI 服务调用失败"
+      }
     },
     "title": "文章",
     "top": {
@@ -437,6 +448,12 @@
         "title": "备选模型队列",
         "desc": "主模型无回复或出错时，按顺序依次尝试备选模型，直到有模型返回摘要（每个备选条目使用各自的 API Key）",
         "add": "添加备选模型"
+      },
+      "search": {
+        "enable": {
+          "title": "启用 AI 搜索",
+          "desc": "在搜索页提供 AI 增强搜索，复用 AI 总结的模型配置"
+        }
       }
     },
     "get_config_failed$message": "获取配置失败，{{message}}",
