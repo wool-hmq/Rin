@@ -478,6 +478,28 @@ describe("ConfigService", () => {
             expect(res.status).toBe(200);
         });
 
+        it("should allow admin to update announcement content", async () => {
+            const res = await app.request("/client", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer mock_token_1",
+                },
+                body: JSON.stringify({
+                    "announcement.content": "欢迎来到本站",
+                }),
+            });
+
+            expect(res.status).toBe(200);
+
+            const getRes = await app.request("/client", {
+                method: "GET",
+            });
+            expect(getRes.status).toBe(200);
+            const data = await getRes.json() as Record<string, any>;
+            expect(data["announcement.content"]).toBe("欢迎来到本站");
+        });
+
         it("should allow admin to update server config", async () => {
             const res = await app.request("/server", {
                 method: "POST",

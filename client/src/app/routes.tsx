@@ -3,6 +3,7 @@ import { useContext } from "react";
 import type { DefaultParams, PathPattern } from "wouter";
 import { Route, Switch } from "wouter";
 import { AdminLayout } from "../components/admin-layout";
+import { AnnouncementBar } from "../components/announcement-bar";
 import Footer from "../components/footer";
 import { Header } from "../components/header";
 import { Padding } from "../components/padding";
@@ -182,7 +183,12 @@ function AppRoute({
 
         return layoutDefinition.renderRouteShell({
           header: <Header>{headerComponent}</Header>,
-          content: <Padding className={paddingClassName}>{resolvedContent}</Padding>,
+          content: (
+            <>
+              <AnnouncementBar />
+              <Padding className={paddingClassName}>{resolvedContent}</Padding>
+            </>
+          ),
           footer: <Footer />,
           paddingClassName,
         });

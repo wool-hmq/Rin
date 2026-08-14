@@ -495,6 +495,11 @@
         "title": "Page Size",
         "desc": "Set the number of articles displayed per page in the list",
         "label": "Articles per page"
+      },
+      "announcement": {
+        "title": "Site Announcement",
+        "desc": "Show a scrolling announcement bar (red text on black) below the header; leave empty to hide",
+        "label": "Announcement content"
       }
     },
     "header_layout": {

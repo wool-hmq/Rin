@@ -232,6 +232,16 @@ export function Settings() {
               setConfigValue("client", "site.page_size", value);
             }}
           />
+          <ItemInput
+            title={t("settings.site.announcement.title")}
+            description={t("settings.site.announcement.desc")}
+            configKeyTitle={t("settings.site.announcement.label")}
+            value={String(clientConfig.get("announcement.content") ?? "")}
+            placeholder={String(clientConfig.default("announcement.content") ?? t("settings.site.announcement.label"))}
+            onChange={(value) => {
+              setConfigValue("client", "announcement.content", value);
+            }}
+          />
 
           <ItemTitle title={t("settings.personalization.title")} />
           <div className="w-full">
