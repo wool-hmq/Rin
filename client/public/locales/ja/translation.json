@@ -389,7 +389,7 @@
       "title": "友リンク設定"
     },
     "ai_summary": {
-      "title": "AI 要約設定",
+      "title": "AI 設定",
       "enable": {
         "title": "AI 要約を有効にする",
         "desc": "記事公開時に AI 要約を自動生成"

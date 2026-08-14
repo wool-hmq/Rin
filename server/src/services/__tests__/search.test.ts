@@ -64,6 +64,41 @@ describe("SearchService", () => {
         expect(data.data[0].title).toBe("TypeScript Tips");
     });
 
+    it("matches only consecutive keywords in the title for keyword mode", async () => {
+        const insert = (title: string, content: string) =>
+            sqlite.query(
+                `INSERT INTO feeds (title, content, summary, ai_summary, uid, draft, listed) VALUES (?, ?, '', '', 1, 0, 1)`,
+            ).run(title, content);
+
+        insert("TypeScript Guide", "content about typescript everywhere");
+        insert("Guide TypeScript", "content too");
+        insert("Other Post", "a full TypeScript Guide in content only");
+
+        const res = await app.request("/TypeScript%20Guide", { method: "GET" }, env);
+
+        expect(res.status).toBe(200);
+        const data = (await res.json()) as any;
+        expect(data.data).toHaveLength(1);
+        expect(data.data[0].title).toBe("TypeScript Guide");
+    });
+
+    it("excludes unlisted feeds from keyword mode", async () => {
+        const insert = (title: string, listed: number, draft: number) =>
+            sqlite.query(
+                `INSERT INTO feeds (title, content, summary, ai_summary, uid, draft, listed) VALUES (?, '', '', '', 1, ?, ?)`,
+            ).run(title, draft, listed);
+
+        insert("Listed Post", 1, 0);
+        insert("Unlisted Post", 0, 0);
+
+        const res = await app.request("/Post", { method: "GET" }, env);
+
+        expect(res.status).toBe(200);
+        const data = (await res.json()) as any;
+        expect(data.data).toHaveLength(1);
+        expect(data.data[0].title).toBe("Listed Post");
+    });
+
     it("returns feeds ranked by the LLM in AI mode", async () => {
         const firstId = await createFeed("Alpha Post");
         const secondId = await createFeed("Alpha Beta");

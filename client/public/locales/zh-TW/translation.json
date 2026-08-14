@@ -398,7 +398,7 @@
       "title": "友情連結設定"
     },
     "ai_summary": {
-      "title": "AI 總結設定",
+      "title": "AI 設定",
       "enable": {
         "title": "啟用 AI 總結",
         "desc": "發佈文章時自動產生 AI 總結"

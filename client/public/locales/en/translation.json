@@ -398,7 +398,7 @@
       "title": "Friend Link Settings"
     },
     "ai_summary": {
-      "title": "AI Summary Settings",
+      "title": "AI Settings",
       "enable": {
         "title": "Enable AI Summary",
         "desc": "Automatically generate AI summary when publishing articles"

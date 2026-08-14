@@ -206,6 +206,9 @@ export function AISummarySettings({
             </Switch.Root>
           }
         />
+      </SettingsCard>
+
+      <SettingsCard>
         <SettingsCardRow
           header={
             <SettingsCardHeader

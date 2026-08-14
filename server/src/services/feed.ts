@@ -527,7 +527,7 @@ export function SearchService(): Hono<{
                 }
 
                 const aiFeedList = (await db.query.feeds.findMany({
-                    where: and(eq(feeds.draft, 0), inArray(feeds.id, numericIds)),
+                    where: and(eq(feeds.draft, 0), eq(feeds.listed, 1), inArray(feeds.id, numericIds)),
                     columns: { draft: false, listed: false },
                     with: {
                         hashtags: {
@@ -564,15 +564,12 @@ export function SearchService(): Hono<{
 
         const cacheKey = `search_${keyword}`;
         const searchKeyword = `%${keyword}%`;
-        const whereClause = or(
-            like(feeds.title, searchKeyword),
-            like(feeds.content, searchKeyword),
-            like(feeds.summary, searchKeyword),
-            like(feeds.alias, searchKeyword)
-        );
+        const whereClause = like(feeds.title, searchKeyword);
 
         const feed_list = (await profileAsync(c, 'feed_search_cache_db', () => cache.getOrSet(cacheKey, () => db.query.feeds.findMany({
-            where: admin ? whereClause : and(whereClause, eq(feeds.draft, 0)),
+            where: admin
+                ? and(whereClause, eq(feeds.listed, 1))
+                : and(whereClause, eq(feeds.draft, 0), eq(feeds.listed, 1)),
             columns: admin ? undefined : { draft: false, listed: false },
             with: {
                 hashtags: {

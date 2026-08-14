@@ -37,17 +37,23 @@ describe("getAISearchCandidates", () => {
     const { db, sqlite } = createMockDB();
     sqlite.exec(`
       INSERT INTO users (id, username, avatar, openid, permission) VALUES (1, 'u', '', 'o', 0);
-      INSERT INTO feeds (id, title, content, summary, ai_summary, uid, draft) VALUES
-        (1, 'TypeScript Tips', 'content one', 'sum one', '', 1, 0),
-        (2, 'Rust Notes', 'content two', 'sum two', '', 1, 0),
-        (3, 'TypeScript Draft', 'content three', '', '', 1, 1);
+      INSERT INTO feeds (id, title, content, summary, ai_summary, uid, draft, listed) VALUES
+        (1, 'TypeScript Tips', 'content one', 'sum one', '', 1, 0, 1),
+        (2, 'Rust Notes', 'content two', 'sum two', '', 1, 0, 1),
+        (3, 'TypeScript Draft', 'content three', '', '', 1, 1, 1),
+        (4, 'TypeScript Hidden', 'content four', '', '', 1, 0, 0);
     `);
 
     const { getAISearchCandidates } = await import("../ai-search");
     const rows = await getAISearchCandidates(db, "TypeScript");
 
-    expect(rows.map((row) => row.id)).toEqual([1]);
-    expect(rows[0]).toMatchObject({ title: "TypeScript Tips", summary: "sum one", ai_summary: "" });
+    const ids = rows.map((row) => row.id);
+    expect(ids).toContain(1);
+    expect(ids).not.toContain(3);
+    expect(ids).not.toContain(4);
+    expect(rows[0].id).toBe(1);
+    expect(rows[0].title).toBe("TypeScript Tips");
+    expect(rows[0].hits).toContain("标题完整命中全部搜索词");
     cleanupTestDB(sqlite);
   });
 
@@ -66,6 +72,55 @@ describe("getAISearchCandidates", () => {
     expect(rows).toHaveLength(1);
     cleanupTestDB(sqlite);
   });
+
+  it("recalls loosely matching titles via 2-gram units", async () => {
+    const { db, sqlite } = createMockDB();
+    sqlite.exec(`
+      INSERT INTO users (id, username, avatar, openid, permission) VALUES (1, 'u', '', 'o', 0);
+      INSERT INTO feeds (id, title, content, summary, ai_summary, uid, draft, listed) VALUES
+        (1, 'AABBCC', 'content', '', '', 1, 0, 1);
+    `);
+
+    const { getAISearchCandidates } = await import("../ai-search");
+    const rows = await getAISearchCandidates(db, "AACC");
+
+    expect(rows.map((row) => row.id)).toEqual([1]);
+    expect(rows[0].hits).toContain("标题部分命中 1/1 个搜索词");
+    cleanupTestDB(sqlite);
+  });
+
+  it("recalls posts whose ai_summary matches a search term", async () => {
+    const { db, sqlite } = createMockDB();
+    sqlite.exec(`
+      INSERT INTO users (id, username, avatar, openid, permission) VALUES (1, 'u', '', 'o', 0);
+      INSERT INTO feeds (id, title, content, summary, ai_summary, uid, draft, listed) VALUES
+        (1, 'Post A', 'content', 'intro', 'AAA通过cloudflare，使XXX实现CCC效果', 1, 0, 1);
+    `);
+
+    const { getAISearchCandidates } = await import("../ai-search");
+    const rows = await getAISearchCandidates(db, "使用cloudflare实现CCC功能");
+
+    expect(rows.map((row) => row.id)).toEqual([1]);
+    expect(rows[0].hits).toContain("AI总结部分命中 1/1 个搜索词");
+    cleanupTestDB(sqlite);
+  });
+});
+
+describe("tokenizeKeyword and buildMatchUnits", () => {
+  it("tokenizes by whitespace and punctuation", async () => {
+    const { tokenizeKeyword } = await import("../ai-search");
+    expect(tokenizeKeyword("AABB 使用cloudflare实现，CCC")).toEqual(["AABB", "使用cloudflare实现", "CCC"]);
+    expect(tokenizeKeyword("   ")).toEqual([]);
+  });
+
+  it("builds 2-gram units for long terms", async () => {
+    const { buildMatchUnits } = await import("../ai-search");
+    const units = buildMatchUnits("AACC");
+    expect(units).toContain("AACC");
+    expect(units).toContain("AA");
+    expect(units).toContain("CC");
+    expect(buildMatchUnits("AB")).toEqual(["AB"]);
+  });
 });
 
 describe("buildSearchPrompt", () => {
@@ -82,6 +137,17 @@ describe("buildSearchPrompt", () => {
     expect(messages[1].content).toContain("[id: 7] 标题：Hello World");
     expect(messages[1].content).toContain("简介：A short intro");
     expect(messages[1].content).toContain("AI 总结：AI recap");
+  });
+
+  it("includes hit hints in the prompt when present", async () => {
+    const { buildSearchPrompt } = await import("../ai-search");
+    const candidates: AISearchCandidate[] = [
+      { id: 7, title: "AABBCC", summary: "", ai_summary: "", hits: "标题命中全部搜索词" },
+    ];
+
+    const messages = buildSearchPrompt("AACC", candidates);
+
+    expect(messages[1].content).toContain("命中情况：标题命中全部搜索词");
   });
 
   it("truncates long title, summary and ai_summary fields", async () => {

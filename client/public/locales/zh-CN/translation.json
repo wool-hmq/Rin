@@ -398,7 +398,7 @@
       "title": "友链设置"
     },
     "ai_summary": {
-      "title": "AI 总结设置",
+      "title": "AI 设置",
       "enable": {
         "title": "启用 AI 总结",
         "desc": "发布文章时自动生成 AI 总结"
