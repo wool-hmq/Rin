@@ -20,6 +20,7 @@ export const CLIENT_CONFIG_DEFAULTS = new Map(
     "site.avatar": "",
     "site.page_size": 5,
     "announcement.content": "",
+    "announcement.speed": 22,
     "ai_search.enabled": false,
   }),
 );

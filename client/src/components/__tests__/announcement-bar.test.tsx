@@ -45,4 +45,22 @@ describe("AnnouncementBar", () => {
     const { container } = renderWithConfig({ "announcement.content": "   " });
     expect(container.querySelector(".announcement-bar")).toBeNull();
   });
+
+  it("should apply configured scroll speed as animation duration", () => {
+    const { container } = renderWithConfig({ "announcement.content": "欢迎", "announcement.speed": 10 });
+    const track = container.querySelector(".announcement-track") as HTMLElement;
+    expect(track.style.animationDuration).toBe("10s");
+  });
+
+  it("should fall back to default duration when speed is invalid", () => {
+    const { container } = renderWithConfig({ "announcement.content": "欢迎", "announcement.speed": "abc" });
+    const track = container.querySelector(".announcement-track") as HTMLElement;
+    expect(track.style.animationDuration).toBe("22s");
+  });
+
+  it("should fall back to default duration when speed is missing", () => {
+    const { container } = renderWithConfig({ "announcement.content": "欢迎" });
+    const track = container.querySelector(".announcement-track") as HTMLElement;
+    expect(track.style.animationDuration).toBe("22s");
+  });
 });

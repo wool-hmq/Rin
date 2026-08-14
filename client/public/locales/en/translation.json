@@ -500,6 +500,11 @@
         "title": "Site Announcement",
         "desc": "Show a scrolling announcement bar (red text on black) below the header; leave empty to hide",
         "label": "Announcement content"
+      },
+      "announcement_speed": {
+        "title": "Announcement Scroll Speed",
+        "desc": "Seconds for one full announcement scroll; larger values scroll slower",
+        "label": "Scroll speed (seconds)"
       }
     },
     "header_layout": {

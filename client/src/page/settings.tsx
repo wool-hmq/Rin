@@ -242,6 +242,16 @@ export function Settings() {
               setConfigValue("client", "announcement.content", value);
             }}
           />
+          <ItemInput
+            title={t("settings.site.announcement_speed.title")}
+            description={t("settings.site.announcement_speed.desc")}
+            configKeyTitle={t("settings.site.announcement_speed.label")}
+            value={String(clientConfig.get("announcement.speed") ?? "")}
+            placeholder={String(clientConfig.default("announcement.speed") ?? "22")}
+            onChange={(value) => {
+              setConfigValue("client", "announcement.speed", value);
+            }}
+          />
 
           <ItemTitle title={t("settings.personalization.title")} />
           <div className="w-full">
