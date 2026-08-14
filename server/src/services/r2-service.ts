@@ -4,6 +4,12 @@ import { profileAsync } from "../core/server-timing";
 import { resolveStorageTarget, putStorageObjectAtKey, getStorageObject } from "../utils/storage";
 import { createS3Client } from "../utils/s3";
 
+const EDITABLE_EXTENSIONS = new Set([
+  "json", "txt", "md", "html", "htm", "css", "js", "mjs", "cjs",
+  "ts", "tsx", "jsx", "yml", "yaml", "xml", "svg", "ini", "toml",
+  "conf", "log", "csv",
+]);
+
 // 列出 R2 中的文件
 async function listR2Objects(env: Env, prefix?: string, delimiter?: string) {
   const target = resolveStorageTarget(env);
@@ -114,6 +120,71 @@ export function R2Service(): Hono {
     } catch (e: any) {
       console.error("R2 upload failed:", e);
       return c.text(e.message || "Upload failed", 500);
+    }
+  });
+
+  // GET /r2/:key - 下载或读取文件内容
+  app.get("/:key", async (c: AppContext) => {
+    const uid = c.get("uid");
+    if (!uid) {
+      return c.text("Unauthorized", 401);
+    }
+
+    const env = c.get("env");
+    const key = decodeURIComponent(c.req.param("key"));
+
+    if (!key) {
+      return c.text("Missing key", 400);
+    }
+
+    try {
+      const response = await profileAsync(c, "r2_get", () => getStorageObject(env, key));
+      if (!response) {
+        return c.text("Not found", 404);
+      }
+
+      const headers = new Headers(response.headers);
+      const download = c.req.query("download") === "1";
+      if (download) {
+        const filename = key.split("/").pop() || "file";
+        headers.set("Content-Disposition", `attachment; filename="${filename}"`);
+      }
+      return new Response(response.body, { status: response.status, headers });
+    } catch (e: any) {
+      console.error("R2 get failed:", e);
+      return c.text(e.message || "Get failed", 500);
+    }
+  });
+
+  // PUT /r2/:key - 更新文件文本内容
+  app.put("/:key", async (c: AppContext) => {
+    const uid = c.get("uid");
+    if (!uid) {
+      return c.text("Unauthorized", 401);
+    }
+
+    const env = c.get("env");
+    const key = decodeURIComponent(c.req.param("key"));
+
+    if (!key) {
+      return c.text("Missing key", 400);
+    }
+
+    const ext = key.includes(".") ? key.split(".").pop()!.toLowerCase() : "";
+    if (!EDITABLE_EXTENSIONS.has(ext)) {
+      return c.text("File type is not editable", 400);
+    }
+
+    try {
+      const body = await c.req.text();
+      const contentType = c.req.header("content-type") || "text/plain;charset=UTF-8";
+      await profileAsync(c, "r2_put", () =>
+        putStorageObjectAtKey(env, key, body, contentType)
+      );
+      return c.json({ success: true, key });
+    } catch (e: any) {
+      console.error("R2 update failed:", e);
+      return c.text(e.message || "Update failed", 500);
     }
   });
 

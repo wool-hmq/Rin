@@ -168,6 +168,10 @@ export type {
 class HttpClient {
   constructor(private baseUrl: string) {}
 
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   private async request<T>(
     method: string,
     path: string,
@@ -686,6 +690,49 @@ class R2API {
   // 删除文件
   async delete(body: { key: string }): Promise<ApiResponse<void>> {
     return this.http.delete<void>(`/api/r2/${encodeURIComponent(body.key)}`);
+  }
+
+  // 读取文件原始文本内容（返回原始文本，避免 JSON 内容被解析）
+  async readText(key: string): Promise<ApiResponse<string>> {
+    try {
+      const response = await fetch(`${this.http.getBaseUrl()}/api/r2/${encodeURIComponent(key)}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        return { error: { status: response.status, value: await response.text() } };
+      }
+      return { data: await response.text() };
+    } catch (error) {
+      return {
+        error: {
+          status: 0,
+          value: error instanceof Error ? error.message : "Network error",
+        },
+      };
+    }
+  }
+
+  // 更新文件文本内容
+  async updateText(key: string, content: string, contentType = "text/plain"): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${this.http.getBaseUrl()}/api/r2/${encodeURIComponent(key)}`, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body: content,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        return { error: { status: response.status, value: await response.text() } };
+      }
+      return { data: undefined };
+    } catch (error) {
+      return {
+        error: {
+          status: 0,
+          value: error instanceof Error ? error.message : "Network error",
+        },
+      };
+    }
   }
 }
 
