@@ -55,6 +55,7 @@ export const AI_CONFIG_KEYS = [
   `${AI_CONFIG_PREFIX}model`,
   `${AI_CONFIG_PREFIX}api_key`,
   `${AI_CONFIG_PREFIX}api_url`,
+  `${AI_CONFIG_PREFIX}retries`,
   `${AI_CONFIG_PREFIX}failover`,
 ] as const;
 
@@ -66,6 +67,7 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
   model: "gpt-4o-mini",
   api_key: "",
   api_url: "https://api.openai.com/v1",
+  retries: 0,
   failover: [],
 };
 

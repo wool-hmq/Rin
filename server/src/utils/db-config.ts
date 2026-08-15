@@ -10,9 +10,17 @@ type ConfigWriter = ConfigReader & {
     save(): Promise<void>;
 };
 
-const AI_CONFIG_FIELDS = ["enabled", "provider", "model", "api_key", "api_url", "failover"] as const;
+const AI_CONFIG_FIELDS = ["enabled", "provider", "model", "api_key", "api_url", "retries", "failover"] as const;
 
 const MASKED_SECRET = "••••••••";
+
+function parseRetries(value: unknown, fallback = 0): number {
+    const num = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(num) || num < 0) {
+        return fallback;
+    }
+    return Math.floor(num);
+}
 
 function parseFailover(value: unknown): AISummaryFailoverItem[] {
     if (!Array.isArray(value)) {
@@ -26,6 +34,7 @@ function parseFailover(value: unknown): AISummaryFailoverItem[] {
             model: typeof item.model === "string" ? item.model : "",
             api_key: typeof item.api_key === "string" ? item.api_key : "",
             api_url: typeof item.api_url === "string" ? item.api_url : "",
+            retries: parseRetries(item.retries),
         }))
         .filter((item) => item.provider.length > 0 && item.model.length > 0);
 }
@@ -75,6 +84,7 @@ function serializeFailover(
             model: typeof item.model === "string" ? item.model : "",
             api_key: typeof item.api_key === "string" ? item.api_key : "",
             api_url: typeof item.api_url === "string" ? item.api_url : "",
+            retries: parseRetries(item.retries),
         })),
         previous,
     );
@@ -107,6 +117,11 @@ export function readAIConfigFromValues(values: Record<string, unknown>): AIConfi
     const apiUrl = values[AI_CONFIG_PREFIX + "api_url"];
     if (typeof apiUrl === "string") {
         config.api_url = apiUrl;
+    }
+
+    const retries = values[AI_CONFIG_PREFIX + "retries"];
+    if (retries != null) {
+        config.retries = parseRetries(retries);
     }
 
     const failover = values[AI_CONFIG_PREFIX + "failover"];

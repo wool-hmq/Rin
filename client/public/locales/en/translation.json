@@ -449,6 +449,14 @@
         "desc": "When the primary model has no response or fails, try each fallback model in order until one returns a summary (each fallback entry uses its own API Key)",
         "add": "Add Fallback Model"
       },
+      "retries": {
+        "title": "Retry Count",
+        "desc": "Retry count for the current model before switching to the next one",
+        "primary": "Primary retry count",
+        "primary_desc": "Retries for the primary model before switching to a fallback",
+        "failover": "Fallback retry count",
+        "failover_desc": "Retries for this fallback model before trying the next one"
+      },
       "search": {
         "enable": {
           "title": "Enable AI Search",

@@ -278,6 +278,8 @@ export interface AISummaryFailoverItem {
   api_key: string;
   /** 该条目独立的 API URL（OpenAI 兼容 Base URL，custom provider 必填） */
   api_url: string;
+  /** 该条目的失败重试次数，超出后才切换到下一个模型 */
+  retries: number;
 }
 
 export interface AIConfig {
@@ -286,6 +288,8 @@ export interface AIConfig {
   model: string;
   api_key: string;
   api_url: string;
+  /** 主用模型失败重试次数，超出后才切换到备用模型 */
+  retries: number;
   failover: AISummaryFailoverItem[];
 }
 

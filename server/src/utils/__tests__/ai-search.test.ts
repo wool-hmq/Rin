@@ -29,6 +29,7 @@ const enabledConfig: AIConfig = {
   model: "gpt-4o-mini",
   api_key: "secret",
   api_url: "https://api.openai.com/v1",
+  retries: 0,
   failover: [],
 };
 
@@ -314,7 +315,7 @@ describe("runAISearchOnCandidates", () => {
       {} as Env,
       createConfigReader({
         ...enabledConfig,
-        failover: [{ provider: "deepseek", model: "deepseek-chat", api_key: "fallback-key", api_url: "" }],
+        failover: [{ provider: "deepseek", model: "deepseek-chat", api_key: "fallback-key", api_url: "", retries: 0 }],
       }),
       "keyword",
       [{ id: 1, title: "A", summary: "", ai_summary: "" }],

@@ -223,10 +223,10 @@ export type AICompletionResult = {
 
 function buildAIAttempts(
     config: AIConfig,
-): Array<{ provider: string; model: string; apiUrl: string; apiKey: string }> {
-    const { provider, model } = config;
-    const attempts: Array<{ provider: string; model: string; apiUrl: string; apiKey: string }> = [
-        { provider, model, apiUrl: config.api_url, apiKey: config.api_key },
+): Array<{ provider: string; model: string; apiUrl: string; apiKey: string; retries: number }> {
+    const { provider, model, retries } = config;
+    const attempts: Array<{ provider: string; model: string; apiUrl: string; apiKey: string; retries: number }> = [
+        { provider, model, apiUrl: config.api_url, apiKey: config.api_key, retries: retries ?? 0 },
     ];
     for (const item of config.failover || []) {
         if (!item.provider || !item.model) {
@@ -240,6 +240,7 @@ function buildAIAttempts(
             model: item.model,
             apiUrl: item.api_url || AI_PROVIDER_URLS[item.provider] || "",
             apiKey: item.api_key || "",
+            retries: item.retries ?? 0,
         });
     }
     return attempts;
@@ -265,47 +266,54 @@ export async function executeAICompletion(
     const errors: string[] = [];
 
     for (const attempt of attempts) {
-        try {
-            let result: string | null;
+        const maxRetries = Math.max(0, attempt.retries);
+        let attemptError: string | null = null;
 
-            if (attempt.provider === 'worker-ai') {
-                const fullModelName = getWorkerAIModelId(attempt.model);
-                result = await executeWorkerAI(env, fullModelName, messages);
-            } else {
-                result = await executeExternalAI(
-                    {
-                        provider: attempt.provider,
-                        model: attempt.model,
-                        api_key: attempt.apiKey,
-                        api_url: attempt.apiUrl,
-                    },
-                    messages,
-                    options,
+        for (let attemptIndex = 0; attemptIndex <= maxRetries; attemptIndex++) {
+            try {
+                let result: string | null;
+
+                if (attempt.provider === 'worker-ai') {
+                    const fullModelName = getWorkerAIModelId(attempt.model);
+                    result = await executeWorkerAI(env, fullModelName, messages);
+                } else {
+                    result = await executeExternalAI(
+                        {
+                            provider: attempt.provider,
+                            model: attempt.model,
+                            api_key: attempt.apiKey,
+                            api_url: attempt.apiUrl,
+                        },
+                        messages,
+                        options,
+                    );
+                }
+
+                if (!result || !result.trim()) {
+                    attemptError = `Empty response from AI provider "${attempt.provider}" using model "${attempt.model}"`;
+                    continue;
+                }
+
+                const cleaned = stripReasoningTags(result);
+                if (!cleaned.trim()) {
+                    attemptError =
+                        `AI response contained only reasoning tags with no final answer (provider "${attempt.provider}", model "${attempt.model}")`;
+                    continue;
+                }
+
+                return { content: cleaned, skipped: false, provider: attempt.provider, model: attempt.model };
+            } catch (error) {
+                console.error(
+                    `[AI] Attempt failed (provider "${attempt.provider}", model "${attempt.model}", retry ${attemptIndex}/${maxRetries}):`,
+                    error,
                 );
+                attemptError =
+                    `provider "${attempt.provider}" model "${attempt.model}": ${error instanceof Error ? error.message : String(error)}`;
             }
+        }
 
-            if (!result || !result.trim()) {
-                errors.push(`Empty response from AI provider "${attempt.provider}" using model "${attempt.model}"`);
-                continue;
-            }
-
-            const cleaned = stripReasoningTags(result);
-            if (!cleaned.trim()) {
-                errors.push(
-                    `AI response contained only reasoning tags with no final answer (provider "${attempt.provider}", model "${attempt.model}")`,
-                );
-                continue;
-            }
-
-            return { content: cleaned, skipped: false, provider: attempt.provider, model: attempt.model };
-        } catch (error) {
-            console.error(
-                `[AI] Attempt failed (provider "${attempt.provider}", model "${attempt.model}"):`,
-                error,
-            );
-            errors.push(
-                `provider "${attempt.provider}" model "${attempt.model}": ${error instanceof Error ? error.message : String(error)}`,
-            );
+        if (attemptError) {
+            errors.push(attemptError);
         }
     }
 

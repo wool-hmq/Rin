@@ -28,6 +28,7 @@ describe("generateAISummaryResult", () => {
       model: "gpt-oss-120b",
       api_key: "",
       api_url: "",
+      retries: 0,
       failover: [],
     });
 
@@ -51,6 +52,7 @@ describe("generateAISummaryResult", () => {
       model: "gpt-oss-120b",
       api_key: "",
       api_url: "",
+      retries: 0,
       failover: [],
     });
 
@@ -85,6 +87,7 @@ describe("generateAISummaryResult", () => {
       model: "gpt-4o-mini",
       api_key: "secret",
       api_url: "https://api.openai.com/v1",
+      retries: 0,
       failover: [],
     });
 
@@ -123,7 +126,8 @@ describe("generateAISummaryResult", () => {
       model: "gpt-4o-mini",
       api_key: "primary-key",
       api_url: "https://api.openai.com/v1",
-      failover: [{ provider: "deepseek", model: "deepseek-chat", api_key: "failover-key", api_url: "" }],
+      retries: 0,
+      failover: [{ provider: "deepseek", model: "deepseek-chat", api_key: "failover-key", api_url: "", retries: 0 }],
     });
 
     const calls: Array<{ headers: Record<string, string>; body: any }> = [];
@@ -160,7 +164,8 @@ describe("generateAISummaryResult", () => {
       model: "gpt-4o-mini",
       api_key: "primary-key",
       api_url: "https://api.openai.com/v1",
-      failover: [{ provider: "custom", model: "my-model", api_key: "custom-key", api_url: "https://custom.example.com/v1" }],
+      retries: 0,
+      failover: [{ provider: "custom", model: "my-model", api_key: "custom-key", api_url: "https://custom.example.com/v1", retries: 0 }],
     });
 
     const urls: string[] = [];

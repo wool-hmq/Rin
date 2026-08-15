@@ -135,11 +135,20 @@ export function buildAIConfigUpdates(updates: Record<string, unknown>) {
   if (updates.model !== undefined) flatUpdates["ai_summary.model"] = updates.model;
   if (updates.api_url !== undefined) flatUpdates["ai_summary.api_url"] = updates.api_url;
   if (updates.api_key !== undefined) flatUpdates["ai_summary.api_key"] = updates.api_key;
+  if (updates.retries !== undefined) flatUpdates["ai_summary.retries"] = String(updates.retries);
   if (updates.failover !== undefined) flatUpdates["ai_summary.failover"] = updates.failover;
   return flatUpdates;
 }
 
-export type AIFailoverItem = { provider: string; model: string; api_key: string; api_url: string };
+export type AIFailoverItem = { provider: string; model: string; api_key: string; api_url: string; retries: number };
+
+function normalizeRetries(value: unknown, fallback = 0): number {
+  const num = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(num) || num < 0) {
+    return fallback;
+  }
+  return Math.floor(num);
+}
 
 export function normalizeAIFailover(value: unknown): AIFailoverItem[] {
   if (!Array.isArray(value)) {
@@ -153,6 +162,7 @@ export function normalizeAIFailover(value: unknown): AIFailoverItem[] {
       model: typeof item.model === "string" ? item.model : "",
       api_key: typeof item.api_key === "string" ? item.api_key : "",
       api_url: typeof item.api_url === "string" ? item.api_url : "",
+      retries: normalizeRetries(item.retries),
     }))
     .filter((item) => item.provider.length > 0 && item.model.length > 0);
 }
@@ -165,6 +175,7 @@ export async function loadAIConfigState() {
     model: data?.["ai_summary.model"] ?? "gpt-4o-mini",
     apiKeySet: data?.["ai_summary.api_key"] === "••••••••",
     apiUrl: data?.["ai_summary.api_url"] ?? "",
+    retries: Number(data?.["ai_summary.retries"] ?? 0) || 0,
     failover: normalizeAIFailover(data?.["ai_summary.failover"]),
   };
 }
@@ -234,6 +245,7 @@ export function buildAIConfigDraftValue(
     apiKey: String(serverConfig["ai_summary.api_key"] ?? ""),
     apiKeySet: hasStoredAiApiKey || String(serverConfig["ai_summary.api_key"] ?? "").trim().length > 0,
     apiUrl: String(serverConfig["ai_summary.api_url"] ?? ""),
+    retries: Number(serverConfig["ai_summary.retries"] ?? 0) || 0,
     failover: normalizeAIFailover(serverConfig["ai_summary.failover"]),
     aiSearchEnabled:
       serverConfig["ai_search.enabled"] === true || serverConfig["ai_search.enabled"] === "true",

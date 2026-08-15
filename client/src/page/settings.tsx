@@ -813,6 +813,9 @@ export function Settings() {
               if (updates.apiUrl !== undefined) {
                 setConfigValue("server", "ai_summary.api_url", updates.apiUrl);
               }
+              if (updates.retries !== undefined) {
+                setConfigValue("server", "ai_summary.retries", updates.retries);
+              }
               if (updates.apiKey !== undefined) {
                 setConfigValue("server", "ai_summary.api_key", updates.apiKey);
               }

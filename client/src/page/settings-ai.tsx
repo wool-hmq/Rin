@@ -32,6 +32,7 @@ export type AISettingsValue = {
   apiKeySet: boolean;
   apiUrl: string;
   customCode?: string;
+  retries: number;
   failover: AIFailoverItem[];
   aiSearchEnabled: boolean;
 };
@@ -230,7 +231,7 @@ export function AISummarySettings({
         />
       </SettingsCard>
 
-      {value.enabled && (
+      {(value.enabled || value.aiSearchEnabled) && (
         <>
           <SettingsCard>
             <SettingsCardRow
@@ -271,6 +272,21 @@ export function AISummarySettings({
                       placeholder="gpt-4o-mini"
                       className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium t-primary">{t("settings.ai_summary.retries.primary")}</p>
+                    <input
+                      type="number"
+                      min={0}
+                      max={20}
+                      value={value.retries}
+                      onChange={(event) => {
+                        const parsed = Number(event.target.value);
+                        onChange({ retries: Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0 });
+                      }}
+                      className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                    />
+                    <p className="text-xs text-neutral-400 dark:text-neutral-500">{t("settings.ai_summary.retries.primary_desc")}</p>
                   </div>
                   <div className="space-y-2 lg:col-span-2">
                     <p className="text-sm font-medium t-primary">
@@ -314,6 +330,21 @@ export function AISummarySettings({
                     allowCustomValue
                     customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
                   />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium t-primary">{t("settings.ai_summary.retries.primary")}</p>
+                  <input
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={value.retries}
+                    onChange={(event) => {
+                      const parsed = Number(event.target.value);
+                      onChange({ retries: Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0 });
+                    }}
+                    className="w-full rounded-xl border border-black/10 bg-w px-4 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                  />
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500">{t("settings.ai_summary.retries.primary_desc")}</p>
                 </div>
                 {providerFields.requiresApiKey ? (
                   <div className="space-y-2">
@@ -412,6 +443,7 @@ export function AISummarySettings({
                           model: nextProvider === "custom" ? item.model : (models[0] ?? item.model),
                           api_url: nextProvider === "custom" ? item.api_url : (preset?.url ?? item.api_url),
                           api_key: item.api_key === MASKED_SECRET ? "" : item.api_key,
+                          retries: item.retries ?? 0,
                         };
                         onChange({ failover: nextItems });
                       }}
@@ -419,6 +451,28 @@ export function AISummarySettings({
                       placeholder={t("settings.ai_summary.provider.title")}
                       searchable={false}
                     />
+                    <div className="flex flex-col">
+                      <input
+                        type="number"
+                        min={0}
+                        max={20}
+                        value={item.retries ?? 0}
+                        onChange={(event) => {
+                          const parsed = Number(event.target.value);
+                          const nextItems = [...value.failover];
+                          nextItems[index] = {
+                            ...item,
+                            retries: Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0,
+                          };
+                          onChange({ failover: nextItems });
+                        }}
+                        title={t("settings.ai_summary.retries.failover")}
+                        className="w-24 rounded-xl border border-black/10 bg-w px-3 py-3 text-sm t-primary outline-none transition-colors placeholder:text-neutral-400 focus:border-black/20 focus:outline-none"
+                      />
+                      <span className="mt-1 text-[10px] text-neutral-400 dark:text-neutral-500">
+                        {t("settings.ai_summary.retries.failover")}
+                      </span>
+                    </div>
                     {item.provider === "custom" ? (
                       <>
                         <input
@@ -581,6 +635,7 @@ export function AISummarySettings({
                           model: AI_MODEL_PRESETS[defaultProvider]?.[0] ?? "",
                           api_key: "",
                           api_url: "",
+                          retries: 0,
                         },
                       ],
                     });
