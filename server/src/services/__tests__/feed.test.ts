@@ -239,7 +239,7 @@ describe('FeedService', () => {
         it('should return AI summary generation status for a queued feed', async () => {
             await serverConfig.set('ai_summary.enabled', 'true', false);
             await serverConfig.set('ai_summary.provider', 'worker-ai', false);
-            await serverConfig.set('ai_summary.model', 'llama-3-8b', false);
+            await serverConfig.set('ai_summary.model', 'gpt-oss-120b', false);
 
             const createRes = await app.request('/', {
                 method: 'POST',

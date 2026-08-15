@@ -283,7 +283,7 @@ describe("ConfigService", () => {
                 body: JSON.stringify({
                     "ai_summary.enabled": "true",
                     "ai_summary.provider": "worker-ai",
-                    "ai_summary.model": "llama-3-8b",
+                    "ai_summary.model": "gpt-oss-120b",
                 }),
             });
 
@@ -328,7 +328,7 @@ describe("ConfigService", () => {
                 body: JSON.stringify({
                     "ai_summary.enabled": "true",
                     "ai_summary.provider": "worker-ai",
-                    "ai_summary.model": "llama-3-8b",
+                    "ai_summary.model": "gpt-oss-120b",
                 }),
             });
 
@@ -402,7 +402,7 @@ describe("ConfigService", () => {
                 body: JSON.stringify({
                     "ai_summary.enabled": "true",
                     "ai_summary.provider": "worker-ai",
-                    "ai_summary.model": "llama-3-8b",
+                    "ai_summary.model": "gpt-oss-120b",
                 }),
             });
 
@@ -672,7 +672,7 @@ describe("ConfigService", () => {
                 },
                 body: JSON.stringify({
                     provider: "worker-ai",
-                    model: "llama-3-8b",
+                    model: "gpt-oss-120b",
                     testPrompt: "Hello",
                 }),
             });

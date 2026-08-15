@@ -8453,6 +8453,10 @@ interface AiModels {
     "@cf/meta/llama-3.2-3b-instruct": BaseAiTextGeneration;
     "@cf/meta/llama-3.2-1b-instruct": BaseAiTextGeneration;
     "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b": BaseAiTextGeneration;
+    "@cf/moonshotai/kimi-k2.7-code": BaseAiTextGeneration;
+    "@cf/zai-org/glm-4.7-flash": BaseAiTextGeneration;
+    "@cf/google/gemma-4-26b-a4b-it": BaseAiTextGeneration;
+    "@cf/nvidia/nemotron-3-120b-a12b": BaseAiTextGeneration;
     "@cf/ibm-granite/granite-4.0-h-micro": BaseAiTextGeneration;
     "@cf/facebook/bart-large-cnn": BaseAiSummarization;
     "@cf/llava-hf/llava-1.5-7b-hf": BaseAiImageToText;

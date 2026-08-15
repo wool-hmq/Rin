@@ -18,15 +18,16 @@ const AI_PROVIDER_URLS: Record<string, string> = {
 
 // Cloudflare Worker AI models mapping (short name -> full model ID)
 export const WORKER_AI_MODELS: Record<string, string> = {
-    "llama-3-8b": "@cf/meta/llama-3-8b-instruct",
-    "llama-3-1-8b": "@cf/meta/llama-3.1-8b-instruct",
-    "llama-2-7b": "@cf/meta/llama-2-7b-chat-int8",
-    "mistral-7b": "@cf/mistral/mistral-7b-instruct-v0.1",
-    "mistral-7b-v2": "@cf/mistral/mistral-7b-instruct-v0.2-lora",
-    "gemma-2b": "@cf/google/gemma-2b-it-lora",
-    "gemma-7b": "@cf/google/gemma-7b-it-lora",
-    "deepseek-coder": "@cf/deepseek-ai/deepseek-coder-6.7b-base-awq",
-    "qwen-7b": "@cf/qwen/qwen1.5-7b-chat-awq",
+    "kimi-k2.7-code": "@cf/moonshotai/kimi-k2.7-code",
+    "glm-4.7-flash": "@cf/zai-org/glm-4.7-flash",
+    "gpt-oss-120b": "@cf/openai/gpt-oss-120b",
+    "gpt-oss-20b": "@cf/openai/gpt-oss-20b",
+    "llama-4-scout": "@cf/meta/llama-4-scout-17b-16e-instruct",
+    "gemma-4-26b": "@cf/google/gemma-4-26b-a4b-it",
+    "qwen3-30b": "@cf/qwen/qwen3-30b-a3b-fp8",
+    "mistral-small-3.1-24b": "@cf/mistralai/mistral-small-3.1-24b-instruct",
+    "nemotron-3-120b": "@cf/nvidia/nemotron-3-120b-a12b",
+    "deepseek-r1-32b": "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
 };
 
 export const AI_SUMMARY_SYSTEM_PROMPT =

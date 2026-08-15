@@ -25,7 +25,7 @@ describe("generateAISummaryResult", () => {
     const serverConfig = createAIConfigReader({
       enabled: true,
       provider: "worker-ai",
-      model: "llama-3-8b",
+      model: "gpt-oss-120b",
       api_key: "",
       api_url: "",
       failover: [],
@@ -48,7 +48,7 @@ describe("generateAISummaryResult", () => {
     const serverConfig = createAIConfigReader({
       enabled: true,
       provider: "worker-ai",
-      model: "llama-3-8b",
+      model: "gpt-oss-120b",
       api_key: "",
       api_url: "",
       failover: [],
