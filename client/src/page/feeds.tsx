@@ -38,7 +38,7 @@ export function FeedsPage() {
     })
     const page = tryInt(1, query.get("page"))
     const limit = tryInt(siteConfig.pageSize, query.get("limit"))
-    const feedListClass = siteConfig.feedLayout === "masonry" ? "wauto columns-1 gap-5 ani-show md:columns-2" : "wauto flex flex-col ani-show";
+    const feedListClass = siteConfig.feedLayout === "masonry" ? "w-full columns-1 gap-5 ani-show md:columns-2" : "w-full flex flex-col ani-show";
     const ref = useRef("")
     
     function fetchFeeds(type: FeedType) {
@@ -87,7 +87,7 @@ export function FeedsPage() {
                     </div>
                     {/* 中间：文章列表区域（跨越中左+中右） */}
                     <div className="flex-1 min-w-0">
-                        <div className="wauto text-start text-black dark:text-white py-4 text-4xl font-bold">
+                        <div className="w-full text-start text-black dark:text-white py-4 text-4xl font-bold">
                             <p>
                                 {listState === 'draft' ? t('draft_bin') : listState === 'normal' ? t('article.title') : t('unlisted')}
                             </p>
@@ -113,7 +113,7 @@ export function FeedsPage() {
                                     <FeedCard key={id} id={id} {...feed} />
                                 ))}
                             </div>
-                            <div className="wauto flex flex-row items-center mt-4 ani-show">
+                            <div className="w-full flex flex-row items-center mt-4 ani-show">
                                 {page > 1 &&
                                     <Link href={`/?type=${listState}&page=${(page - 1)}`}
                                         className={`text-sm font-normal rounded-full px-4 py-2 text-white bg-theme`}>
