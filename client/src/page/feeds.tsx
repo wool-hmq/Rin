@@ -85,8 +85,8 @@ export function FeedsPage() {
                     <div className="hidden lg:block w-80 flex-shrink-0 sticky top-[5.5rem]">
                         <Padding mode="left" />
                     </div>
-                    {/* 中间：文章列表区域 */}
-                    <div className="flex-1 min-w-0 max-w-4xl">
+                    {/* 中间：文章列表区域（跨越中左+中右） */}
+                    <div className="flex-1 min-w-0">
                         <div className="wauto text-start text-black dark:text-white py-4 text-4xl font-bold">
                             <p>
                                 {listState === 'draft' ? t('draft_bin') : listState === 'normal' ? t('article.title') : t('unlisted')}
