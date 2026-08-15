@@ -81,7 +81,11 @@ export function FeedsPage() {
             </Helmet>
             <Waiting for={feeds.draft.size + feeds.normal.size + feeds.unlisted.size > 0 || status === 'idle'}>
                 <main className="w-full flex flex-row justify-center items-start mb-8 gap-6 px-4">
-                    {/* 左侧：文章列表区域 */}
+                    {/* 左侧：侧边栏挂件 */}
+                    <div className="hidden lg:block w-80 flex-shrink-0 sticky top-[5.5rem]">
+                        <Padding mode="left" />
+                    </div>
+                    {/* 中间：文章列表区域 */}
                     <div className="flex-1 min-w-0 max-w-4xl">
                         <div className="wauto text-start text-black dark:text-white py-4 text-4xl font-bold">
                             <p>
