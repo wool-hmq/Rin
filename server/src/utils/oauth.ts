@@ -82,8 +82,13 @@ export function createOAuthPlugin(providers: Record<string, OAuthProvider>): OAu
 
             const params = new URLSearchParams({
                 client_id: provider.clientId,
+                response_type: "code",
                 state: state,
             });
+
+            if (provider.redirectUri) {
+                params.set("redirect_uri", provider.redirectUri);
+            }
 
             return `${provider.authorizeUrl}?${params.toString()}`;
         },

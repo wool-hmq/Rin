@@ -210,6 +210,8 @@ jobs:
           S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY || '' }}
           RIN_GITHUB_CLIENT_ID: ${{ secrets.RIN_GITHUB_CLIENT_ID || '' }}
           RIN_GITHUB_CLIENT_SECRET: ${{ secrets.RIN_GITHUB_CLIENT_SECRET || '' }}
+          RIN_GITEE_CLIENT_ID: ${{ secrets.RIN_GITEE_CLIENT_ID || '' }}
+          RIN_GITEE_CLIENT_SECRET: ${{ secrets.RIN_GITEE_CLIENT_SECRET || '' }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || '' }}
