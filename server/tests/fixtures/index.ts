@@ -347,7 +347,8 @@ export async function setupTestApp(
 
             const oauth2: OAuth2Utils = {
                 generateState: () => 'mock_state',
-                createRedirectUrl: (state: string, provider: string) => `https://github.com/login?state=${state}`,
+                createRedirectUrl: (state: string, provider: string, redirectUri?: string) =>
+                    `https://github.com/login?state=${state}${redirectUri ? `&redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`,
                 authorize: async (provider: string, code: string) => code === 'valid_code' ? { accessToken: 'gh_token' } : null,
             };
 

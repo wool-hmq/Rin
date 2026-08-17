@@ -68,6 +68,8 @@ describe('UserService', () => {
             const location = res.headers.get('Location');
             expect(location).toContain('github.com');
             expect(location).toContain('state=');
+            expect(location).toContain('redirect_uri=');
+            expect(decodeURIComponent(location || '')).toContain('/api/user/github/callback');
         });
 
         it('should require referer header', async () => {

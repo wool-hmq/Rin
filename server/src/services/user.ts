@@ -42,7 +42,8 @@ export function UserService(): Hono {
             path: '/',
         });
 
-        return c.redirect(oauth2.createRedirectUrl(genState, "GitHub"), 302);
+        const redirectUri = new URL('/api/user/github/callback', refererUrl.origin).toString();
+        return c.redirect(oauth2.createRedirectUrl(genState, "GitHub", redirectUri), 302);
     });
 
     // GET /user/github/callback - GitHub OAuth callback
@@ -173,7 +174,8 @@ export function UserService(): Hono {
             path: '/',
         });
 
-        return c.redirect(oauth2.createRedirectUrl(genState, "Gitee"), 302);
+        const redirectUri = new URL('/api/user/gitee/callback', refererUrl.origin).toString();
+        return c.redirect(oauth2.createRedirectUrl(genState, "Gitee", redirectUri), 302);
     });
 
     // GET /user/gitee/callback - Gitee OAuth callback

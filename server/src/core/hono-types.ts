@@ -11,7 +11,7 @@ export interface JWTUtils {
 
 export interface OAuth2Utils {
     generateState(): string;
-    createRedirectUrl(state: string, provider: string): string;
+    createRedirectUrl(state: string, provider: string, redirectUri?: string): string;
     authorize(provider: string, code: string): Promise<{ accessToken: string } | null>;
 }
 

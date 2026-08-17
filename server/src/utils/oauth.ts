@@ -62,7 +62,7 @@ export class GiteeProvider implements OAuthProvider {
 
 export interface OAuth2Utils {
     generateState: () => string;
-    createRedirectUrl: (state: string, providerName: string) => string;
+    createRedirectUrl: (state: string, providerName: string, redirectUri?: string) => string;
     authorize: (providerName: string, code?: string) => Promise<OAuthToken>;
 }
 
@@ -74,7 +74,7 @@ export function createOAuthPlugin(providers: Record<string, OAuthProvider>): OAu
             return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
         },
         
-        createRedirectUrl: (state: string, providerName: string): string => {
+        createRedirectUrl: (state: string, providerName: string, redirectUri?: string): string => {
             const provider = providers[providerName];
             if (!provider) {
                 throw new Error(`OAuth provider "${providerName}" not found`);
@@ -86,7 +86,9 @@ export function createOAuthPlugin(providers: Record<string, OAuthProvider>): OAu
                 state: state,
             });
 
-            if (provider.redirectUri) {
+            if (redirectUri) {
+                params.set("redirect_uri", redirectUri);
+            } else if (provider.redirectUri) {
                 params.set("redirect_uri", provider.redirectUri);
             }
 
