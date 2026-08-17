@@ -71,7 +71,7 @@ export function UserService(): Hono {
         deleteCookie(c, 'state');
 
         // Exchange code for access token
-        const gh_token = await profileAsync(c, 'user_oauth_authorize', () => oauth2.authorize("GitHub", query.code));
+        const gh_token = await profileAsync(c, 'user_oauth_authorize', () => oauth2.authorize("GitHub", query.code, new URL('/api/user/github/callback', new URL(c.req.url).origin).toString()));
         if (!gh_token) {
             throw new BadRequestError('Failed to authorize with GitHub');
         }
@@ -203,7 +203,7 @@ export function UserService(): Hono {
         deleteCookie(c, 'state');
 
         // Exchange code for access token
-        const gitee_token = await profileAsync(c, 'user_gitee_authorize', () => oauth2.authorize("Gitee", query.code));
+        const gitee_token = await profileAsync(c, 'user_gitee_authorize', () => oauth2.authorize("Gitee", query.code, new URL('/api/user/gitee/callback', new URL(c.req.url).origin).toString()));
         if (!gitee_token) {
             throw new BadRequestError('Failed to authorize with Gitee');
         }

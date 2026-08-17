@@ -3,6 +3,7 @@ export interface OAuthProvider {
     clientId: string;
     clientSecret: string;
     redirectUri?: string;
+    grantType?: string;
     authorizeUrl: string;
     tokenUrl: string;
     scopes: string[];
@@ -49,6 +50,7 @@ export class GiteeProvider implements OAuthProvider {
     clientId: string;
     clientSecret: string;
     redirectUri?: string;
+    grantType = "authorization_code";
     authorizeUrl = "https://gitee.com/oauth/authorize";
     tokenUrl = "https://gitee.com/oauth/token";
     scopes: string[] = ["user_info"];
@@ -63,7 +65,7 @@ export class GiteeProvider implements OAuthProvider {
 export interface OAuth2Utils {
     generateState: () => string;
     createRedirectUrl: (state: string, providerName: string, redirectUri?: string) => string;
-    authorize: (providerName: string, code?: string) => Promise<OAuthToken>;
+    authorize: (providerName: string, code?: string, redirectUri?: string) => Promise<OAuthToken>;
 }
 
 export function createOAuthPlugin(providers: Record<string, OAuthProvider>): OAuth2Utils {
@@ -95,7 +97,7 @@ export function createOAuthPlugin(providers: Record<string, OAuthProvider>): OAu
             return `${provider.authorizeUrl}?${params.toString()}`;
         },
 
-        authorize: async (providerName: string, code?: string): Promise<OAuthToken> => {
+        authorize: async (providerName: string, code?: string, redirectUri?: string): Promise<OAuthToken> => {
             const provider = providers[providerName];
             if (!provider) {
                 throw new Error(`OAuth provider "${providerName}" not found`);
@@ -111,7 +113,13 @@ export function createOAuthPlugin(providers: Record<string, OAuthProvider>): OAu
                 code: code,
             });
 
-            if (provider.redirectUri) {
+            if (provider.grantType) {
+                params.set("grant_type", provider.grantType);
+            }
+
+            if (redirectUri) {
+                params.set("redirect_uri", redirectUri);
+            } else if (provider.redirectUri) {
                 params.set("redirect_uri", provider.redirectUri);
             }
 

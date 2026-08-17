@@ -146,6 +146,72 @@ describe('UserService', () => {
         });
     });
 
+    describe('GET /gitee - Initiate Gitee OAuth', () => {
+        it('should redirect to Gitee OAuth with redirect_uri', async () => {
+            const res = await app.request('/gitee', {
+                method: 'GET',
+                headers: { 'Referer': 'http://localhost:5173/' }
+            }, env);
+
+            expect(res.status).toBe(302);
+            const location = res.headers.get('Location');
+            expect(location).toContain('gitee.com');
+            expect(location).toContain('state=');
+            expect(location).toContain('redirect_uri=');
+            expect(decodeURIComponent(location || '')).toContain('/api/user/gitee/callback');
+        });
+
+        it('should require referer header', async () => {
+            const res = await app.request('/gitee', { method: 'GET' }, env);
+
+            expect(res.status).toBe(400);
+            const data = await res.json() as { error: { message: string } };
+            expect(data.error.message).toBe('Referer header is required');
+        });
+    });
+
+    describe('GET /gitee/callback - Gitee OAuth callback', () => {
+        it('should authenticate existing user', async () => {
+            const originalFetch = global.fetch;
+            global.fetch = async () => {
+                return new Response(JSON.stringify({
+                    id: 123,
+                    login: 'gitee_user',
+                    name: 'Gitee User',
+                    avatar_url: 'https://gitee.com/avatar.png'
+                }), { status: 200 });
+            };
+
+            try {
+                const res = await app.request('/gitee/callback?code=valid_code&state=mock_state', {
+                    method: 'GET',
+                    headers: {
+                        'Cookie': 'state=mock_state; redirect_to=http://localhost:5173/callback'
+                    }
+                }, env);
+
+                expect(res.status).toBe(302);
+                const location = res.headers.get('Location');
+                expect(location).toContain('/callback');
+            } finally {
+                global.fetch = originalFetch;
+            }
+        });
+
+        it('should reject invalid state', async () => {
+            const res = await app.request('/gitee/callback?code=valid_code&state=wrong_state', {
+                method: 'GET',
+                headers: {
+                    'Cookie': 'state=mock_state; redirect_to=http://localhost:5173/callback'
+                }
+            }, env);
+
+            expect(res.status).toBe(400);
+            const data = await res.json() as { error: { message: string } };
+            expect(data.error.message).toBe('Invalid state parameter');
+        });
+    });
+
     describe('GET /github/callback - GitHub OAuth callback', () => {
         it('should authenticate existing user', async () => {
             const originalFetch = global.fetch;
