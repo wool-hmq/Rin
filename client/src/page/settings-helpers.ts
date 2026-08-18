@@ -43,7 +43,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   cerebras: ["gpt-oss-120b", "gemma-4-31b"],
   zhipu: ["glm-4.7", "glm-4.6", "glm-4.5", "glm-4.5-air", "glm-4.5-airx", "glm-4.5-flash", "glm-4-long", "glm-4.6v", "glm-4.1v-thinking-flashx", "glm-4.6v-flash", "glm-4.1v-thinking-flash", "glm-4v-flash", "glm-4", "glm-4-plus", "glm-4-air", "glm-4-flash", "glm-4-flash-250414", "glm-4-flashx-250414", "glm-3-turbo"],
   // ✅ OpenRouter 模型列表（可在此增加或修改）
-  openrouter: ["openai/gpt-oss-120b:free"],
+  openrouter: ["openrouter/free", "nvidia/nemotron-3-ultra-550b-a55b:free", "poolside/laguna-s-2.1:free", "nvidia/nemotron-3.5-lightning:free", "nvidia/nemotron-3-super-120b-a12b:free", "cohere/north-mini-code:free", "poolside/laguna-xs-2.1:free", "nvidia/nemotron-3-nano-30b-a3b:free", "dots-studio/dots-3-note-preview:free", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "google/gemma-4-26b-a4b-it:free", "openai/gpt-oss-20b:free", "google/gemma-4-31b-it:free", "nvidia/nemotron-3.5-content-safety:free", "fish-audio/s2.1-pro-free:free", "deepgram/flux-tts:free"],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
   Omaleai: ["deepseek-v4-flash"],
   "Agnes-ai": ["agnes-2.0-flash", "agnes-2.5-flash"],
