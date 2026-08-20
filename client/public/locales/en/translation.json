@@ -123,6 +123,12 @@
       "cwd": "CWD Comments",
       "gitalk": "Gitalk Comments",
       "utterances": "Utterances Comments"
+    },
+    "order": {
+      "title": "Comment System Display Order",
+      "desc": "Adjust the display order of comment systems on article pages",
+      "move_up": "Move Up",
+      "move_down": "Move Down"
     }
   },
   "comparison": "Comparison",

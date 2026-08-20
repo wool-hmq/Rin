@@ -123,6 +123,12 @@
       "cwd": "CWD 留言",
       "gitalk": "Gitalk 留言",
       "utterances": "Utterances 留言"
+    },
+    "order": {
+      "title": "留言系統顯示順序",
+      "desc": "調整文章頁面留言系統的顯示順序",
+      "move_up": "上移",
+      "move_down": "下移"
     }
   },
   "comparison": "比較",

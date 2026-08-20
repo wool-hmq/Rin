@@ -526,6 +526,79 @@ export function Settings() {
               />
             </SettingsCard>
           </div>
+          {/* Comment System Order Settings */}
+          {(() => {
+            const enabledSystems = COMMENT_SYSTEM_OPTIONS.filter((system) => {
+              if (system === "native") return clientConfig.getBoolean("comment.enabled");
+              return clientConfig.getBoolean(`${system}.enabled`);
+            });
+            if (enabledSystems.length <= 1) return null;
+
+            const orderConfig = (clientConfig.get("comment.systemOrder") as string[] | undefined) ?? [];
+            const currentOrder = orderConfig.length === enabledSystems.length ? orderConfig : enabledSystems;
+
+            const moveSystem = (index: number, direction: "up" | "down") => {
+              const newIndex = direction === "up" ? index - 1 : index + 1;
+              if (newIndex < 0 || newIndex >= currentOrder.length) return;
+              const newOrder = [...currentOrder];
+              [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+              setConfigValue("client", "comment.systemOrder", newOrder);
+            };
+
+            return (
+                <SettingsCard>
+                <SettingsCardRow
+                  header={
+                    <SettingsCardHeader
+                      title={t("settings.comment.order.title")}
+                      description={t("settings.comment.order.desc")}
+                    />
+                  }
+                  action={<div />}
+                />
+                <SettingsCardBody>
+                  <div className="flex flex-col gap-2">
+                    {currentOrder.map((system, index) => (
+                      <div
+                        key={system}
+                        className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-800/50"
+                      >
+                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                          {t(`comment.system.${system}`)}
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => moveSystem(index, "up")}
+                            disabled={index === 0}
+                            className={`rounded p-1 ${
+                              index === 0
+                                ? "cursor-not-allowed text-neutral-300 dark:text-neutral-600"
+                                : "text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                            }`}
+                            aria-label={t("settings.comment.order.move_up")}
+                          >
+                            <i className="ri-arrow-up-s-line"></i>
+                          </button>
+                          <button
+                            onClick={() => moveSystem(index, "down")}
+                            disabled={index === currentOrder.length - 1}
+                            className={`rounded p-1 ${
+                              index === currentOrder.length - 1
+                                ? "cursor-not-allowed text-neutral-300 dark:text-neutral-600"
+                                : "text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                            }`}
+                            aria-label={t("settings.comment.order.move_down")}
+                          >
+                            <i className="ri-arrow-down-s-line"></i>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </SettingsCardBody>
+              </SettingsCard>
+            );
+          })()}
           <ItemSwitch
             title="启用 Twikoo 评论"
             description="启用后可同时使用 Twikoo 评论系统（需要在 Vercel 部署 Twikoo）"

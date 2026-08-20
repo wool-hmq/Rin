@@ -547,15 +547,32 @@ function Comments({ id }: { id: string }) {
   const gitalkEnabled = config.getBoolean('gitalk.enabled');
   const utterancesEnabled = config.getBoolean('utterances.enabled');
 
-  const enabledSystems = [
-    config.getBoolean('comment.enabled') && "native",
-    twikooEnabled && "twikoo",
-    giscusEnabled && "giscus",
-    walineEnabled && "waline",
-    cwdEnabled && "cwd",
-    gitalkEnabled && "gitalk",
-    utterancesEnabled && "utterances",
-  ].filter(Boolean) as CommentSystem[];
+  const enabledSystems = (() => {
+    const orderConfig = config.get("comment.systemOrder") as CommentSystem[] | undefined;
+    const allEnabled = [
+      config.getBoolean('comment.enabled') && "native" as const,
+      twikooEnabled && "twikoo" as const,
+      giscusEnabled && "giscus" as const,
+      walineEnabled && "waline" as const,
+      cwdEnabled && "cwd" as const,
+      gitalkEnabled && "gitalk" as const,
+      utterancesEnabled && "utterances" as const,
+    ].filter(Boolean) as CommentSystem[];
+
+    if (!orderConfig || !Array.isArray(orderConfig) || orderConfig.length !== allEnabled.length) {
+      return allEnabled;
+    }
+
+    const sorted = [...allEnabled].sort((a, b) => {
+      const idxA = orderConfig.indexOf(a);
+      const idxB = orderConfig.indexOf(b);
+      if (idxA === -1 && idxB === -1) return 0;
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+    return sorted;
+  })();
 
   const [activeSystem, setActiveSystem] = useState<CommentSystem>(() => {
     const preferred = String(config.get("comment.default") || "native") as CommentSystem;

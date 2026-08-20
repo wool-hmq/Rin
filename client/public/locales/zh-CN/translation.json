@@ -123,6 +123,12 @@
       "cwd": "CWD 评论",
       "gitalk": "Gitalk 评论",
       "utterances": "Utterances 评论"
+    },
+    "order": {
+      "title": "评论系统显示顺序",
+      "desc": "拖拽或点击箭头调整文章页评论系统的显示顺序",
+      "move_up": "上移",
+      "move_down": "下移"
     }
   },
   "comparison": "对比",
