@@ -24,6 +24,8 @@ import { TwikooComment } from "../components/twikoo_comment";
 import { GiscusCommentSection } from "../components/giscus_comment";
 import { WalineComment } from "../components/waline_comment";
 import { CWDComment } from "../components/cwd_comment";
+import { GitalkComment } from "../components/gitalk_comment";
+import { UtterancesComment } from "../components/utterances_comment";
 
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
@@ -529,7 +531,7 @@ type Comment = {
   guestWebsite?: string;
 };
 
-type CommentSystem = "native" | "twikoo" | "giscus" | "waline" | "cwd";
+type CommentSystem = "native" | "twikoo" | "giscus" | "waline" | "cwd" | "gitalk" | "utterances";
 
 function Comments({ id }: { id: string }) {
   const config = useContext(ClientConfigContext);
@@ -542,6 +544,8 @@ function Comments({ id }: { id: string }) {
   const giscusEnabled = config.getBoolean('giscus.enabled');
   const walineEnabled = config.getBoolean('waline.enabled');
   const cwdEnabled = config.getBoolean('cwd.enabled');
+  const gitalkEnabled = config.getBoolean('gitalk.enabled');
+  const utterancesEnabled = config.getBoolean('utterances.enabled');
 
   const enabledSystems = [
     config.getBoolean('comment.enabled') && "native",
@@ -549,6 +553,8 @@ function Comments({ id }: { id: string }) {
     giscusEnabled && "giscus",
     walineEnabled && "waline",
     cwdEnabled && "cwd",
+    gitalkEnabled && "gitalk",
+    utterancesEnabled && "utterances",
   ].filter(Boolean) as CommentSystem[];
 
   const [activeSystem, setActiveSystem] = useState<CommentSystem>(() => {
@@ -578,10 +584,12 @@ function Comments({ id }: { id: string }) {
   const showGiscusComments = giscusEnabled && activeSystem === "giscus";
   const showWalineComments = walineEnabled && activeSystem === "waline";
   const showCWDComments = cwdEnabled && activeSystem === "cwd";
+  const showGitalkComments = gitalkEnabled && activeSystem === "gitalk";
+  const showUtterancesComments = utterancesEnabled && activeSystem === "utterances";
 
   return (
     <>
-      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled || walineEnabled || cwdEnabled) &&
+      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled || walineEnabled || cwdEnabled || gitalkEnabled || utterancesEnabled) &&
         <div className="m-2 flex flex-col justify-center items-center">
           {enabledSystems.length > 1 && (
             <div className="w-full mb-4 flex gap-2 justify-center flex-wrap">
@@ -650,6 +658,32 @@ function Comments({ id }: { id: string }) {
                   {t("comment.system.cwd")}
                 </button>
               )}
+              {gitalkEnabled && (
+                <button
+                  onClick={() => setActiveSystem("gitalk")}
+                  className={`px-4 py-2 rounded-full transition ${
+                    activeSystem === "gitalk"
+                      ? "bg-theme text-white"
+                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <i className="ri-github-line mr-1"></i>
+                  {t("comment.system.gitalk")}
+                </button>
+              )}
+              {utterancesEnabled && (
+                <button
+                  onClick={() => setActiveSystem("utterances")}
+                  className={`px-4 py-2 rounded-full transition ${
+                    activeSystem === "utterances"
+                      ? "bg-theme text-white"
+                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <i className="ri-github-fill mr-1"></i>
+                  {t("comment.system.utterances")}
+                </button>
+              )}
             </div>
           )}
           {showNativeComments && (
@@ -692,6 +726,12 @@ function Comments({ id }: { id: string }) {
           )}
           {showCWDComments && (
             <CWDComment key={`cwd-${id}`} feedId={id} />
+          )}
+          {showGitalkComments && (
+            <GitalkComment key={`gitalk-${id}`} feedId={id} />
+          )}
+          {showUtterancesComments && (
+            <UtterancesComment key={`utterances-${id}`} feedId={id} />
           )}
         </div>
       }

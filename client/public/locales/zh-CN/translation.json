@@ -120,7 +120,9 @@
       "twikoo": "Twikoo 评论 (推荐)",
       "giscus": "Giscus 评论",
       "waline": "Waline 评论",
-      "cwd": "CWD 评论"
+      "cwd": "CWD 评论",
+      "gitalk": "Gitalk 评论",
+      "utterances": "Utterances 评论"
     }
   },
   "comparison": "对比",

@@ -120,7 +120,9 @@
       "twikoo": "Twikoo 留言 (推薦)",
       "giscus": "Giscus 留言",
       "waline": "Waline 留言",
-      "cwd": "CWD 留言"
+      "cwd": "CWD 留言",
+      "gitalk": "Gitalk 留言",
+      "utterances": "Utterances 留言"
     }
   },
   "comparison": "比較",

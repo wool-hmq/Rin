@@ -120,7 +120,9 @@
       "twikoo": "Twikoo Comments (Recommended)",
       "giscus": "Giscus Comments",
       "waline": "Waline Comments",
-      "cwd": "CWD Comments"
+      "cwd": "CWD Comments",
+      "gitalk": "Gitalk Comments",
+      "utterances": "Utterances Comments"
     }
   },
   "comparison": "Comparison",

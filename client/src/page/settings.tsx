@@ -49,7 +49,7 @@ const THEME_COLOR_OPTIONS = [
   { label: "Orange", value: "#ea580c" },
 ];
 
-const COMMENT_SYSTEM_OPTIONS = ["native", "twikoo", "giscus", "waline", "cwd"];
+const COMMENT_SYSTEM_OPTIONS = ["native", "twikoo", "giscus", "waline", "cwd", "gitalk", "utterances"];
 
 export function Settings() {
   const { t } = useTranslation();
@@ -638,6 +638,93 @@ export function Settings() {
                 value={String(clientConfig.get("cwd.siteId") ?? "")}
                 onChange={(value) => {
                   setConfigValue("client", "cwd.siteId", value);
+                }}
+              />
+            </>
+          )}
+          <ItemSwitch
+            title="启用 Gitalk 评论"
+            description="启用后可同时使用 Gitalk 评论系统（基于 GitHub Issues）"
+            checked={clientConfig.getBoolean("gitalk.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "gitalk.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("gitalk.enabled") && (
+            <>
+              <ItemInput
+                title="Client ID"
+                description="GitHub OAuth App 的 Client ID"
+                configKeyTitle="Gitalk Client ID"
+                value={String(clientConfig.get("gitalk.clientID") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "gitalk.clientID", value);
+                }}
+              />
+              <ItemInput
+                title="Client Secret"
+                description="GitHub OAuth App 的 Client Secret，只在前端使用，请确认已做好安全隔离"
+                configKeyTitle="Gitalk Client Secret"
+                value={String(clientConfig.get("gitalk.clientSecret") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "gitalk.clientSecret", value);
+                }}
+              />
+              <ItemInput
+                title="GitHub 仓库"
+                description="格式：username/repo，如：wool-hmq/Rin"
+                configKeyTitle="Gitalk Repo"
+                value={String(clientConfig.get("gitalk.repo") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "gitalk.repo", value);
+                }}
+              />
+              <ItemInput
+                title="仓库所有者"
+                description="仓库所有者用户名，如：wool-hmq"
+                configKeyTitle="Gitalk Owner"
+                value={String(clientConfig.get("gitalk.owner") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "gitalk.owner", value);
+                }}
+              />
+              <ItemInput
+                title="管理员 (选填)"
+                description="多个管理员用英文逗号分隔，默认使用仓库所有者"
+                configKeyTitle="Gitalk Admin"
+                value={String(clientConfig.get("gitalk.admin") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "gitalk.admin", value);
+                }}
+              />
+            </>
+          )}
+          <ItemSwitch
+            title="启用 Utterances 评论"
+            description="启用后可同时使用 Utterances 评论系统（基于 GitHub Issues）"
+            checked={clientConfig.getBoolean("utterances.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "utterances.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("utterances.enabled") && (
+            <>
+              <ItemInput
+                title="GitHub 仓库"
+                description="格式：username/repo，如：wool-hmq/Rin，需公开且已安装 utterances app"
+                configKeyTitle="Utterances Repo"
+                value={String(clientConfig.get("utterances.repo") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "utterances.repo", value);
+                }}
+              />
+              <ItemInput
+                title="Issue 关联方式 (选填)"
+                description="默认 pathname，可选 url/title/og:title 或具体 issue 号"
+                configKeyTitle="Utterances Issue Term"
+                value={String(clientConfig.get("utterances.issueTerm") ?? "pathname")}
+                onChange={(value) => {
+                  setConfigValue("client", "utterances.issueTerm", value);
                 }}
               />
             </>
