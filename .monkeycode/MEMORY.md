@@ -37,3 +37,12 @@ Entries discovered by the Agent during task execution should follow this format:
 - Instructions:
   - 默认情况下，每次代码修改完成后自动提交并推送到 GitHub main 分支。
   - 例外情况（不做默认推送，需与用户确认）：代码中有不确定之处（如 ad 广告栏这类需求模糊的代码）、用户刻意要求不推送时。
+
+[Project Knowledge Summary]
+- Date: 2026-08-17
+- Context: Discovered by Agent while troubleshooting Gitee OAuth login error and Cloudflare secrets propagation
+- Category: Operations & Deployment
+- Instructions:
+  - 站点 OAuth 相关 secrets（RIN_GITHUB_CLIENT_ID/SECRET、RIN_GITEE_CLIENT_ID/SECRET、JWT_SECRET、ADMIN_*、S3_*）统一在 GitHub Actions Repository secrets 中配置，不要放在 Environment secrets 下（deploy job 引用 production/preview environment 时 repository secrets 仍可用）。
+  - 首次部署后 Worker 上手动配置的 secret 会被后续 wrangler secret bulk 用 GitHub 侧 secret 值同步覆盖，手动配置只是临时兜底。
+  - Gitee OAuth 登录报"服务器不支持这种 response type"的根因是 authorize URL 缺 response_type=code；此参数已写入 server/src/utils/oauth.ts 的 createRedirectUrl。
