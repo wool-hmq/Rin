@@ -122,7 +122,8 @@
       "waline": "Waline 评论",
       "cwd": "CWD 评论",
       "gitalk": "Gitalk 评论",
-      "utterances": "Utterances 评论"
+      "utterances": "Utterances 评论",
+      "discuss": "Discuss 评论"
     },
     "order": {
       "title": "评论系统显示顺序",

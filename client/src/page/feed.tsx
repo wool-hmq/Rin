@@ -26,6 +26,7 @@ import { WalineComment } from "../components/waline_comment";
 import { CWDComment } from "../components/cwd_comment";
 import { GitalkComment } from "../components/gitalk_comment";
 import { UtterancesComment } from "../components/utterances_comment";
+import { DiscussComment } from "../components/discuss_comment";
 
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
@@ -531,7 +532,7 @@ type Comment = {
   guestWebsite?: string;
 };
 
-type CommentSystem = "native" | "twikoo" | "giscus" | "waline" | "cwd" | "gitalk" | "utterances";
+type CommentSystem = "native" | "twikoo" | "giscus" | "waline" | "cwd" | "gitalk" | "utterances" | "discuss";
 
 function Comments({ id }: { id: string }) {
   const config = useContext(ClientConfigContext);
@@ -547,6 +548,8 @@ function Comments({ id }: { id: string }) {
   const gitalkEnabled = config.getBoolean('gitalk.enabled');
   const utterancesEnabled = config.getBoolean('utterances.enabled');
 
+  const discussEnabled = config.getBoolean('discuss.enabled');
+
   const enabledSystems = (() => {
     const orderConfig = config.get("comment.systemOrder") as CommentSystem[] | undefined;
     const allEnabled = [
@@ -557,6 +560,7 @@ function Comments({ id }: { id: string }) {
       cwdEnabled && "cwd" as const,
       gitalkEnabled && "gitalk" as const,
       utterancesEnabled && "utterances" as const,
+      discussEnabled && "discuss" as const,
     ].filter(Boolean) as CommentSystem[];
 
     if (!orderConfig || !Array.isArray(orderConfig) || orderConfig.length !== allEnabled.length) {
@@ -596,114 +600,42 @@ function Comments({ id }: { id: string }) {
     ref.current = id;
   }, [id]);
 
-  const showNativeComments = config.getBoolean('comment.enabled') && activeSystem === "native";
-  const showTwikooComments = twikooEnabled && activeSystem === "twikoo";
-  const showGiscusComments = giscusEnabled && activeSystem === "giscus";
-  const showWalineComments = walineEnabled && activeSystem === "waline";
-  const showCWDComments = cwdEnabled && activeSystem === "cwd";
-  const showGitalkComments = gitalkEnabled && activeSystem === "gitalk";
-  const showUtterancesComments = utterancesEnabled && activeSystem === "utterances";
-
   return (
     <>
-      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled || walineEnabled || cwdEnabled || gitalkEnabled || utterancesEnabled) &&
+      {(config.getBoolean('comment.enabled') || twikooEnabled || giscusEnabled || walineEnabled || cwdEnabled || gitalkEnabled || utterancesEnabled || discussEnabled) &&
         <div className="m-2 flex flex-col justify-center items-center">
           {enabledSystems.length > 1 && (
             <div className="w-full mb-4 flex gap-2 justify-center flex-wrap">
-              {config.getBoolean('comment.enabled') && (
-                <button
-                  onClick={() => setActiveSystem("native")}
-                  className={`px-4 py-2 rounded-full transition ${
-                    activeSystem === "native"
-                      ? "bg-theme text-white"
-                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <i className="ri-message-3-line mr-1"></i>
-                  {t("comment.system.native")}
-                </button>
-              )}
-              {twikooEnabled && (
-                <button
-                  onClick={() => setActiveSystem("twikoo")}
-                  className={`px-4 py-2 rounded-full transition ${
-                    activeSystem === "twikoo"
-                      ? "bg-theme text-white"
-                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <i className="ri-chat-smile-2-line mr-1"></i>
-                  {t("comment.system.twikoo")}
-                </button>
-              )}
-              {giscusEnabled && (
-                <button
-                  onClick={() => setActiveSystem("giscus")}
-                  className={`px-4 py-2 rounded-full transition ${
-                    activeSystem === "giscus"
-                      ? "bg-theme text-white"
-                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <i className="ri-github-line mr-1"></i>
-                  {t("comment.system.giscus")}
-                </button>
-              )}
-              {walineEnabled && (
-                <button
-                  onClick={() => setActiveSystem("waline")}
-                  className={`px-4 py-2 rounded-full transition ${
-                    activeSystem === "waline"
-                      ? "bg-theme text-white"
-                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <i className="ri-chat-3-line mr-1"></i>
-                  {t("comment.system.waline")}
-                </button>
-              )}
-              {cwdEnabled && (
-                <button
-                  onClick={() => setActiveSystem("cwd")}
-                  className={`px-4 py-2 rounded-full transition ${
-                    activeSystem === "cwd"
-                      ? "bg-theme text-white"
-                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <i className="ri-chat-2-line mr-1"></i>
-                  {t("comment.system.cwd")}
-                </button>
-              )}
-              {gitalkEnabled && (
-                <button
-                  onClick={() => setActiveSystem("gitalk")}
-                  className={`px-4 py-2 rounded-full transition ${
-                    activeSystem === "gitalk"
-                      ? "bg-theme text-white"
-                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <i className="ri-github-line mr-1"></i>
-                  {t("comment.system.gitalk")}
-                </button>
-              )}
-              {utterancesEnabled && (
-                <button
-                  onClick={() => setActiveSystem("utterances")}
-                  className={`px-4 py-2 rounded-full transition ${
-                    activeSystem === "utterances"
-                      ? "bg-theme text-white"
-                      : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <i className="ri-github-fill mr-1"></i>
-                  {t("comment.system.utterances")}
-                </button>
-              )}
+              {enabledSystems.map((system) => {
+                const isActive = activeSystem === system;
+                const icons: Record<CommentSystem, string> = {
+                  native: "ri-message-3-line",
+                  twikoo: "ri-chat-smile-2-line",
+                  giscus: "ri-github-line",
+                  waline: "ri-chat-3-line",
+                  cwd: "ri-chat-2-line",
+                  gitalk: "ri-github-line",
+                  utterances: "ri-github-fill",
+                  discuss: "ri-discuss-line",
+                };
+                return (
+                  <button
+                    key={system}
+                    onClick={() => setActiveSystem(system)}
+                    className={`px-4 py-2 rounded-full transition ${
+                      isActive
+                        ? "bg-theme text-white"
+                        : "bg-secondary text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    <i className={`${icons[system]} mr-1`}></i>
+                    {t(`comment.system.${system}`)}
+                  </button>
+                );
+              })}
             </div>
           )}
-          {showNativeComments && (
+          {(config.getBoolean('comment.enabled') && activeSystem === "native") && (
             <>
               <CommentInput id={id} onRefresh={loadComments} />
               {error && (
@@ -732,24 +664,13 @@ function Comments({ id }: { id: string }) {
               )}
             </>
           )}
-          {showTwikooComments && (
-            <TwikooComment key={`twikoo-${id}`} feedId={id} />
-          )}
-          {showGiscusComments && (
-            <GiscusCommentSection key={`giscus-${id}`} feedId={id} />
-          )}
-          {showWalineComments && (
-            <WalineComment key={`waline-${id}`} feedId={id} />
-          )}
-          {showCWDComments && (
-            <CWDComment key={`cwd-${id}`} feedId={id} />
-          )}
-          {showGitalkComments && (
-            <GitalkComment key={`gitalk-${id}`} feedId={id} />
-          )}
-          {showUtterancesComments && (
-            <UtterancesComment key={`utterances-${id}`} feedId={id} />
-          )}
+          {activeSystem === "twikoo" && <TwikooComment key={`twikoo-${id}`} feedId={id} />}
+          {activeSystem === "giscus" && <GiscusCommentSection key={`giscus-${id}`} feedId={id} />}
+          {activeSystem === "waline" && <WalineComment key={`waline-${id}`} feedId={id} />}
+          {activeSystem === "cwd" && <CWDComment key={`cwd-${id}`} feedId={id} />}
+          {activeSystem === "gitalk" && <GitalkComment key={`gitalk-${id}`} feedId={id} />}
+          {activeSystem === "utterances" && <UtterancesComment key={`utterances-${id}`} feedId={id} />}
+          {activeSystem === "discuss" && <DiscussComment key={`discuss-${id}`} feedId={id} />}
         </div>
       }
     </>

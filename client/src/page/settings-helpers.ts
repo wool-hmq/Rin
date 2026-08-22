@@ -75,6 +75,16 @@ export function normalizeSettingsState(
   const serverConfig = { ...(data?.serverConfig ?? {}) };
   const hasStoredAiApiKey = serverConfig["ai_summary.api_key"] === MASKED_SECRET;
 
+  const rawOrder = clientConfig["comment.systemOrder"];
+  if (rawOrder !== undefined && !Array.isArray(rawOrder)) {
+    try {
+      const parsed = JSON.parse(rawOrder as string);
+      clientConfig["comment.systemOrder"] = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      clientConfig["comment.systemOrder"] = [];
+    }
+  }
+
   if (hasStoredAiApiKey) {
     serverConfig["ai_summary.api_key"] = "";
   }

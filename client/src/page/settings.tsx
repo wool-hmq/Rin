@@ -49,7 +49,7 @@ const THEME_COLOR_OPTIONS = [
   { label: "Orange", value: "#ea580c" },
 ];
 
-const COMMENT_SYSTEM_OPTIONS = ["native", "twikoo", "giscus", "waline", "cwd", "gitalk", "utterances"];
+const COMMENT_SYSTEM_OPTIONS = ["native", "twikoo", "giscus", "waline", "cwd", "gitalk", "utterances", "discuss"];
 
 export function Settings() {
   const { t } = useTranslation();
@@ -534,7 +534,8 @@ export function Settings() {
             });
             if (enabledSystems.length <= 1) return null;
 
-            const orderConfig = (clientConfig.get("comment.systemOrder") as string[] | undefined) ?? [];
+            const rawOrder = clientConfig.get("comment.systemOrder");
+            const orderConfig = Array.isArray(rawOrder) ? (rawOrder as string[]) : [];
             const currentOrder = orderConfig.length === enabledSystems.length ? orderConfig : enabledSystems;
 
             const moveSystem = (index: number, direction: "up" | "down") => {
@@ -798,6 +799,54 @@ export function Settings() {
                 value={String(clientConfig.get("utterances.issueTerm") ?? "pathname")}
                 onChange={(value) => {
                   setConfigValue("client", "utterances.issueTerm", value);
+                }}
+              />
+            </>
+          )}
+          <ItemSwitch
+            title="启用 Discuss 评论"
+            description="启用后可同时使用 Discuss 评论系统"
+            checked={clientConfig.getBoolean("discuss.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "discuss.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("discuss.enabled") && (
+            <>
+              <ItemInput
+                title="API 地址"
+                description="Discuss 服务 API 地址"
+                configKeyTitle="Discuss API"
+                value={String(clientConfig.get("discuss.api") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "discuss.api", value);
+                }}
+              />
+              <ItemInput
+                title="Token (选填)"
+                description="Discuss 认证 Token，如需要"
+                configKeyTitle="Discuss Token"
+                value={String(clientConfig.get("discuss.token") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "discuss.token", value);
+                }}
+              />
+              <ItemInput
+                title="Repo (选填)"
+                description="Discuss 关联仓库，如需要"
+                configKeyTitle="Discuss Repo"
+                value={String(clientConfig.get("discuss.repo") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "discuss.repo", value);
+                }}
+              />
+              <ItemInput
+                title="Channel (选填)"
+                description="Discuss 频道，如需要"
+                configKeyTitle="Discuss Channel"
+                value={String(clientConfig.get("discuss.channel") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "discuss.channel", value);
                 }}
               />
             </>

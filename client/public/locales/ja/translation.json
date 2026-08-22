@@ -122,7 +122,8 @@
       "waline": "Waline コメント",
       "cwd": "CWD コメント",
       "gitalk": "Gitalk コメント",
-      "utterances": "Utterances コメント"
+      "utterances": "Utterances コメント",
+      "discuss": "Discuss コメント"
     },
     "order": {
       "title": "コメントシステムの表示順",

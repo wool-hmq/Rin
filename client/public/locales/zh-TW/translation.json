@@ -122,7 +122,8 @@
       "waline": "Waline 留言",
       "cwd": "CWD 留言",
       "gitalk": "Gitalk 留言",
-      "utterances": "Utterances 留言"
+      "utterances": "Utterances 留言",
+      "discuss": "Discuss 留言"
     },
     "order": {
       "title": "留言系統顯示順序",

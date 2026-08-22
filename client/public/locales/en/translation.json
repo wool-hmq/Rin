@@ -122,7 +122,8 @@
       "waline": "Waline Comments",
       "cwd": "CWD Comments",
       "gitalk": "Gitalk Comments",
-      "utterances": "Utterances Comments"
+      "utterances": "Utterances Comments",
+      "discuss": "Discuss Comments"
     },
     "order": {
       "title": "Comment System Display Order",
