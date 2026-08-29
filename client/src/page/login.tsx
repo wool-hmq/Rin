@@ -2,6 +2,7 @@ import { t } from "i18next";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { ButtonWithLoading } from "../components/button";
+import { GiteeIcon } from "../components/gitee-icon";
 import { Icon } from "../components/icon";
 import { Input } from "../components/input";
 import { client, oauth_url } from "../app/runtime";
@@ -112,7 +113,7 @@ export function LoginPage() {
                                 }} hover={true} />
                             )}
                             {authStatus.gitee && (
-                                <Icon label={t('gitee_login')} name="ri-git-merge-line" onClick={() => {
+                                <GiteeIcon label={t('gitee_login')} onClick={() => {
                                     window.location.href = `${gitee_oauth_url}`
                                 }} hover={true} />
                             )}

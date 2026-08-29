@@ -1,0 +1,31 @@
+export function GiteeIcon({
+    label,
+    className,
+    onClick,
+    hover = true,
+}: {
+    label: string;
+    className?: string;
+    onClick: () => void;
+    hover?: boolean;
+}) {
+    return (
+        <button
+            title={label}
+            aria-label={label}
+            onClick={onClick}
+            className={`max-w-12 flex rounded-full border dark:border-neutral-600 px-2 bg-w aspect-[1] items-center justify-center t-primary ${hover ? "bg-button" : ""} ${className ?? ""}`}
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="1em"
+                height="1em"
+                fill="currentColor"
+                aria-hidden="true"
+            >
+                <path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2m-1.852 4.444a3.704 3.704 0 0 0-3.704 3.704v6.913c0 .273.222.495.494.495h7.285a3.334 3.334 0 0 0 3.333-3.333v-2.84a.494.494 0 0 0-.495-.494h-5.678a.495.495 0 0 0-.494.494v1.234c0 .273.22.494.493.494h3.458c.272 0 .493.221.493.493v.248a1.48 1.48 0 0 1-1.481 1.481H9.16a.494.494 0 0 1-.494-.493v-4.692c0-.818.663-1.48 1.482-1.481h6.913a.495.495 0 0 0 .494-.494V6.938a.493.493 0 0 0-.494-.494z" />
+            </svg>
+        </button>
+    );
+}
