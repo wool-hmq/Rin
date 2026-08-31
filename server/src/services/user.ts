@@ -108,7 +108,8 @@ export function UserService(): Hono {
 
         if (existingUser) {
             profile.permission = existingUser.permission;
-            await profileAsync(c, 'user_existing_update', () => db.update(users).set(profile).where(eq(users.id, existingUser.id)));
+            // Only refresh the avatar. Never overwrite the user-chosen username.
+            await profileAsync(c, 'user_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
             authToken = await profileAsync(c, 'user_existing_token', () => jwt.sign({ id: existingUser.id }));
             setJWTCookie(c, authToken);
             // Store token in cookie for frontend to read (not HttpOnly)
@@ -233,7 +234,8 @@ export function UserService(): Hono {
 
         if (existingUser) {
             profile.permission = existingUser.permission;
-            await profileAsync(c, 'user_gitee_existing_update', () => db.update(users).set(profile).where(eq(users.id, existingUser.id)));
+            // Only refresh the avatar. Never overwrite the user-chosen username.
+            await profileAsync(c, 'user_gitee_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
             authToken = await profileAsync(c, 'user_gitee_existing_token', () => jwt.sign({ id: existingUser.id }));
             setJWTCookie(c, authToken);
             // Store token in cookie for frontend to read (not HttpOnly)

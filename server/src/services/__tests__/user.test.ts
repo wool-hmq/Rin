@@ -241,6 +241,33 @@ describe('UserService', () => {
             }
         });
 
+        it('should not overwrite the existing username on re-login', async () => {
+            const originalFetch = global.fetch;
+            global.fetch = async () => {
+                return new Response(JSON.stringify({
+                    id: 'gh_123',
+                    login: 'github_handle',
+                    name: 'GitHub Handle',
+                    avatar_url: 'https://github.com/new_avatar.png'
+                }), { status: 200 });
+            };
+
+            try {
+                await app.request('/github/callback?code=valid_code&state=mock_state', {
+                    method: 'GET',
+                    headers: {
+                        'Cookie': 'state=mock_state; redirect_to=http://localhost:5173/callback'
+                    }
+                }, env);
+
+                const row = sqlite.prepare("SELECT username, avatar FROM users WHERE id = 1").get() as any;
+                expect(row.username).toBe('user1');
+                expect(row.avatar).toBe('https://github.com/new_avatar.png');
+            } finally {
+                global.fetch = originalFetch;
+            }
+        });
+
         it('should reject invalid state', async () => {
             const res = await app.request('/github/callback?code=valid_code&state=wrong_state', {
                 method: 'GET',
