@@ -326,7 +326,7 @@ export function UserService(): Hono {
             throw new BadRequestError('Missing code parameter');
         }
 
-        const infoResp = await profileAsync(c, 'user_qq_fetch', () => fetch(`https://qq.wch666.com/api/get_user_info.php?code=${encodeURIComponent(code)}&msg=${encodeURIComponent(query.msg || '')}`));
+        const infoResp = await profileAsync(c, 'user_qq_fetch', () => fetch(`https://qq.wch666.com/api/get_user_info.php?code=${encodeURIComponent(code)}`));
         const infoText = await profileAsync(c, 'user_qq_parse', () => infoResp.text());
         let info: any;
         try {
