@@ -326,7 +326,7 @@ export function UserService(): Hono {
             throw new BadRequestError('Missing code parameter');
         }
 
-        const infoResp = await profileAsync(c, 'user_qq_fetch', () => fetch(`https://qq.wch666.com/api/get_user_info.php?code=${encodeURIComponent(code)}`));
+        const infoResp = await profileAsync(c, 'user_qq_fetch', () => fetch(`https://qq.wch666.com/api/get_user_info.php?code=${encodeURIComponent(code)}&msg=${encodeURIComponent(query.msg || '')}`));
         const infoText = await profileAsync(c, 'user_qq_parse', () => infoResp.text());
         let info: any;
         try {
@@ -334,7 +334,14 @@ export function UserService(): Hono {
         } catch {
             throw new BadRequestError('Failed to parse QQ user info');
         }
-        if (!info || !info.openid) {
+        if (!info) {
+            throw new BadRequestError('Failed to get QQ user info');
+        }
+        // 心月互联 returns { ret: 0, msg: '', open_id: '...' } on success.
+        if (typeof info.ret !== 'undefined' && Number(info.ret) !== 0) {
+            throw new BadRequestError(info.msg || 'Failed to get QQ user info');
+        }
+        if (!info.open_id) {
             throw new BadRequestError('Failed to get QQ user info');
         }
 
@@ -345,9 +352,9 @@ export function UserService(): Hono {
             permission: number | null;
         } = {
             // Namespace to avoid colliding with GitHub/Gitee openids.
-            openid: `qq:${String(info.openid)}`,
-            username: info.nickname || info.name || info.username || `qq_${String(info.openid)}`,
-            avatar: info.avatar || info.figureurl || info.headimgurl || '',
+            openid: `qq:${String(info.open_id)}`,
+            username: info.nickname || `qq_${String(info.open_id)}`,
+            avatar: info.figureurl_qq || info.figureurl_1 || info.figureurl_2 || info.figureurl || '',
             permission: 0,
         };
 

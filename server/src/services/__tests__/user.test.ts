@@ -356,7 +356,7 @@ describe('UserService', () => {
             sqlite.exec(`INSERT INTO users (id, username, avatar, permission, openid) VALUES (3, 'oldqq', 'old.png', 0, 'qq:qq_abc')`);
             const originalFetch = global.fetch;
             global.fetch = async () => new Response(
-                JSON.stringify({ openid: 'qq_abc', nickname: 'QQUser', avatar: 'https://x/y.png' }),
+                JSON.stringify({ ret: 0, open_id: 'qq_abc', nickname: 'QQUser', figureurl_qq: 'https://x/y.png' }),
                 { status: 200, headers: { 'Content-Type': 'application/json' } }
             );
 
@@ -388,7 +388,7 @@ describe('UserService', () => {
         it('callback should redirect a new QQ user to the register page', async () => {
             const originalFetch = global.fetch;
             global.fetch = async () => new Response(
-                JSON.stringify({ openid: 'qq_new', nickname: 'NewQQ', avatar: 'https://x/z.png' }),
+                JSON.stringify({ ret: 0, open_id: 'qq_new', nickname: 'NewQQ', figureurl_qq: 'https://x/z.png' }),
                 { status: 200, headers: { 'Content-Type': 'application/json' } }
             );
 
