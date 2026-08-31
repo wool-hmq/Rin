@@ -1,4 +1,4 @@
-# User Instruction Memor
+# User Instruction Memory
 
 This file records user instructions, preferences, and teachings for reference in future interactions.
 
