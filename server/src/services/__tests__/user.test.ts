@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import type { Variables, JWTUtils, OAuth2Utils } from "../../core/hono-types";
 import { setupTestApp, TestCacheImpl, cleanupTestDB, createMockEnv } from '../../../tests/fixtures';
+import { createJWT } from '../../utils/jwt';
 import type { Database } from 'bun:sqlite';
 
 describe('UserService', () => {
@@ -175,7 +176,7 @@ describe('UserService', () => {
             const originalFetch = global.fetch;
             global.fetch = async () => {
                 return new Response(JSON.stringify({
-                    id: 123,
+                    id: 'gh_123',
                     login: 'gitee_user',
                     name: 'Gitee User',
                     avatar_url: 'https://gitee.com/avatar.png'
@@ -342,6 +343,153 @@ describe('UserService', () => {
             }, env);
             
             expect(res.status).toBe(400);
+        });
+    });
+
+    describe('GET /check-username - Username availability', () => {
+        it('should return available:false for empty username', async () => {
+            const res = await app.request('/check-username?username=', { method: 'GET' }, env);
+            expect(res.status).toBe(200);
+            const data = await res.json() as { available: boolean };
+            expect(data.available).toBe(false);
+        });
+
+        it('should return available:true for an unused username', async () => {
+            const res = await app.request('/check-username?username=freshname', { method: 'GET' }, env);
+            expect(res.status).toBe(200);
+            const data = await res.json() as { available: boolean };
+            expect(data.available).toBe(true);
+        });
+
+        it('should return available:false for a taken username', async () => {
+            const res = await app.request('/check-username?username=user1', { method: 'GET' }, env);
+            expect(res.status).toBe(200);
+            const data = await res.json() as { available: boolean };
+            expect(data.available).toBe(false);
+        });
+    });
+
+    describe('GET /gitee/callback - new user redirect', () => {
+        it('should redirect new OAuth user to /register with a token', async () => {
+            const originalFetch = global.fetch;
+            global.fetch = async () => {
+                return new Response(JSON.stringify({
+                    id: 999,
+                    login: 'brand_new',
+                    name: 'Brand New',
+                    avatar_url: 'https://gitee.com/new.png'
+                }), { status: 200 });
+            };
+
+            try {
+                const res = await app.request('/gitee/callback?code=valid_code&state=mock_state', {
+                    method: 'GET',
+                    headers: {
+                        'Cookie': 'state=mock_state; redirect_to=http://localhost:5173/callback'
+                    }
+                }, env);
+
+                expect(res.status).toBe(302);
+                const location = res.headers.get('Location') || '';
+                expect(location).toContain('/register');
+                expect(location).toContain('token=');
+            } finally {
+                global.fetch = originalFetch;
+            }
+        });
+    });
+
+    describe('POST /register - complete registration', () => {
+        function buildAppWithRealJwt() {
+            const appReal = new Hono<{ Bindings: Env; Variables: Variables }>();
+            appReal.use(createMiddleware<{ Bindings: Env; Variables: Variables }>(async (c, next) => {
+                c.set('db', db);
+                c.set('cache', new TestCacheImpl());
+                c.set('serverConfig', new TestCacheImpl());
+                c.set('clientConfig', new TestCacheImpl());
+                c.set('jwt', createJWT('test-jwt-secret'));
+                c.set('oauth2', undefined);
+                c.set('env', env);
+                await next();
+            }));
+            appReal.route('/', UserService());
+            appReal.onError((err, c) => {
+                const error = err as any;
+                if (error.code && error.statusCode) {
+                    return c.json({
+                        success: false,
+                        error: { code: error.code, message: error.message, details: error.details }
+                    }, error.statusCode as any);
+                }
+                return c.json({ success: false, error: { code: 'INTERNAL_ERROR', message: err.message || 'error' } }, 500);
+            });
+            return appReal;
+        }
+
+        function makeRegToken(openid: string, username: string) {
+            const jwt = createJWT('test-jwt-secret');
+            return jwt.sign({
+                type: 'register',
+                openid,
+                avatar: 'https://example.com/a.png',
+                platform: 'github',
+                suggestedUsername: username,
+                exp: Math.floor(Date.now() / 1000) + 600,
+            });
+        }
+
+        it('should reject request without token', async () => {
+            const appReal = buildAppWithRealJwt();
+            const res = await appReal.request('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'someone' }),
+            }, env);
+            expect(res.status).toBe(403);
+        });
+
+        it('should create a user with a unique username', async () => {
+            const appReal = buildAppWithRealJwt();
+            const token = await makeRegToken('gh_brandnew', 'brandnew');
+            const res = await appReal.request('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, username: 'brandnew' }),
+            }, env);
+            expect(res.status).toBe(200);
+            const data = await res.json() as any;
+            expect(data.token).toBeTruthy();
+            expect(data.user.username).toBe('brandnew');
+
+            const row = sqlite.prepare("SELECT username, openid, permission FROM users WHERE openid = 'gh_brandnew'").get() as any;
+            expect(row).toBeDefined();
+            expect(row.username).toBe('brandnew');
+            expect(row.permission).toBe(0);
+        });
+
+        it('should set permission=1 for the first registered user', async () => {
+            sqlite.exec('DELETE FROM users');
+            const appReal = buildAppWithRealJwt();
+            const token = await makeRegToken('gh_first', 'firstuser');
+            const res = await appReal.request('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, username: 'firstuser' }),
+            }, env);
+            expect(res.status).toBe(200);
+            const row = sqlite.prepare("SELECT permission FROM users WHERE openid = 'gh_first'").get() as any;
+            expect(row.permission).toBe(1);
+        });
+
+        it('should return 409 for a taken username', async () => {
+            const appReal = buildAppWithRealJwt();
+            const token = await makeRegToken('gh_other', 'otheruser');
+            const res = await appReal.request('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, username: 'user1' }),
+            }, env);
+            expect(res.status).toBe(409);
         });
     });
 

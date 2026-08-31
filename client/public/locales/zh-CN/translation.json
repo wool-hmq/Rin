@@ -250,6 +250,21 @@
       "placeholder": "请输入用户名"
     }
   },
+  "register": {
+    "title": "创建新用户",
+    "invalid_token": "注册链接已失效，请重新登录",
+    "username": {
+      "placeholder": "请输入用户名",
+      "required": "用户名不能为空"
+    },
+    "checking": "检查中...",
+    "available": "用户名可用",
+    "username_taken": "用户名已被占用",
+    "submit": "创建账号",
+    "submitting": "创建中...",
+    "failed": "创建失败，请重试",
+    "suggested": "建议用户名：{{name}}"
+  },
   "logout": "退出登录",
   "main_content": "正文",
   "moments": {

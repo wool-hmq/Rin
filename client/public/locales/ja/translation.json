@@ -241,6 +241,21 @@
       "placeholder": "ユーザー名を入力してください"
     }
   },
+  "register": {
+    "title": "アカウント作成",
+    "invalid_token": "登録リンクの有効期限が切れました。再度ログインしてください",
+    "username": {
+      "placeholder": "ユーザー名を入力",
+      "required": "ユーザー名は必須です"
+    },
+    "checking": "確認中...",
+    "available": "ユーザー名は使用可能です",
+    "username_taken": "ユーザー名は既に使用されています",
+    "submit": "アカウント作成",
+    "submitting": "作成中...",
+    "failed": "アカウント作成に失敗しました。再度お試しください",
+    "suggested": "推奨ユーザー名: {{name}}"
+  },
   "logout": "ログアウト",
   "main_content": "本文",
   "moments": {

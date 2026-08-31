@@ -21,6 +21,7 @@ import { HealthPage } from "../page/health";
 import { HashtagPage } from "../page/hashtag";
 import { HashtagsPage } from "../page/hashtags";
 import { LoginPage } from "../page/login";
+import { RegisterPage } from "../page/register";
 import { MomentsPage } from "../page/moments";
 import { ProfilePage } from "../page/profile";
 import { QueueStatusPage } from "../page/queue-status";
@@ -116,6 +117,10 @@ export function AppRoutes() {
 
       <AppRoute path="/login">
         <LoginPage />
+      </AppRoute>
+
+      <AppRoute path="/register">
+        <RegisterPage />
       </AppRoute>
 
       <AppRoute path="/profile">

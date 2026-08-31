@@ -250,6 +250,21 @@
       "placeholder": "Please enter your username"
     }
   },
+  "register": {
+    "title": "Create Account",
+    "invalid_token": "Registration link expired, please log in again",
+    "username": {
+      "placeholder": "Enter a username",
+      "required": "Username is required"
+    },
+    "checking": "Checking...",
+    "available": "Username is available",
+    "username_taken": "Username is already taken",
+    "submit": "Create Account",
+    "submitting": "Creating...",
+    "failed": "Failed to create account, please try again",
+    "suggested": "Suggested username: {{name}}"
+  },
   "logout": "Logout",
   "main_content": "Main content",
   "moments": {

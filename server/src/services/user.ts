@@ -7,6 +7,7 @@ import { setJWTCookie } from "../core/hono-middleware";
 import { users } from "../db/schema";
 import {
     BadRequestError,
+    ConflictError,
     ForbiddenError,
     InternalServerError,
     NotFoundError
@@ -117,25 +118,19 @@ export function UserService(): Hono {
                 sameSite: 'Lax',
             });
         } else {
-            // If no user exists, check if this is the first user
-            const anyUserCheck = await profileAsync(c, 'user_first_lookup', () => db.query.users.findMany({ limit: 1 }));
-            if (anyUserCheck.length === 0) {
-                profile.permission = 1;
-            }
-
-            const result = await profileAsync(c, 'user_insert', () => db.insert(users).values(profile).returning({ insertedId: users.id }));
-            if (!result || result.length === 0) {
-                throw new InternalServerError('Failed to register user');
-            }
-
-            authToken = await profileAsync(c, 'user_insert_token', () => jwt.sign({ id: result[0].insertedId }));
-            setJWTCookie(c, authToken);
-            // Store token in cookie for frontend to read (not HttpOnly)
-            setCookie(c, 'auth_token', authToken, {
-                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-                path: '/',
-                sameSite: 'Lax',
-            });
+            const regToken = await profileAsync(c, 'user_github_reg_token', () => jwt.sign({
+                type: 'register',
+                openid: profile.openid,
+                avatar: profile.avatar,
+                platform: 'github',
+                suggestedUsername: profile.username,
+                exp: Math.floor(Date.now() / 1000) + 600,
+            }));
+            const redirectTo = getCookie(c, 'redirect_to');
+            const regUrl = new URL(redirectTo || '/');
+            regUrl.pathname = '/register';
+            regUrl.searchParams.set('token', regToken);
+            return c.redirect(regUrl.toString(), 302);
         }
 
         const redirectTo = getCookie(c, 'redirect_to');
@@ -248,25 +243,19 @@ export function UserService(): Hono {
                 sameSite: 'Lax',
             });
         } else {
-            // If no user exists, check if this is the first user
-            const anyUserCheck = await profileAsync(c, 'user_gitee_first_lookup', () => db.query.users.findMany({ limit: 1 }));
-            if (anyUserCheck.length === 0) {
-                profile.permission = 1;
-            }
-
-            const result = await profileAsync(c, 'user_gitee_insert', () => db.insert(users).values(profile).returning({ insertedId: users.id }));
-            if (!result || result.length === 0) {
-                throw new InternalServerError('Failed to register user');
-            }
-
-            authToken = await profileAsync(c, 'user_gitee_insert_token', () => jwt.sign({ id: result[0].insertedId }));
-            setJWTCookie(c, authToken);
-            // Store token in cookie for frontend to read (not HttpOnly)
-            setCookie(c, 'auth_token', authToken, {
-                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-                path: '/',
-                sameSite: 'Lax',
-            });
+            const regToken = await profileAsync(c, 'user_gitee_reg_token', () => jwt.sign({
+                type: 'register',
+                openid: profile.openid,
+                avatar: profile.avatar,
+                platform: 'gitee',
+                suggestedUsername: profile.username,
+                exp: Math.floor(Date.now() / 1000) + 600,
+            }));
+            const redirectTo = getCookie(c, 'redirect_to');
+            const regUrl = new URL(redirectTo || '/');
+            regUrl.pathname = '/register';
+            regUrl.searchParams.set('token', regToken);
+            return c.redirect(regUrl.toString(), 302);
         }
 
         const redirectTo = getCookie(c, 'redirect_to');
@@ -299,6 +288,83 @@ export function UserService(): Hono {
             permission: user.permission === 1,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
+        });
+    });
+
+    // GET /user/check-username - Check username availability
+    app.get('/check-username', async (c: AppContext) => {
+        const db = c.get('db');
+        const username = (c.req.query('username') || '').trim();
+        if (!username) {
+            return c.json({ available: false });
+        }
+        const existing = await profileAsync(c, 'user_check_username', () => db.query.users.findFirst({
+            where: eq(users.username, username),
+        }));
+        return c.json({ available: !existing });
+    });
+
+    // POST /user/register - Complete OAuth registration with a unique username
+    app.post('/register', async (c: AppContext) => {
+        const db = c.get('db');
+        const jwt = c.get('jwt');
+        const body = await c.req.json().catch(() => ({})) as { token?: string; username?: string };
+
+        const payload = await jwt.verify(body.token ?? "");
+        if (!payload || payload.type !== 'register') {
+            throw new ForbiddenError('Invalid or expired registration token');
+        }
+
+        const cleanName = (body.username || '').trim();
+        if (!cleanName) {
+            throw new BadRequestError('Username is required');
+        }
+
+        const existing = await profileAsync(c, 'user_register_lookup', () => db.query.users.findFirst({
+            where: eq(users.username, cleanName),
+        }));
+        if (existing) {
+            throw new ConflictError('Username already taken');
+        }
+
+        const anyUserCheck = await profileAsync(c, 'user_register_first_lookup', () => db.query.users.findMany({ limit: 1 }));
+        const permission = anyUserCheck.length === 0 ? 1 : 0;
+
+        let result: { insertedId: number }[];
+        try {
+            result = await profileAsync(c, 'user_register_insert', () => db.insert(users).values({
+                openid: payload.openid,
+                username: cleanName,
+                avatar: payload.avatar,
+                permission,
+            }).returning({ insertedId: users.id }));
+        } catch (e: any) {
+            if (String(e?.message ?? '').includes('UNIQUE constraint failed')) {
+                throw new ConflictError('Username already taken');
+            }
+            throw e;
+        }
+
+        if (!result || result.length === 0) {
+            throw new InternalServerError('Failed to register user');
+        }
+
+        const authToken = await profileAsync(c, 'user_register_token', () => jwt.sign({ id: result[0].insertedId }));
+        setJWTCookie(c, authToken);
+        setCookie(c, 'auth_token', authToken, {
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+            path: '/',
+            sameSite: 'Lax',
+        });
+
+        return c.json({
+            token: authToken,
+            user: {
+                id: result[0].insertedId,
+                username: cleanName,
+                avatar: payload.avatar,
+                permission: permission === 1,
+            },
         });
     });
 

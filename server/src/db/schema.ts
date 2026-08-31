@@ -64,7 +64,7 @@ export const friends = sqliteTable("friends", {
 
 export const users = sqliteTable("users", {
     id: integer("id").primaryKey(),
-    username: text("username").notNull(),
+    username: text("username").notNull().unique(),
     openid: text("openid").notNull(),
     avatar: text("avatar"),
     password: text("password"),

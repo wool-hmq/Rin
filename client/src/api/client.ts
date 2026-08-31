@@ -393,6 +393,19 @@ class UserAPI {
     return this.http.post<void>("/api/user/logout");
   }
 
+  // GET /api/user/check-username
+  async checkUsername(username: string): Promise<ApiResponse<{ available: boolean }>> {
+    return this.http.get<{ available: boolean }>(`/api/user/check-username?username=${encodeURIComponent(username)}`);
+  }
+
+  // POST /api/user/register
+  async register(body: { token: string; username: string }): Promise<ApiResponse<{
+    token: string;
+    user: { id: number; username: string; avatar: string | null; permission: boolean };
+  }>> {
+    return this.http.post("/api/user/register", body);
+  }
+
   // GET /api/user/github
   githubAuth(): string {
     return `${endpoint}/api/user/github`;
