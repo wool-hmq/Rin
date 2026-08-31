@@ -286,7 +286,6 @@ describe('UserService', () => {
         function buildQQApp(overrides: Partial<Env> = {}) {
             const env = createMockEnv({
                 RIN_QQ_TOKEN: 'qq_token_123',
-                RIN_QQ_CALLBACK_URL: 'https://jiaoblog.dpdns.org/api/user/xinyueqq/callback',
                 ...overrides,
             });
             const a = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -342,7 +341,7 @@ describe('UserService', () => {
         });
 
         it('should return 400 if QQ login is not configured', async () => {
-            const { app: a, env } = buildQQApp({ RIN_QQ_TOKEN: '', RIN_QQ_CALLBACK_URL: '' });
+            const { app: a, env } = buildQQApp({ RIN_QQ_TOKEN: '' });
             const res = await a.request('/xinyueqq', {
                 method: 'GET',
                 headers: { 'Referer': 'http://localhost:5173/' }

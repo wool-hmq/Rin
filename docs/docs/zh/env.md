@@ -67,7 +67,7 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）**和**S
 | `RIN_GITHUB_CLIENT_ID` | GitHub OAuth 客户端 ID | GitHub OAuth App 设置 |
 | `RIN_GITHUB_CLIENT_SECRET` | GitHub OAuth 客户端密钥 | GitHub OAuth App 设置 |
 | `RIN_QQ_TOKEN` | 心月互联 QQ 登录 Token | 心月互联 https://qq.wch666.com/ 申请 |
-| `RIN_QQ_CALLBACK_URL` | 心月互联回调地址 | 固定为 `https://<你的域名>/api/user/xinyueqq/callback`，需与心月互联后台该 Token 配置的回调一致 |
+| QQ 回调地址 | 心月互联回调地址 | 固定为 `https://<你的域名>/api/user/xinyueqq/callback`，需在心月互联后台为该 Token 配置一致（代码中写死路径，无需环境变量） |
 | `ADMIN_USERNAME` | 账号密码登录用户名 | 自行设定 |
 | `ADMIN_PASSWORD` | 账号密码登录密码 | 自行设定 |
 | `JWT_SECRET` | JWT 签名密钥（任意随机字符串） | 自行生成 |

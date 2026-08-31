@@ -277,11 +277,10 @@ export function UserService(): Hono {
 
     // GET /user/xinyueqq - Redirect to 心月互联 (Xinyue) QQ OAuth
     // 心月互联 proxies QQ login: we redirect to its gateway with our token, and it
-    // redirects back to RIN_QQ_CALLBACK_URL (configured per-token in 心月互联) carrying ?code=&msg=.
+    // redirects back to /api/user/xinyueqq/callback (configured per-token in 心月互联) carrying ?code=&msg=.
     app.get("/xinyueqq", async (c: AppContext) => {
         const token = c.env.RIN_QQ_TOKEN;
-        const callbackUrl = c.env.RIN_QQ_CALLBACK_URL;
-        if (!token || !callbackUrl) {
+        if (!token) {
             throw new BadRequestError('QQ login is not configured');
         }
 
