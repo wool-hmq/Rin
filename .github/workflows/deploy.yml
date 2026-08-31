@@ -212,6 +212,8 @@ jobs:
           RIN_GITHUB_CLIENT_SECRET: ${{ secrets.RIN_GITHUB_CLIENT_SECRET || '' }}
           RIN_GITEE_CLIENT_ID: ${{ secrets.RIN_GITEE_CLIENT_ID || '' }}
           RIN_GITEE_CLIENT_SECRET: ${{ secrets.RIN_GITEE_CLIENT_SECRET || '' }}
+          RIN_QQ_TOKEN: ${{ secrets.RIN_QQ_TOKEN || '' }}
+          RIN_QQ_CALLBACK_URL: ${{ secrets.RIN_QQ_CALLBACK_URL || '' }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || '' }}

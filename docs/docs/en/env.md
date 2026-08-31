@@ -66,6 +66,8 @@ These sensitive values must be configured as **Cloudflare Workers Secrets**, ent
 |----------|---------|---------------|
 | `RIN_GITHUB_CLIENT_ID` | GitHub OAuth client ID | GitHub OAuth App settings |
 | `RIN_GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | GitHub OAuth App settings |
+| `RIN_QQ_TOKEN` | Xinyue QQ login token | Apply at https://qq.wch666.com/ |
+| `RIN_QQ_CALLBACK_URL` | Xinyue QQ callback URL | Fixed to `https://<your-domain>/api/user/xinyueqq/callback`, must match the callback configured for the token in Xinyue |
 | `ADMIN_USERNAME` | Username for password login | Set yourself |
 | `ADMIN_PASSWORD` | Password for password login | Set yourself |
 | `JWT_SECRET` | JWT signing key (any random string) | Generate yourself |

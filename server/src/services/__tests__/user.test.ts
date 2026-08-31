@@ -282,6 +282,151 @@ describe('UserService', () => {
         });
     });
 
+    describe('GET /xinyueqq - Xinyue QQ OAuth', () => {
+        function buildQQApp(overrides: Partial<Env> = {}) {
+            const env = createMockEnv({
+                RIN_QQ_TOKEN: 'qq_token_123',
+                RIN_QQ_CALLBACK_URL: 'https://jiaoblog.dpdns.org/api/user/xinyueqq/callback',
+                ...overrides,
+            });
+            const a = new Hono<{ Bindings: Env; Variables: Variables }>();
+            a.use(createMiddleware<{ Bindings: Env; Variables: Variables }>(async (c, next) => {
+                c.set('db', db);
+                c.set('cache', new TestCacheImpl());
+                c.set('serverConfig', new TestCacheImpl());
+                c.set('clientConfig', new TestCacheImpl());
+                c.set('jwt', {
+                    sign: async (payload: any) => `mock_token_${payload.id ?? 'reg'}`,
+                    verify: async () => null,
+                } as JWTUtils);
+                c.set('oauth2', undefined);
+                c.set('env', env);
+                await next();
+            }));
+            a.route('/', UserService());
+            a.onError((err, c) => {
+                const error = err as any;
+                if (error.code && error.statusCode) {
+                    return c.json({ success: false, error: { code: error.code, message: error.message, details: error.details } }, error.statusCode as any);
+                }
+                return c.json({ success: false, error: { code: 'INTERNAL_ERROR', message: err.message || 'An unexpected error occurred' } }, 500);
+            });
+            return { app: a, env };
+        }
+
+        it('should redirect to 心月互联 with token, state (msg) and display', async () => {
+            const { app: a, env } = buildQQApp();
+            const res = await a.request('/xinyueqq', {
+                method: 'GET',
+                headers: {
+                    'Referer': 'http://localhost:5173/login',
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'
+                }
+            }, env);
+
+            expect(res.status).toBe(302);
+            const location = res.headers.get('Location') || '';
+            expect(location).toContain('qq.wch666.com/api/qq.php');
+            expect(location).toContain('token=qq_token_123');
+            expect(location).toContain('display=mobile');
+            expect(location).toContain('msg=');
+            expect(res.headers.get('Set-Cookie')).toContain('qq_state');
+        });
+
+        it('should require referer header', async () => {
+            const { app: a, env } = buildQQApp();
+            const res = await a.request('/xinyueqq', { method: 'GET' }, env);
+            expect(res.status).toBe(400);
+            const data = await res.json() as { error: { message: string } };
+            expect(data.error.message).toBe('Referer header is required');
+        });
+
+        it('should return 400 if QQ login is not configured', async () => {
+            const { app: a, env } = buildQQApp({ RIN_QQ_TOKEN: '', RIN_QQ_CALLBACK_URL: '' });
+            const res = await a.request('/xinyueqq', {
+                method: 'GET',
+                headers: { 'Referer': 'http://localhost:5173/' }
+            }, env);
+            expect(res.status).toBe(400);
+            const data = await res.json() as { error: { message: string } };
+            expect(data.error.message).toBe('QQ login is not configured');
+        });
+
+        it('callback should log in an existing QQ user and refresh avatar only', async () => {
+            sqlite.exec(`INSERT INTO users (id, username, avatar, permission, openid) VALUES (3, 'oldqq', 'old.png', 0, 'qq:qq_abc')`);
+            const originalFetch = global.fetch;
+            global.fetch = async () => new Response(
+                JSON.stringify({ openid: 'qq_abc', nickname: 'QQUser', avatar: 'https://x/y.png' }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } }
+            );
+
+            try {
+                const { app: a, env } = buildQQApp();
+                const r1 = await a.request('/xinyueqq', {
+                    method: 'GET',
+                    headers: { 'Referer': 'http://localhost:5173/login' }
+                }, env);
+                const setCookie = r1.headers.get('Set-Cookie') || '';
+                const state = decodeURIComponent((setCookie.match(/qq_state=([^;]+)/) || [])[1] || '');
+                expect(state).toBeTruthy();
+
+                const res = await a.request(`/xinyueqq/callback?code=zzz&msg=${encodeURIComponent(state)}`, {
+                    method: 'GET',
+                    headers: { Cookie: `qq_state=${state}; redirect_to=http://localhost:5173/callback` }
+                }, env);
+
+                expect(res.status).toBe(302);
+                expect(res.headers.get('Location')).toContain('token=');
+                const row = sqlite.prepare("SELECT username, avatar FROM users WHERE openid = 'qq:qq_abc'").get() as any;
+                expect(row.username).toBe('oldqq');
+                expect(row.avatar).toBe('https://x/y.png');
+            } finally {
+                global.fetch = originalFetch;
+            }
+        });
+
+        it('callback should redirect a new QQ user to the register page', async () => {
+            const originalFetch = global.fetch;
+            global.fetch = async () => new Response(
+                JSON.stringify({ openid: 'qq_new', nickname: 'NewQQ', avatar: 'https://x/z.png' }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } }
+            );
+
+            try {
+                const { app: a, env } = buildQQApp();
+                const r1 = await a.request('/xinyueqq', {
+                    method: 'GET',
+                    headers: { 'Referer': 'http://localhost:5173/login' }
+                }, env);
+                const setCookie = r1.headers.get('Set-Cookie') || '';
+                const state = decodeURIComponent((setCookie.match(/qq_state=([^;]+)/) || [])[1] || '');
+
+                const res = await a.request(`/xinyueqq/callback?code=zzz&msg=${encodeURIComponent(state)}`, {
+                    method: 'GET',
+                    headers: { Cookie: `qq_state=${state}; redirect_to=http://localhost:5173/callback` }
+                }, env);
+
+                expect(res.status).toBe(302);
+                const location = res.headers.get('Location') || '';
+                expect(location).toContain('/register');
+                expect(location).toContain('token=');
+            } finally {
+                global.fetch = originalFetch;
+            }
+        });
+
+        it('callback should reject an invalid state', async () => {
+            const { app: a, env } = buildQQApp();
+            const res = await a.request('/xinyueqq/callback?code=zzz&msg=forged', {
+                method: 'GET',
+                headers: { Cookie: 'qq_state=legit' }
+            }, env);
+            expect(res.status).toBe(400);
+            const data = await res.json() as { error: { message: string } };
+            expect(data.error.message).toBe('Invalid state parameter');
+        });
+    });
+
     describe('GET /profile - Get user profile', () => {
         it('should return user profile', async () => {
             const res = await app.request('/profile', {

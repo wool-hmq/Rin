@@ -153,6 +153,18 @@ export function AppRoutes() {
         </TipsPage>
       </AppRoute>
 
+      <AppRoute path="/user/xinyueqq">
+        <TipsPage>
+          <Tips value={t("error.api_url")} type="error" />
+        </TipsPage>
+      </AppRoute>
+
+      <AppRoute path="/user/xinyueqq/callback">
+        <TipsPage>
+          <Tips value={t("error.github_callback")} type="error" />
+        </TipsPage>
+      </AppRoute>
+
       <AppRoute>
         <ErrorPage error={t("error.not_found")} />
       </AppRoute>

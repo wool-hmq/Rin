@@ -149,6 +149,7 @@ export function PasswordAuthService(): Hono<{
         return c.json({
             github: !!(env.RIN_GITHUB_CLIENT_ID && env.RIN_GITHUB_CLIENT_SECRET),
             gitee: !!(env.RIN_GITEE_CLIENT_ID && env.RIN_GITEE_CLIENT_SECRET),
+            qq: !!(env.RIN_QQ_TOKEN && env.RIN_QQ_CALLBACK_URL),
             password: !!(env.ADMIN_USERNAME && env.ADMIN_PASSWORD),
         });
     });

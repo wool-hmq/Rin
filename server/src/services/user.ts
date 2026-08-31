@@ -13,6 +13,12 @@ import {
     NotFoundError
 } from "../errors";
 
+function generateRandomState(): string {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export function UserService(): Hono {
     const app = new Hono();
 
@@ -263,6 +269,123 @@ export function UserService(): Hono {
         const redirectTo = getCookie(c, 'redirect_to');
         const redirect_url = new URL(redirectTo || '/');
         // Add token to URL for frontend to store (for cross-domain auth)
+        if (authToken) {
+            redirect_url.searchParams.set('token', authToken);
+        }
+        return c.redirect(redirect_url.toString(), 302);
+    });
+
+    // GET /user/xinyueqq - Redirect to 心月互联 (Xinyue) QQ OAuth
+    // 心月互联 proxies QQ login: we redirect to its gateway with our token, and it
+    // redirects back to RIN_QQ_CALLBACK_URL (configured per-token in 心月互联) carrying ?code=&msg=.
+    app.get("/xinyueqq", async (c: AppContext) => {
+        const token = c.env.RIN_QQ_TOKEN;
+        const callbackUrl = c.env.RIN_QQ_CALLBACK_URL;
+        if (!token || !callbackUrl) {
+            throw new BadRequestError('QQ login is not configured');
+        }
+
+        const referer = c.req.header('referer');
+        if (!referer) {
+            throw new BadRequestError('Referer header is required');
+        }
+
+        const ua = c.req.header('user-agent') || '';
+        const display = /Mobile|Android|iPhone|iPad|iPod/i.test(ua) ? 'mobile' : 'pc';
+
+        // CSRF protection: carry a one-time state in msg (心月互联 echoes it back).
+        const state = generateRandomState();
+        setCookie(c, 'qq_state', state, { path: '/' });
+
+        const refererUrl = new URL(referer);
+        setCookie(c, 'redirect_to', new URL('/callback', refererUrl.origin).toString(), { path: '/' });
+
+        const qqUrl = new URL('https://qq.wch666.com/api/qq.php');
+        qqUrl.searchParams.set('token', token);
+        qqUrl.searchParams.set('msg', state);
+        qqUrl.searchParams.set('display', display);
+
+        return c.redirect(qqUrl.toString(), 302);
+    });
+
+    // GET /user/xinyueqq/callback - 心月互联 QQ OAuth callback
+    app.get("/xinyueqq/callback", async (c: AppContext) => {
+        const jwt = c.get('jwt');
+        const db = c.get('db');
+
+        const query = c.req.query();
+        const stateCookie = getCookie(c, 'qq_state');
+
+        if (!query.msg || query.msg !== stateCookie) {
+            throw new BadRequestError('Invalid state parameter');
+        }
+        deleteCookie(c, 'qq_state');
+
+        const code = query.code;
+        if (!code) {
+            throw new BadRequestError('Missing code parameter');
+        }
+
+        const infoResp = await profileAsync(c, 'user_qq_fetch', () => fetch(`https://qq.wch666.com/api/get_user_info.php?code=${encodeURIComponent(code)}`));
+        const infoText = await profileAsync(c, 'user_qq_parse', () => infoResp.text());
+        let info: any;
+        try {
+            info = JSON.parse(infoText);
+        } catch {
+            throw new BadRequestError('Failed to parse QQ user info');
+        }
+        if (!info || !info.openid) {
+            throw new BadRequestError('Failed to get QQ user info');
+        }
+
+        const profile: {
+            openid: string;
+            username: string;
+            avatar: string;
+            permission: number | null;
+        } = {
+            // Namespace to avoid colliding with GitHub/Gitee openids.
+            openid: `qq:${String(info.openid)}`,
+            username: info.nickname || info.name || info.username || `qq_${String(info.openid)}`,
+            avatar: info.avatar || info.figureurl || info.headimgurl || '',
+            permission: 0,
+        };
+
+        let authToken: string | undefined;
+
+        const existingUser = await profileAsync(c, 'user_qq_existing_lookup', () => db.query.users.findFirst({
+            where: eq(users.openid, profile.openid),
+        }));
+
+        if (existingUser) {
+            profile.permission = existingUser.permission;
+            // Only refresh the avatar. Never overwrite the user-chosen username.
+            await profileAsync(c, 'user_qq_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
+            authToken = await profileAsync(c, 'user_qq_existing_token', () => jwt.sign({ id: existingUser.id }));
+            setJWTCookie(c, authToken);
+            setCookie(c, 'auth_token', authToken, {
+                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                path: '/',
+                sameSite: 'Lax',
+            });
+        } else {
+            const regToken = await profileAsync(c, 'user_qq_reg_token', () => jwt.sign({
+                type: 'register',
+                openid: profile.openid,
+                avatar: profile.avatar,
+                platform: 'xinyueqq',
+                suggestedUsername: profile.username,
+                exp: Math.floor(Date.now() / 1000) + 600,
+            }));
+            const redirectTo = getCookie(c, 'redirect_to');
+            const regUrl = new URL(redirectTo || '/');
+            regUrl.pathname = '/register';
+            regUrl.searchParams.set('token', regToken);
+            return c.redirect(regUrl.toString(), 302);
+        }
+
+        const redirectTo = getCookie(c, 'redirect_to');
+        const redirect_url = new URL(redirectTo || '/');
         if (authToken) {
             redirect_url.searchParams.set('token', authToken);
         }

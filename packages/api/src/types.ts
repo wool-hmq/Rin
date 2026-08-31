@@ -127,6 +127,7 @@ export interface UpdateProfileRequest {
 export interface AuthStatus {
   github: boolean;
   gitee: boolean;
+  qq: boolean;
   password: boolean;
 }
 
