@@ -220,6 +220,7 @@
   "github_login": "Github 登入",
   "gitee_login": "Gitee 登入",
   "qq_login": "QQ 登入",
+  "email_login": "郵件登入",
   "hashtags": "標籤",
   "home": "首頁",
   "index": {
@@ -232,6 +233,7 @@
   "listed": "列出在文章中",
   "load_more": "載入更多",
   "login": {
+    "back": "返回登入",
     "error": {
       "empty": "請輸入用戶名和密碼",
       "failed": "登入失敗",
@@ -249,6 +251,24 @@
     "title": "登入",
     "username": {
       "placeholder": "請輸入用戶名"
+    }
+  },
+  "email_login": {
+    "title": "郵件登入",
+    "enter_email": "請輸入您的郵件地址",
+    "email_placeholder": "請輸入郵件",
+    "send_code": "發送驗證碼",
+    "enter_code": "驗證碼已發送至 {{email}}",
+    "code_placeholder": "請輸入驗證碼",
+    "submit": "登入",
+    "resend_in": "{{seconds}}秒後重發",
+    "error": {
+      "email_required": "請輸入郵件地址",
+      "code_required": "請輸入驗證碼",
+      "send_failed": "發送失敗，請重試",
+      "invalid": "驗證碼錯誤或已過期",
+      "failed": "登入失敗，請重試",
+      "network": "網路錯誤，請重試"
     }
   },
   "register": {

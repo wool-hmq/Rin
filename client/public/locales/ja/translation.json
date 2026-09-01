@@ -220,6 +220,7 @@
   "github_login": "Github ログイン",
   "gitee_login": "Gitee ログイン",
   "qq_login": "QQ ログイン",
+  "email_login": "メールログイン",
   "hashtags": "ラベル",
   "home": "ホーム",
   "index": {
@@ -232,7 +233,17 @@
   "listed": "記事にリスト",
   "load_more": "もっと読み込む",
   "login": {
+    "back": "ログインに戻る",
+    "error": {
+      "empty": "ユーザー名とパスワードを入力してください",
+      "failed": "ログインに失敗しました",
+      "invalid": "ユーザー名またはパスワードが正しくありません",
+      "network": "ネットワークエラー、再試行してください"
+    },
+    "loading": "ログイン中...",
+    "no_methods": "利用可能なログイン方法がありません",
     "oauth_only": "続行するにはログインしてください",
+    "or": "または",
     "password": {
       "placeholder": "パスワードを入力してください"
     },
@@ -240,6 +251,24 @@
     "title": "ログイン",
     "username": {
       "placeholder": "ユーザー名を入力してください"
+    }
+  },
+  "email_login": {
+    "title": "メールログイン",
+    "enter_email": "メールアドレスを入力してください",
+    "email_placeholder": "メールを入力",
+    "send_code": "認証コードを送信",
+    "enter_code": "認証コードを {{email}} に送信しました",
+    "code_placeholder": "認証コードを入力",
+    "submit": "ログイン",
+    "resend_in": "{{seconds}}秒後に再送信",
+    "error": {
+      "email_required": "メールアドレスを入力してください",
+      "code_required": "認証コードを入力してください",
+      "send_failed": "送信に失敗しました。再試行してください",
+      "invalid": "認証コードが無効または期限切れです",
+      "failed": "ログインに失敗しました。再試行してください",
+      "network": "ネットワークエラー、再試行してください"
     }
   },
   "register": {

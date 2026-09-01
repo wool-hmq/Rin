@@ -68,6 +68,10 @@ These sensitive values must be configured as **Cloudflare Workers Secrets**, ent
 | `RIN_GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | GitHub OAuth App settings |
 | `RIN_QQ_TOKEN` | Xinyue QQ login token | Apply at https://qq.wch666.com/ |
 | QQ callback URL | Xinyue QQ callback URL | Fixed to `https://<your-domain>/api/user/xinyueqq/callback` and must match the callback configured for the token in Xinyue (path is hardcoded in code, no env var needed) |
+| `SMTP_MAIL` | SMTP sender email | Get from your SMTP provider |
+| `SMTP_USER` | SMTP login username | Get from your SMTP provider |
+| `SMTP_PASS` | SMTP login password | Get from your SMTP provider |
+| `SMTP_HOST` | SMTP server address (with port) | e.g. `smtp.example.com:465` or email service HTTP API endpoint |
 | `ADMIN_USERNAME` | Username for password login | Set yourself |
 | `ADMIN_PASSWORD` | Password for password login | Set yourself |
 | `JWT_SECRET` | JWT signing key (any random string) | Generate yourself |

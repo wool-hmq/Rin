@@ -128,12 +128,34 @@ export interface AuthStatus {
   github: boolean;
   gitee: boolean;
   qq: boolean;
+  email: boolean;
   password: boolean;
 }
 
 export interface LoginRequest {
   username: string;
   password: string;
+}
+
+export interface EmailSendRequest {
+  email: string;
+}
+
+export interface EmailLoginRequest {
+  email: string;
+  code: string;
+}
+
+export interface EmailSendResponse {
+  success: boolean;
+  message?: string;
+  code?: string;
+}
+
+export interface EmailLoginResponse {
+  success: boolean;
+  token?: string;
+  user?: UserProfile;
 }
 
 export interface LoginResponse {

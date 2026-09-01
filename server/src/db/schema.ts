@@ -66,6 +66,7 @@ export const users = sqliteTable("users", {
     id: integer("id").primaryKey(),
     username: text("username").notNull().unique(),
     openid: text("openid").notNull(),
+    email: text("email").default(""),
     avatar: text("avatar"),
     password: text("password"),
     permission: integer("permission").default(0),

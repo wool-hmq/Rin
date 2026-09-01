@@ -220,6 +220,7 @@
   "github_login": "Github Login",
   "gitee_login": "Gitee Login",
   "qq_login": "QQ Login",
+  "email_login": "Email Login",
   "hashtags": "Hashtags",
   "home": "Home",
   "index": {
@@ -232,6 +233,7 @@
   "listed": "Listed in articles",
   "load_more": "Load More",
   "login": {
+    "back": "Back to Login",
     "error": {
       "empty": "Please enter username and password",
       "failed": "Login failed",
@@ -249,6 +251,24 @@
     "title": "Login",
     "username": {
       "placeholder": "Please enter your username"
+    }
+  },
+  "email_login": {
+    "title": "Email Login",
+    "enter_email": "Please enter your email address",
+    "email_placeholder": "Enter email",
+    "send_code": "Send Code",
+    "enter_code": "Verification code sent to {{email}}",
+    "code_placeholder": "Enter verification code",
+    "submit": "Login",
+    "resend_in": "Resend in {{seconds}}s",
+    "error": {
+      "email_required": "Please enter your email",
+      "code_required": "Please enter the verification code",
+      "send_failed": "Failed to send code, please try again",
+      "invalid": "Invalid or expired verification code",
+      "failed": "Login failed, please try again",
+      "network": "Network error, please try again"
     }
   },
   "register": {

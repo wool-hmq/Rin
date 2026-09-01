@@ -32,6 +32,10 @@ import type {
   UploadResponse,
   AuthStatus,
   LoginRequest,
+  EmailSendRequest,
+  EmailSendResponse,
+  EmailLoginRequest,
+  EmailLoginResponse,
   LoginResponse,
   SearchResponse,
   SearchMode,
@@ -629,6 +633,16 @@ class AuthAPI {
   // POST /api/auth/login
   async login(body: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     return this.http.post<LoginResponse>("/api/auth/login", body);
+  }
+
+  // POST /api/auth/email/send
+  async sendEmailCode(body: EmailSendRequest): Promise<ApiResponse<EmailSendResponse>> {
+    return this.http.post<EmailSendResponse>("/api/auth/email/send", body);
+  }
+
+  // POST /api/auth/email/login
+  async emailLogin(body: EmailLoginRequest): Promise<ApiResponse<EmailLoginResponse>> {
+    return this.http.post<EmailLoginResponse>("/api/auth/email/login", body);
   }
 }
 

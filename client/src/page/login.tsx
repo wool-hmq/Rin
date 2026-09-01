@@ -15,7 +15,7 @@ const qq_oauth_url = oauth_url.replace('/github', '/xinyueqq');
 export function LoginPage() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const [authStatus, setAuthStatus] = useState<{ github: boolean, gitee: boolean, qq: boolean, password: boolean }>({ github: false, gitee: false, qq: false, password: false });
+    const [authStatus, setAuthStatus] = useState<{ github: boolean, gitee: boolean, qq: boolean, email: boolean, password: boolean }>({ github: false, gitee: false, qq: false, email: false, password: false });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [, setLocation] = useLocation();
@@ -103,10 +103,10 @@ export function LoginPage() {
                 )}
 
                 {/* OAuth options */}
-                {(authStatus.github || authStatus.gitee || authStatus.qq) && (
+                {(authStatus.github || authStatus.gitee || authStatus.qq || authStatus.email) && (
                     <div className="flex flex-col justify-center items-center space-y-2 pt-2">
                         {authStatus.password && <p className="text-xs t-secondary">{t('login.or')}</p>}
-                        {(!authStatus.password && !authStatus.github && !authStatus.gitee && !authStatus.qq) && <p className="text-xs t-secondary">{t('login.oauth_only')}</p>}
+                        {(!authStatus.password && !authStatus.github && !authStatus.gitee && !authStatus.qq && !authStatus.email) && <p className="text-xs t-secondary">{t('login.oauth_only')}</p>}
                         <div className="flex flex-row items-center space-x-4">
                             {authStatus.github && (
                                 <Icon label={t('github_login')} name="ri-github-line" onClick={() => {
@@ -123,12 +123,17 @@ export function LoginPage() {
                                     window.location.href = `${qq_oauth_url}`
                                 }} hover={true} />
                             )}
+                            {authStatus.email && (
+                                <Icon label={t('email_login')} name="ri-mail-line" onClick={() => {
+                                    setLocation('/email-login');
+                                }} hover={true} />
+                            )}
                         </div>
                     </div>
                 )}
 
                 {/* No auth methods available */}
-                {!authStatus.github && !authStatus.gitee && !authStatus.password && !authStatus.qq && (
+                {!authStatus.github && !authStatus.gitee && !authStatus.password && !authStatus.qq && !authStatus.email && (
                     <p className="text-sm text-red-500">{t('login.no_methods')}</p>
                 )}
             </div>

@@ -20,7 +20,25 @@ interface AuthApi {
     }>>;
     status(): Promise<ApiResponse<{
         github: boolean;
+        gitee: boolean;
+        qq: boolean;
+        email: boolean;
         password: boolean;
+    }>>;
+    sendEmailCode(body: { email: string }): Promise<ApiResponse<{
+        success: boolean;
+        message?: string;
+        code?: string;
+    }>>;
+    emailLogin(body: { email: string; code: string }): Promise<ApiResponse<{
+        success: boolean;
+        token?: string;
+        user?: {
+            id: number;
+            username: string;
+            avatar: string;
+            permission: boolean;
+        };
     }>>;
 }
 
@@ -67,6 +85,52 @@ export function createTestClient(app: Hono | FetchableApp, env: Env): TestClient
             async status(): Promise<ApiResponse<any>> {
                 const req = new Request(`${baseUrl}/auth/status`, {
                     method: "GET",
+                });
+                const res = await fetchableApp.fetch(req, env);
+                const data = await res.json().catch(() => null);
+                
+                if (res.ok) {
+                    return { data };
+                } else {
+                    return {
+                        error: {
+                            status: res.status,
+                            value: data,
+                        },
+                    };
+                }
+            },
+
+            async sendEmailCode(body: { email: string }): Promise<ApiResponse<any>> {
+                const req = new Request(`${baseUrl}/auth/email/send`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(body),
+                });
+                const res = await fetchableApp.fetch(req, env);
+                const data = await res.json().catch(() => null);
+                
+                if (res.ok) {
+                    return { data };
+                } else {
+                    return {
+                        error: {
+                            status: res.status,
+                            value: data,
+                        },
+                    };
+                }
+            },
+
+            async emailLogin(body: { email: string; code: string }): Promise<ApiResponse<any>> {
+                const req = new Request(`${baseUrl}/auth/email/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(body),
                 });
                 const res = await fetchableApp.fetch(req, env);
                 const data = await res.json().catch(() => null);

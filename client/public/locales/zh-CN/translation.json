@@ -220,6 +220,7 @@
   "github_login": "Github 登录",
   "gitee_login": "Gitee 登录",
   "qq_login": "QQ 登录",
+  "email_login": "邮箱登录",
   "hashtags": "标签",
   "home": "首页",
   "index": {
@@ -232,6 +233,7 @@
   "listed": "列出在文章中",
   "load_more": "加载更多",
   "login": {
+    "back": "返回登录",
     "error": {
       "empty": "请输入用户名和密码",
       "failed": "登录失败",
@@ -249,6 +251,24 @@
     "title": "登录",
     "username": {
       "placeholder": "请输入用户名"
+    }
+  },
+  "email_login": {
+    "title": "邮箱登录",
+    "enter_email": "请输入您的邮箱地址",
+    "email_placeholder": "请输入邮箱",
+    "send_code": "发送验证码",
+    "enter_code": "验证码已发送至 {{email}}",
+    "code_placeholder": "请输入验证码",
+    "submit": "登录",
+    "resend_in": "{{seconds}}秒后重发",
+    "error": {
+      "email_required": "请输入邮箱地址",
+      "code_required": "请输入验证码",
+      "send_failed": "发送失败，请重试",
+      "invalid": "验证码错误或已过期",
+      "failed": "登录失败，请重试",
+      "network": "网络错误，请重试"
     }
   },
   "register": {
