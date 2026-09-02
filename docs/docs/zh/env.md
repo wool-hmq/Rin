@@ -92,7 +92,7 @@ Rin 博客运行在 Cloudflare Workers 上，不支持原始 TCP SMTP。邮箱�
 2. Vercel 项目使用 `nodemailer` 通过 SMTP 发送邮件
 3. 域名限制（`EMAIL_DOMAIN`）在 Vercel 项目中配置
 
-详见 [Rin-Email 项目文档](https://github.com/your-org/Rin-Email)。
+详见 [Rin-Email 项目文档](https://github.com/wool-hmq/Rin-Email)。
 :::
 
 ### S3 存储凭证
