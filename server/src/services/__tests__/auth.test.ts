@@ -578,7 +578,7 @@ describe("PasswordAuthService", () => {
         // Verify user was created
         const dbResult = sqlite.prepare(`SELECT * FROM users WHERE email = 'new@example.com'`).all() as any[];
         expect(dbResult.length).toBe(1);
-        expect(dbResult[0].username).toBe("new");
+        expect(dbResult[0].username).toBe("new@example.com");
       } finally {
         global.fetch = originalFetch;
       }
@@ -591,6 +591,276 @@ describe("PasswordAuthService", () => {
       expect(result.error?.status).toBe(400);
       const errorData = result.error?.value as any;
       expect(errorData.error.message).toBe("Invalid or expired verification code");
+    });
+  });
+
+  describe("POST /auth/email/send - EMAIL_DOMAIN restriction", () => {
+    const domainEnv = createMockEnv({
+      SMTP_MAIL: "test@example.com",
+      SMTP_USER: "testuser",
+      SMTP_PASS: "testpass",
+      SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
+      EMAIL_DOMAIN: JSON.stringify(["example.com", "qq.com"]),
+    });
+
+    let app: Hono<{ Bindings: Env; Variables: Variables }>;
+    let api: ReturnType<typeof createTestClient>;
+
+    beforeEach(async () => {
+      app = new Hono<{ Bindings: Env; Variables: Variables }>();
+      app.use(async (c: any, next: any) => {
+        c.set("db", db);
+        c.set("jwt", {
+          sign: async (payload: any) => `mock_token_${payload.id}`,
+          verify: async () => null,
+        });
+        c.set("env", domainEnv);
+        await next();
+      });
+      app.route('/auth', PasswordAuthService());
+      app.onError((err: any, c: any) => {
+        if (err.code && err.statusCode) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: err.code,
+                message: err.message,
+                details: err.details,
+              },
+            },
+            err.statusCode,
+          );
+        }
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: err.message || "An unexpected error occurred",
+            },
+          },
+          500,
+        );
+      });
+
+      const fetchApp = {
+        ...app,
+        fetch: (request: Request, env: Env) =>
+          app.fetch(request, { ...env, DB: db }),
+      };
+      api = createTestClient(fetchApp, domainEnv);
+    });
+
+    it("should allow email from allowed domain", async () => {
+      const originalFetch = global.fetch;
+      global.fetch = async () => new Response("", { status: 200 });
+
+      try {
+        const result = await api.auth.sendEmailCode({ email: "user@example.com" });
+        expect(result.error).toBeUndefined();
+        expect(result.data?.success).toBe(true);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it("should reject email from disallowed domain", async () => {
+      const result = await api.auth.sendEmailCode({ email: "user@hotmail.com" });
+
+      expect(result.error).toBeDefined();
+      expect(result.error?.status).toBe(400);
+      const errorData = result.error?.value as any;
+      expect(errorData.error.message).toBe("Email domain is not allowed");
+    });
+
+    it("should allow all domains when EMAIL_DOMAIN is empty", async () => {
+      const envNoDomain = createMockEnv({
+        SMTP_MAIL: "test@example.com",
+        SMTP_USER: "testuser",
+        SMTP_PASS: "testpass",
+        SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
+        EMAIL_DOMAIN: "",
+      });
+
+      const appNoDomain = new Hono<{ Bindings: Env; Variables: Variables }>();
+      appNoDomain.use(async (c: any, next: any) => {
+        c.set("db", db);
+        c.set("jwt", {
+          sign: async (payload: any) => `mock_token_${payload.id}`,
+          verify: async () => null,
+        });
+        c.set("env", envNoDomain);
+        await next();
+      });
+      appNoDomain.route('/auth', PasswordAuthService());
+      appNoDomain.onError((err: any, c: any) => {
+        if (err.code && err.statusCode) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: err.code,
+                message: err.message,
+                details: err.details,
+              },
+            },
+            err.statusCode,
+          );
+        }
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: err.message || "An unexpected error occurred",
+            },
+          },
+          500,
+        );
+      });
+
+      const fetchApp = {
+        ...appNoDomain,
+        fetch: (request: Request, env: Env) =>
+          appNoDomain.fetch(request, { ...env, DB: db }),
+      };
+      const apiNoDomain = createTestClient(fetchApp, envNoDomain);
+
+      const originalFetch = global.fetch;
+      global.fetch = async () => new Response("", { status: 200 });
+
+      try {
+        const result = await apiNoDomain.auth.sendEmailCode({ email: "user@any-domain.com" });
+        expect(result.error).toBeUndefined();
+        expect(result.data?.success).toBe(true);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+  });
+
+  describe("POST /auth/email/send - IP rate limiting", () => {
+    const smtpEnv = createMockEnv({
+      SMTP_MAIL: "test@example.com",
+      SMTP_USER: "testuser",
+      SMTP_PASS: "testpass",
+      SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
+    });
+
+    let app: Hono<{ Bindings: Env; Variables: Variables }>;
+    let api: ReturnType<typeof createTestClient>;
+
+    beforeEach(async () => {
+      app = new Hono<{ Bindings: Env; Variables: Variables }>();
+      app.use(async (c: any, next: any) => {
+        c.set("db", db);
+        c.set("jwt", {
+          sign: async (payload: any) => `mock_token_${payload.id}`,
+          verify: async () => null,
+        });
+        c.set("env", smtpEnv);
+        await next();
+      });
+      app.route('/auth', PasswordAuthService());
+      app.onError((err: any, c: any) => {
+        if (err.code && err.statusCode) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: err.code,
+                message: err.message,
+                details: err.details,
+              },
+            },
+            err.statusCode,
+          );
+        }
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: err.message || "An unexpected error occurred",
+            },
+          },
+          500,
+        );
+      });
+
+      const fetchApp = {
+        ...app,
+        fetch: (request: Request, env: Env) =>
+          app.fetch(request, { ...env, DB: db }),
+      };
+      api = createTestClient(fetchApp, smtpEnv);
+    });
+
+    it("should allow first send, then reject second send within 1 minute from same IP", async () => {
+      const originalFetch = global.fetch;
+      global.fetch = async () => new Response("", { status: 200 });
+
+      try {
+        const req1 = new Request(`http://localhost/auth/email/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "CF-Connecting-IP": "1.2.3.4",
+          },
+          body: JSON.stringify({ email: "user@example.com" }),
+        });
+        const res1 = await app.fetch(req1, smtpEnv);
+        const data1 = await res1.json() as any;
+        expect(res1.ok).toBe(true);
+        expect(data1.success).toBe(true);
+
+        const req2 = new Request(`http://localhost/auth/email/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "CF-Connecting-IP": "1.2.3.4",
+          },
+          body: JSON.stringify({ email: "user@example.com" }),
+        });
+        const res2 = await app.fetch(req2, smtpEnv);
+        const data2 = await res2.json() as any;
+        expect(res2.ok).toBe(false);
+        expect(data2.error?.message).toBe("Please wait before requesting another code");
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it("should allow send from different IPs", async () => {
+      const originalFetch = global.fetch;
+      global.fetch = async () => new Response("", { status: 200 });
+
+      try {
+        const req1 = new Request(`http://localhost/auth/email/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "CF-Connecting-IP": "1.2.3.4",
+          },
+          body: JSON.stringify({ email: "user@example.com" }),
+        });
+        const res1 = await app.fetch(req1, smtpEnv);
+        expect(res1.ok).toBe(true);
+
+        const req2 = new Request(`http://localhost/auth/email/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "CF-Connecting-IP": "5.6.7.8",
+          },
+          body: JSON.stringify({ email: "user@example.com" }),
+        });
+        const res2 = await app.fetch(req2, smtpEnv);
+        expect(res2.ok).toBe(true);
+      } finally {
+        global.fetch = originalFetch;
+      }
     });
   });
 });

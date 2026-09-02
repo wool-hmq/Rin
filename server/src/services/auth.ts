@@ -221,6 +221,27 @@ export function PasswordAuthService(): Hono<{
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
+    // IP-based rate limit: one email per minute per IP
+    const emailRateLimitStore = new Map<string, number>();
+
+    function parseAllowedDomains(env: Env): Set<string> | undefined {
+        const raw = env.EMAIL_DOMAIN?.trim();
+        if (!raw) return undefined;
+        try {
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return undefined;
+            const domains = new Set<string>();
+            for (const item of parsed) {
+                if (typeof item === 'string' && item.trim()) {
+                    domains.add(item.trim().toLowerCase());
+                }
+            }
+            return domains.size > 0 ? domains : undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
     // POST /auth/email/send - Send verification code to email
     app.post("/email/send", async (c: AppContext) => {
         const env = c.env;
@@ -233,6 +254,23 @@ export function PasswordAuthService(): Hono<{
         if (!env.SMTP_MAIL || !env.SMTP_USER || !env.SMTP_PASS || !env.SMTP_HOST) {
             throw new BadRequestError('Email service is not configured');
         }
+
+        const allowedDomains = parseAllowedDomains(env);
+        if (allowedDomains) {
+            const domain = email.split('@')[1]?.toLowerCase();
+            if (!domain || !allowedDomains.has(domain)) {
+                throw new BadRequestError('Email domain is not allowed');
+            }
+        }
+
+        const clientIp = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || 'unknown';
+        const rateKey = `email_rate:${clientIp}`;
+        const now = Date.now();
+        const lastSent = emailRateLimitStore.get(rateKey);
+        if (lastSent && now - lastSent < 60 * 1000) {
+            throw new BadRequestError('Please wait before requesting another code');
+        }
+        emailRateLimitStore.set(rateKey, now);
 
         cleanExpiredCodes();
 
@@ -281,10 +319,9 @@ export function PasswordAuthService(): Hono<{
         if (user) {
             authToken = await profileAsync(c, 'email_existing_token', () => jwt.sign({ id: user.id }));
         } else {
-            const suggestedUsername = cleanEmail.split('@')[0];
             const result = await profileAsync(c, 'email_user_insert', () => db.insert(users).values({
                 email: cleanEmail,
-                username: suggestedUsername,
+                username: cleanEmail,
                 openid: `email:${cleanEmail}`,
                 avatar: '',
                 permission: 0,
