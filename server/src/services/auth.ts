@@ -65,7 +65,7 @@ async function sendEmailViaSMTP(env: Env, to: string, subject: string, text: str
             }
         }
     } else {
-        throw new Error('SMTP_HOST must be an HTTP API endpoint in Cloudflare Workers runtime');
+        throw new Error('SMTP_HOST must be an HTTP API endpoint in Cloudflare Workers runtime. Use Mailgun, SendGrid, Postmark, or other email services that provide HTTP APIs. Raw TCP SMTP (e.g. smtp.163.com:587) is not supported.');
     }
 }
 

@@ -75,8 +75,17 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 | `SMTP_MAIL` | 条件 | SMTP 发件邮箱 | SMTP 服务商处获取 |
 | `SMTP_USER` | 条件 | SMTP 登录用户名 | SMTP 服务商处获取 |
 | `SMTP_PASS` | 条件 | SMTP 登录密码 | SMTP 服务商处获取 |
-| `SMTP_HOST` | 条件 | SMTP 发件地址（带端口） | 如 `smtp.example.com:465` 或邮件服务 HTTP API 地址 |
+| `SMTP_HOST` | 条件 | 邮件服务 HTTP API 地址（Cloudflare Workers 不支持原始 TCP SMTP） | 如 Mailgun `https://api.mailgun.net/v3/your-domain/messages`、SendGrid `https://api.sendgrid.com/v3/mail/send` |
 | `JWT_SECRET` | **是** | JWT 签名密钥（任意随机字符串） | 自行生成 |
+
+:::warning SMTP 限制
+Cloudflare Workers 不支持原始 TCP SMTP（如 `smtp.163.com:587`、`smtp.qq.com:465`）。必须使用提供 HTTP API 的邮件服务，例如：
+- **Mailgun**：`https://api.mailgun.net/v3/your-domain/messages`
+- **SendGrid**：`https://api.sendgrid.com/v3/mail/send`
+- **Postmark**、**Brevo** 等
+
+`SMTP_USER` 和 `SMTP_PASS` 分别对应邮件服务提供的 API Key 或登录凭证。
+:::
 
 :::warning 认证要求
 至少配置以下认证方式中的 **一种**：
@@ -216,7 +225,11 @@ EMAIL_DOMAIN=["qq.com","example.com"]
 SMTP_MAIL=noreply@example.com
 SMTP_USER=noreply@example.com
 SMTP_PASS=xxx
-SMTP_HOST=smtp.example.com:465
+# 必须使用 HTTP API 端点，不支持原始 TCP SMTP
+# Mailgun 示例：
+SMTP_HOST=https://api.mailgun.net/v3/example.com/messages
+# SendGrid 示例：
+# SMTP_HOST=https://api.sendgrid.com/v3/mail/send
 
 # 方式五：账号密码登录
 ADMIN_USERNAME=admin

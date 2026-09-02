@@ -75,8 +75,17 @@ These sensitive values must be configured as **Cloudflare Workers Secrets**, ent
 | `SMTP_MAIL` | Conditional | SMTP sender email | Get from your SMTP provider |
 | `SMTP_USER` | Conditional | SMTP login username | Get from your SMTP provider |
 | `SMTP_PASS` | Conditional | SMTP login password | Get from your SMTP provider |
-| `SMTP_HOST` | Conditional | SMTP server address (with port) | e.g. `smtp.example.com:465` or email service HTTP API endpoint |
+| `SMTP_HOST` | Conditional | Email service HTTP API endpoint (Cloudflare Workers does not support raw TCP SMTP) | e.g. Mailgun `https://api.mailgun.net/v3/your-domain/messages`, SendGrid `https://api.sendgrid.com/v3/mail/send` |
 | `JWT_SECRET` | **Yes** | JWT signing key (any random string) | Generate yourself |
+
+:::warning SMTP Limitation
+Cloudflare Workers does not support raw TCP SMTP (e.g. `smtp.163.com:587`, `smtp.qq.com:465`). You must use an email service that provides an HTTP API, such as:
+- **Mailgun**: `https://api.mailgun.net/v3/your-domain/messages`
+- **SendGrid**: `https://api.sendgrid.com/v3/mail/send`
+- **Postmark**, **Brevo**, etc.
+
+`SMTP_USER` and `SMTP_PASS` should be the API Key or login credentials provided by your email service.
+:::
 
 :::warning Authentication Required
 You must configure at least **one** of the following authentication methods:
@@ -216,7 +225,11 @@ EMAIL_DOMAIN=["qq.com","example.com"]
 SMTP_MAIL=noreply@example.com
 SMTP_USER=noreply@example.com
 SMTP_PASS=xxx
-SMTP_HOST=smtp.example.com:465
+# Must use HTTP API endpoint, raw TCP SMTP is not supported
+# Mailgun example:
+SMTP_HOST=https://api.mailgun.net/v3/example.com/messages
+# SendGrid example:
+# SMTP_HOST=https://api.sendgrid.com/v3/mail/send
 
 # Option 5: Username/Password Login
 ADMIN_USERNAME=admin
