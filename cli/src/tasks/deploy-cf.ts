@@ -22,6 +22,11 @@ const WORKER_SECRET_KEYS = [
   "RIN_GITHUB_CLIENT_SECRET",
   "RIN_GITEE_CLIENT_ID",
   "RIN_GITEE_CLIENT_SECRET",
+  "RIN_QQ_TOKEN",
+  "SMTP_MAIL",
+  "SMTP_USER",
+  "SMTP_PASS",
+  "SMTP_HOST",
   "S3_ACCESS_KEY_ID",
   "S3_SECRET_ACCESS_KEY",
 ] as const;
@@ -159,6 +164,7 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
   const rssTitle = env("RSS_TITLE", "");
   const rssDescription = env("RSS_DESCRIPTION", "");
   const cacheStorageMode = env("CACHE_STORAGE_MODE", "s3");
+  const emailDomain = env("EMAIL_DOMAIN", "");
   const name = env("NAME", "Rin");
   const description = env("DESCRIPTION", "A lightweight personal blogging system");
   const avatar = env("AVATAR", "");
@@ -211,6 +217,7 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
       RSS_TITLE = "${rssTitle}"
       RSS_DESCRIPTION = "${rssDescription}"
       CACHE_STORAGE_MODE = "${cacheStorageMode}"
+      EMAIL_DOMAIN = "${emailDomain}"
       NAME = "${name}"
       DESCRIPTION = "${description}"
       AVATAR = "${avatar}"
