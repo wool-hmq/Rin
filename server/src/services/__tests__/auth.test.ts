@@ -330,10 +330,8 @@ describe("PasswordAuthService", () => {
 
   describe("POST /auth/email/send - Send email verification code", () => {
     const smtpEnv = createMockEnv({
-      SMTP_MAIL: "test@example.com",
-      SMTP_USER: "testuser",
-      SMTP_PASS: "testpass",
-      SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
+      EMAIL_RESEND_URL: "https://rin-email.vercel.app/api/send",
+      EMAIL_RESEND_PASS: "test-resend-pass",
     });
 
     let emailApp: Hono<{ Bindings: Env; Variables: Variables }>;
@@ -413,12 +411,10 @@ describe("PasswordAuthService", () => {
       expect(errorData.error.message).toBe("Invalid email address");
     });
 
-    it("should return 400 when SMTP is not configured", async () => {
+    it("should return 400 when email service is not configured", async () => {
       const envNoSmtp = createMockEnv({
-        SMTP_MAIL: "",
-        SMTP_USER: "",
-        SMTP_PASS: "",
-        SMTP_HOST: "",
+        EMAIL_RESEND_URL: "",
+        EMAIL_RESEND_PASS: "",
       });
 
       const appNoSmtp = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -476,10 +472,8 @@ describe("PasswordAuthService", () => {
 
   describe("POST /auth/email/login - Email verification login", () => {
     const smtpEnv = createMockEnv({
-      SMTP_MAIL: "test@example.com",
-      SMTP_USER: "testuser",
-      SMTP_PASS: "testpass",
-      SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
+      EMAIL_RESEND_URL: "https://rin-email.vercel.app/api/send",
+      EMAIL_RESEND_PASS: "test-resend-pass",
     });
 
     let emailApp: Hono<{ Bindings: Env; Variables: Variables }>;
@@ -594,158 +588,10 @@ describe("PasswordAuthService", () => {
     });
   });
 
-  describe("POST /auth/email/send - EMAIL_DOMAIN restriction", () => {
-    const domainEnv = createMockEnv({
-      SMTP_MAIL: "test@example.com",
-      SMTP_USER: "testuser",
-      SMTP_PASS: "testpass",
-      SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
-      EMAIL_DOMAIN: JSON.stringify(["example.com", "qq.com"]),
-    });
-
-    let app: Hono<{ Bindings: Env; Variables: Variables }>;
-    let api: ReturnType<typeof createTestClient>;
-
-    beforeEach(async () => {
-      app = new Hono<{ Bindings: Env; Variables: Variables }>();
-      app.use(async (c: any, next: any) => {
-        c.set("db", db);
-        c.set("jwt", {
-          sign: async (payload: any) => `mock_token_${payload.id}`,
-          verify: async () => null,
-        });
-        c.set("env", domainEnv);
-        await next();
-      });
-      app.route('/auth', PasswordAuthService());
-      app.onError((err: any, c: any) => {
-        if (err.code && err.statusCode) {
-          return c.json(
-            {
-              success: false,
-              error: {
-                code: err.code,
-                message: err.message,
-                details: err.details,
-              },
-            },
-            err.statusCode,
-          );
-        }
-        return c.json(
-          {
-            success: false,
-            error: {
-              code: "INTERNAL_ERROR",
-              message: err.message || "An unexpected error occurred",
-            },
-          },
-          500,
-        );
-      });
-
-      const fetchApp = {
-        ...app,
-        fetch: (request: Request, env: Env) =>
-          app.fetch(request, { ...env, DB: db }),
-      };
-      api = createTestClient(fetchApp, domainEnv);
-    });
-
-    it("should allow email from allowed domain", async () => {
-      const originalFetch = global.fetch;
-      global.fetch = async () => new Response("", { status: 200 });
-
-      try {
-        const result = await api.auth.sendEmailCode({ email: "user@example.com" });
-        expect(result.error).toBeUndefined();
-        expect(result.data?.success).toBe(true);
-      } finally {
-        global.fetch = originalFetch;
-      }
-    });
-
-    it("should reject email from disallowed domain", async () => {
-      const result = await api.auth.sendEmailCode({ email: "user@hotmail.com" });
-
-      expect(result.error).toBeDefined();
-      expect(result.error?.status).toBe(400);
-      const errorData = result.error?.value as any;
-      expect(errorData.error.message).toBe("Email domain is not allowed");
-    });
-
-    it("should allow all domains when EMAIL_DOMAIN is empty", async () => {
-      const envNoDomain = createMockEnv({
-        SMTP_MAIL: "test@example.com",
-        SMTP_USER: "testuser",
-        SMTP_PASS: "testpass",
-        SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
-        EMAIL_DOMAIN: "",
-      });
-
-      const appNoDomain = new Hono<{ Bindings: Env; Variables: Variables }>();
-      appNoDomain.use(async (c: any, next: any) => {
-        c.set("db", db);
-        c.set("jwt", {
-          sign: async (payload: any) => `mock_token_${payload.id}`,
-          verify: async () => null,
-        });
-        c.set("env", envNoDomain);
-        await next();
-      });
-      appNoDomain.route('/auth', PasswordAuthService());
-      appNoDomain.onError((err: any, c: any) => {
-        if (err.code && err.statusCode) {
-          return c.json(
-            {
-              success: false,
-              error: {
-                code: err.code,
-                message: err.message,
-                details: err.details,
-              },
-            },
-            err.statusCode,
-          );
-        }
-        return c.json(
-          {
-            success: false,
-            error: {
-              code: "INTERNAL_ERROR",
-              message: err.message || "An unexpected error occurred",
-            },
-          },
-          500,
-        );
-      });
-
-      const fetchApp = {
-        ...appNoDomain,
-        fetch: (request: Request, env: Env) =>
-          appNoDomain.fetch(request, { ...env, DB: db }),
-      };
-      const apiNoDomain = createTestClient(fetchApp, envNoDomain);
-
-      const originalFetch = global.fetch;
-      global.fetch = async () => new Response("", { status: 200 });
-
-      try {
-        const result = await apiNoDomain.auth.sendEmailCode({ email: "user@any-domain.com" });
-        expect(result.error).toBeUndefined();
-        expect(result.data?.success).toBe(true);
-      } finally {
-        global.fetch = originalFetch;
-      }
-    });
-  });
-
   describe("POST /auth/email/send - IP rate limiting", () => {
     const smtpEnv = createMockEnv({
-      SMTP_MAIL: "test@example.com",
-      SMTP_USER: "testuser",
-      SMTP_PASS: "testpass",
-      SMTP_HOST: "https://api.mailgun.net/v3/example.com/messages",
+      EMAIL_RESEND_URL: "https://rin-email.vercel.app/api/send",
+      EMAIL_RESEND_PASS: "test-resend-pass",
     });
 
     let app: Hono<{ Bindings: Env; Variables: Variables }>;

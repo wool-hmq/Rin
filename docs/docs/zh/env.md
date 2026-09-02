@@ -71,35 +71,28 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 | `RIN_GITEE_CLIENT_ID` | 条件 | Gitee OAuth 客户端 ID | Gitee OAuth App 设置 |
 | `RIN_GITEE_CLIENT_SECRET` | 条件 | Gitee OAuth 客户端密钥 | Gitee OAuth App 设置 |
 | `RIN_QQ_TOKEN` | 条件 | 心月互联 QQ 登录 Token | 心月互联 https://qq.wch666.com/ 申请 |
-| `EMAIL_DOMAIN` | 否 | 邮箱登录域名限制（JSON 数组，如 `["qq.com","example.com"]`） | 空 = 不限制 |
-| `SMTP_MAIL` | 条件 | SMTP 发件邮箱 | SMTP 服务商处获取 |
-| `SMTP_USER` | 条件 | SMTP 登录用户名 | SMTP 服务商处获取 |
-| `SMTP_PASS` | 条件 | SMTP 登录密码 | SMTP 服务商处获取 |
-| `SMTP_HOST` | 条件 | 邮件服务 HTTP API 地址（Cloudflare Workers 不支持原始 TCP SMTP） | 如 Mailgun `https://api.mailgun.net/v3/your-domain/messages`、SendGrid `https://api.sendgrid.com/v3/mail/send` |
+| `EMAIL_RESEND_URL` | 条件 | 邮件转发服务 URL（Vercel 部署的 Rin-Email 项目地址） | 自行部署 Rin-Email 到 Vercel 获取 |
+| `EMAIL_RESEND_PASS` | 条件 | 邮件转发服务认证密码（与 Vercel 项目中 EMAIL_PASS 相同） | 自行设定 |
 | `JWT_SECRET` | **是** | JWT 签名密钥（任意随机字符串） | 自行生成 |
-
-:::warning SMTP 限制
-Cloudflare Workers 不支持原始 TCP SMTP（如 `smtp.163.com:587`、`smtp.qq.com:465`）。必须使用提供 HTTP API 的邮件服务，例如：
-- **Mailgun**：`https://api.mailgun.net/v3/your-domain/messages`
-- **SendGrid**：`https://api.sendgrid.com/v3/mail/send`
-- **Postmark**、**Brevo** 等
-
-`SMTP_USER` 和 `SMTP_PASS` 分别对应邮件服务提供的 API Key 或登录凭证。
-:::
 
 :::warning 认证要求
 至少配置以下认证方式中的 **一种**：
 - GitHub OAuth（`RIN_GITHUB_CLIENT_ID` + `RIN_GITHUB_CLIENT_SECRET`）
 - Gitee OAuth（`RIN_GITEE_CLIENT_ID` + `RIN_GITEE_CLIENT_SECRET`）
 - QQ 登录（`RIN_QQ_TOKEN`）
-- 邮箱验证码登录（`SMTP_MAIL` + `SMTP_USER` + `SMTP_PASS` + `SMTP_HOST`）
+- 邮箱验证码登录（`EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`）
 - 账号密码登录（`ADMIN_USERNAME` + `ADMIN_PASSWORD`）
 
 否则无法登录后台。
 :::
 
-:::note QQ 回调地址
-QQ 登录的回调地址固定为 `https://<你的域名>/api/user/xinyueqq/callback`，需在心月互联后台为该 Token 配置一致。代码中路径写死，无需环境变量。
+:::note 邮箱验证码架构
+Rin 博客运行在 Cloudflare Workers 上，不支持原始 TCP SMTP。邮箱验证码功能通过部署到 Vercel 的 Rin-Email 项目实现 SMTP 发件：
+1. Rin 博客收到发送验证码请求后，调用 Vercel 项目的 `/api/send` 接口
+2. Vercel 项目使用 `nodemailer` 通过 SMTP 发送邮件
+3. 域名限制（`EMAIL_DOMAIN`）在 Vercel 项目中配置
+
+详见 [Rin-Email 项目文档](https://github.com/your-org/Rin-Email)。
 :::
 
 ### S3 存储凭证
@@ -221,15 +214,11 @@ RIN_GITEE_CLIENT_SECRET=xxx
 RIN_QQ_TOKEN=xxx
 
 # 方式四：邮箱验证码登录
-EMAIL_DOMAIN=["qq.com","example.com"]
-SMTP_MAIL=noreply@example.com
-SMTP_USER=noreply@example.com
-SMTP_PASS=xxx
-# 必须使用 HTTP API 端点，不支持原始 TCP SMTP
-# Mailgun 示例：
-SMTP_HOST=https://api.mailgun.net/v3/example.com/messages
-# SendGrid 示例：
-# SMTP_HOST=https://api.sendgrid.com/v3/mail/send
+# 部署 Rin-Email 项目到 Vercel 后，配置以下环境变量：
+# - Vercel 项目环境变量：SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_MAIL, EMAIL_PASS
+# - Rin 博客环境变量：
+EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
+EMAIL_RESEND_PASS=your-email-pass
 
 # 方式五：账号密码登录
 ADMIN_USERNAME=admin
@@ -277,7 +266,19 @@ S3_SECRET_ACCESS_KEY=xxx
 
 可以。同时配置多种登录方式的凭证即可，前端会自动显示对应的登录按钮。
 
-### Q: `EMAIL_DOMAIN` 如何限制特定域名？
+### Q: 如何配置邮箱验证码登录？
+
+邮箱验证码功能通过 Vercel 部署的 Rin-Email 项目实现：
+
+1. 将 `/tmp/opencode/Rin-Email` 项目部署到 Vercel
+2. 在 Vercel 项目中配置 SMTP 环境变量（`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_MAIL`, `EMAIL_PASS`）
+3. 在 Cloudflare Worker 中配置：
+   - `EMAIL_RESEND_URL` = Vercel 项目的 `/api/send` URL
+   - `EMAIL_RESEND_PASS` = 与 Vercel 项目的 `EMAIL_PASS` 相同
+
+### Q: 如何在 Vercel 项目中限制允许的邮箱域名？
+
+在 Vercel 项目的环境变量中配置 `EMAIL_DOMAIN`：
 
 ```bash
 # 只允许 qq.com 和 example.com 的邮箱登录
@@ -286,6 +287,10 @@ EMAIL_DOMAIN=["qq.com","example.com"]
 
 留空则不限制域名。
 
-### Q: `SMTP_HOST` 支持 HTTP API 吗？
+### Q: Vercel 项目支持哪些 SMTP 服务商？
 
-支持。对于 Mailgun、SendGrid 等邮件服务，`SMTP_HOST` 可以设置为 HTTP API 端点。具体格式请参考相应服务商的文档。
+Vercel 项目使用 `nodemailer`，支持任何 SMTP 服务商，包括：
+- 163 邮箱：`smtp.163.com:465`
+- QQ 邮箱：`smtp.qq.com:465`
+- Gmail：`smtp.gmail.com:465`
+- 其他任何提供 SMTP 服务的邮件服务商

@@ -36,11 +36,8 @@ declare namespace Cloudflare {
 		RIN_GITEE_CLIENT_ID: string;
 		RIN_GITEE_CLIENT_SECRET: string;
 		RIN_QQ_TOKEN: string;
-		EMAIL_DOMAIN: string;
-		SMTP_MAIL: string;
-		SMTP_USER: string;
-		SMTP_PASS: string;
-		SMTP_HOST: string;
+		EMAIL_RESEND_URL: string;
+		EMAIL_RESEND_PASS: string;
 		ADMIN_USERNAME: string;
 		ADMIN_PASSWORD: string;
 		JWT_SECRET: string;

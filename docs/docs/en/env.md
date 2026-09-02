@@ -71,20 +71,17 @@ These sensitive values must be configured as **Cloudflare Workers Secrets**, ent
 | `RIN_GITEE_CLIENT_ID` | Conditional | Gitee OAuth client ID | Gitee OAuth App settings |
 | `RIN_GITEE_CLIENT_SECRET` | Conditional | Gitee OAuth client secret | Gitee OAuth App settings |
 | `RIN_QQ_TOKEN` | Conditional | Xinyue QQ login token | Apply at https://qq.wch666.com/ |
-| `EMAIL_DOMAIN` | No | Email login domain restriction (JSON array, e.g. `["qq.com","example.com"]`) | Empty = no restriction |
-| `SMTP_MAIL` | Conditional | SMTP sender email | Get from your SMTP provider |
-| `SMTP_USER` | Conditional | SMTP login username | Get from your SMTP provider |
-| `SMTP_PASS` | Conditional | SMTP login password | Get from your SMTP provider |
-| `SMTP_HOST` | Conditional | Email service HTTP API endpoint (Cloudflare Workers does not support raw TCP SMTP) | e.g. Mailgun `https://api.mailgun.net/v3/your-domain/messages`, SendGrid `https://api.sendgrid.com/v3/mail/send` |
+| `EMAIL_RESEND_URL` | Conditional | Email relay service URL (Vercel-deployed Rin-Email project) | Deploy Rin-Email to Vercel to get the URL |
+| `EMAIL_RESEND_PASS` | Conditional | Email relay service auth password (same as EMAIL_PASS in Vercel project) | Set yourself |
 | `JWT_SECRET` | **Yes** | JWT signing key (any random string) | Generate yourself |
 
-:::warning SMTP Limitation
-Cloudflare Workers does not support raw TCP SMTP (e.g. `smtp.163.com:587`, `smtp.qq.com:465`). You must use an email service that provides an HTTP API, such as:
-- **Mailgun**: `https://api.mailgun.net/v3/your-domain/messages`
-- **SendGrid**: `https://api.sendgrid.com/v3/mail/send`
-- **Postmark**, **Brevo**, etc.
+:::warning Email Relay Architecture
+Cloudflare Workers does not support raw TCP SMTP. Email verification is handled by a Vercel-deployed Rin-Email project:
+1. Rin blog receives a verification code request and calls the Vercel project's `/api/send` endpoint
+2. The Vercel project uses `nodemailer` to send emails via SMTP
+3. Domain restrictions (`EMAIL_DOMAIN`) are configured in the Vercel project
 
-`SMTP_USER` and `SMTP_PASS` should be the API Key or login credentials provided by your email service.
+See [Rin-Email project documentation](https://github.com/your-org/Rin-Email).
 :::
 
 :::warning Authentication Required
@@ -92,7 +89,7 @@ You must configure at least **one** of the following authentication methods:
 - GitHub OAuth (`RIN_GITHUB_CLIENT_ID` + `RIN_GITHUB_CLIENT_SECRET`)
 - Gitee OAuth (`RIN_GITEE_CLIENT_ID` + `RIN_GITEE_CLIENT_SECRET`)
 - QQ Login (`RIN_QQ_TOKEN`)
-- Email Verification Code Login (`SMTP_MAIL` + `SMTP_USER` + `SMTP_PASS` + `SMTP_HOST`)
+- Email Verification Code Login (`EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`)
 - Username/Password (`ADMIN_USERNAME` + `ADMIN_PASSWORD`)
 
 Otherwise you cannot access the admin panel.
@@ -221,15 +218,11 @@ RIN_GITEE_CLIENT_SECRET=xxx
 RIN_QQ_TOKEN=xxx
 
 # Option 4: Email Verification Code Login
-EMAIL_DOMAIN=["qq.com","example.com"]
-SMTP_MAIL=noreply@example.com
-SMTP_USER=noreply@example.com
-SMTP_PASS=xxx
-# Must use HTTP API endpoint, raw TCP SMTP is not supported
-# Mailgun example:
-SMTP_HOST=https://api.mailgun.net/v3/example.com/messages
-# SendGrid example:
-# SMTP_HOST=https://api.sendgrid.com/v3/mail/send
+# After deploying Rin-Email to Vercel, configure these variables:
+# - Vercel project env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_MAIL, EMAIL_PASS
+# - Rin blog env vars:
+EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
+EMAIL_RESEND_PASS=your-email-pass
 
 # Option 5: Username/Password Login
 ADMIN_USERNAME=admin
@@ -277,7 +270,19 @@ No. `database` mode stores cache in D1 database without S3/R2. However, S3 confi
 
 Yes. Configure credentials for multiple methods and the frontend will display corresponding login buttons automatically.
 
-### Q: How to restrict email login to specific domains with `EMAIL_DOMAIN`?
+### Q: How to set up email verification code login?
+
+Email verification is handled by a Vercel-deployed Rin-Email project:
+
+1. Deploy the `/tmp/opencode/Rin-Email` project to Vercel
+2. Configure SMTP environment variables in the Vercel project (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_MAIL`, `EMAIL_PASS`)
+3. In your Cloudflare Worker, configure:
+   - `EMAIL_RESEND_URL` = Vercel project's `/api/send` URL
+   - `EMAIL_RESEND_PASS` = same as `EMAIL_PASS` in the Vercel project
+
+### Q: How to restrict allowed email domains in the Vercel project?
+
+Configure `EMAIL_DOMAIN` in the Vercel project's environment variables:
 
 ```bash
 # Allow only qq.com and example.com
@@ -286,6 +291,10 @@ EMAIL_DOMAIN=["qq.com","example.com"]
 
 Leave empty to allow all domains.
 
-### Q: Does `SMTP_HOST` support HTTP API?
+### Q: Which SMTP providers does the Vercel project support?
 
-Yes. For services like Mailgun or SendGrid, `SMTP_HOST` can be set to their HTTP API endpoints. Refer to your provider's documentation for the exact format.
+The Vercel project uses `nodemailer` and supports any SMTP provider, including:
+- 163 Mail: `smtp.163.com:465`
+- QQ Mail: `smtp.qq.com:465`
+- Gmail: `smtp.gmail.com:465`
+- Any other SMTP service provider

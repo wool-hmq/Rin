@@ -21,51 +21,29 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function sendEmailViaSMTP(env: Env, to: string, subject: string, text: string): Promise<void> {
-    const { SMTP_MAIL, SMTP_USER, SMTP_PASS, SMTP_HOST } = env;
+    const resendUrl = env.EMAIL_RESEND_URL;
+    const resendPass = env.EMAIL_RESEND_PASS;
 
-    if (SMTP_HOST.startsWith('http://') || SMTP_HOST.startsWith('https://')) {
-        const url = new URL(SMTP_HOST);
-        const isSendGrid = url.hostname.includes('sendgrid');
+    if (!resendUrl || !resendPass) {
+        throw new Error('Email service is not configured: EMAIL_RESEND_URL and EMAIL_RESEND_PASS are required');
+    }
 
-        if (isSendGrid) {
-            const resp = await fetch(url.toString(), {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${SMTP_PASS}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    personalizations: [{ to: [{ email: to }] }],
-                    from: { email: SMTP_MAIL },
-                    subject,
-                    content: [{ type: 'text/plain', value: text }]
-                })
-            });
-            if (!resp.ok) {
-                const errText = await resp.text().catch(() => '');
-                throw new Error(`SendGrid error ${resp.status}: ${errText}`);
-            }
-        } else {
-            const resp = await fetch(url.toString(), {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Basic ' + btoa(`${SMTP_USER}:${SMTP_PASS}`),
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    from: SMTP_MAIL,
-                    to,
-                    subject,
-                    text,
-                }).toString()
-            });
-            if (!resp.ok) {
-                const errText = await resp.text().catch(() => '');
-                throw new Error(`Mailgun error ${resp.status}: ${errText}`);
-            }
-        }
-    } else {
-        throw new Error('SMTP_HOST must be an HTTP API endpoint in Cloudflare Workers runtime. Use Mailgun, SendGrid, Postmark, or other email services that provide HTTP APIs. Raw TCP SMTP (e.g. smtp.163.com:587) is not supported.');
+    const resp = await fetch(resendUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            to,
+            subject,
+            text,
+            pass: resendPass,
+        }),
+    });
+
+    if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        throw new Error(`Email service error ${resp.status}: ${errText}`);
     }
 }
 
@@ -200,7 +178,7 @@ export function PasswordAuthService(): Hono<{
             github: !!(env.RIN_GITHUB_CLIENT_ID && env.RIN_GITHUB_CLIENT_SECRET),
             gitee: !!(env.RIN_GITEE_CLIENT_ID && env.RIN_GITEE_CLIENT_SECRET),
             qq: !!env.RIN_QQ_TOKEN,
-            email: !!(env.SMTP_MAIL && env.SMTP_USER && env.SMTP_PASS && env.SMTP_HOST),
+            email: !!(env.EMAIL_RESEND_URL && env.EMAIL_RESEND_PASS),
             password: !!(env.ADMIN_USERNAME && env.ADMIN_PASSWORD),
         });
     });
@@ -224,24 +202,6 @@ export function PasswordAuthService(): Hono<{
     // IP-based rate limit: one email per minute per IP
     const emailRateLimitStore = new Map<string, number>();
 
-    function parseAllowedDomains(env: Env): Set<string> | undefined {
-        const raw = env.EMAIL_DOMAIN?.trim();
-        if (!raw) return undefined;
-        try {
-            const parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed)) return undefined;
-            const domains = new Set<string>();
-            for (const item of parsed) {
-                if (typeof item === 'string' && item.trim()) {
-                    domains.add(item.trim().toLowerCase());
-                }
-            }
-            return domains.size > 0 ? domains : undefined;
-        } catch {
-            return undefined;
-        }
-    }
-
     // POST /auth/email/send - Send verification code to email
     app.post("/email/send", async (c: AppContext) => {
         const env = c.env;
@@ -251,16 +211,8 @@ export function PasswordAuthService(): Hono<{
             throw new BadRequestError('Invalid email address');
         }
 
-        if (!env.SMTP_MAIL || !env.SMTP_USER || !env.SMTP_PASS || !env.SMTP_HOST) {
+        if (!env.EMAIL_RESEND_URL || !env.EMAIL_RESEND_PASS) {
             throw new BadRequestError('Email service is not configured');
-        }
-
-        const allowedDomains = parseAllowedDomains(env);
-        if (allowedDomains) {
-            const domain = email.split('@')[1]?.toLowerCase();
-            if (!domain || !allowedDomains.has(domain)) {
-                throw new BadRequestError('Email domain is not allowed');
-            }
         }
 
         const clientIp = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || 'unknown';

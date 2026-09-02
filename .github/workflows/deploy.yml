@@ -213,10 +213,8 @@ jobs:
           RIN_GITEE_CLIENT_ID: ${{ secrets.RIN_GITEE_CLIENT_ID || '' }}
           RIN_GITEE_CLIENT_SECRET: ${{ secrets.RIN_GITEE_CLIENT_SECRET || '' }}
           RIN_QQ_TOKEN: ${{ secrets.RIN_QQ_TOKEN || '' }}
-          SMTP_MAIL: ${{ secrets.SMTP_MAIL || '' }}
-          SMTP_USER: ${{ secrets.SMTP_USER || '' }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS || '' }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST || '' }}
+          EMAIL_RESEND_URL: ${{ vars.EMAIL_RESEND_URL || '' }}
+          EMAIL_RESEND_PASS: ${{ secrets.EMAIL_RESEND_PASS || '' }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || '' }}
