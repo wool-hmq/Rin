@@ -47,6 +47,17 @@ Entries discovered by the Agent during task execution should follow this format:
   - 首次部署后 Worker 上手动配置的 secret 会被后续 wrangler secret bulk 用 GitHub 侧 secret 值同步覆盖，手动配置只是临时兜底。
   - Gitee OAuth 登录报"服务器不支持这种 response type"的根因是 authorize URL 缺 response_type=code；此参数已写入 server/src/utils/oauth.ts 的 createRedirectUrl。
 
+[Project Knowledge Summary]
+- Date: 2026-09-02
+- Context: Cloudflare Workers 不支持原始 TCP SMTP，实现 Vercel 邮件中继架构
+- Category: Operations & Deployment
+- Instructions:
+  - 邮箱验证码登录不再使用 Cloudflare Workers 直接发 SMTP，改为调用 Vercel 部署的 Rin-Email 项目（HTTP API 中转）。
+  - Rin 博客环境变量：保留 `EMAIL_RESEND_URL`（Vercel 项目 URL，Variable），`EMAIL_RESEND_PASS`（认证密码，Secret）。
+  - 移除 `SMTP_MAIL`/`SMTP_USER`/`SMTP_PASS`/`SMTP_HOST`/`EMAIL_DOMAIN` 环境变量；域名限制改在 Vercel 项目的 `EMAIL_DOMAIN` 中配置。
+  - Vercel 项目 `/tmp/opencode/Rin-Email` 使用 `nodemailer` 支持任何 SMTP 服务商（163/QQ/Gmail 等）。
+  - deploy-cf.ts、deploy.yml、worker-configuration.d.ts、auth.ts、auth.test.ts 及中英文 env.md 文档已同步更新。
+
 [User Instruction Summary]
 - Date: 2026-09-02
 - Context: 用户要求建立文档同步习惯
