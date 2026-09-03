@@ -32,6 +32,7 @@ interface AuthApi {
     }>>;
     emailLogin(body: { email: string; code: string }): Promise<ApiResponse<{
         success: boolean;
+        register?: boolean;
         token?: string;
         user?: {
             id: number;
