@@ -81,7 +81,7 @@ Cloudflare Workers does not support raw TCP SMTP. Email verification is handled 
 2. The Vercel project uses `nodemailer` to send emails via SMTP
 3. Domain restrictions (`EMAIL_DOMAIN`) are configured in the Vercel project
 
-See [Rin-Email project documentation](https://github.com/your-org/Rin-Email).
+See [Rin-Email project documentation](https://github.com/wool-hmq/Rin-Email).
 :::
 
 :::warning Authentication Required

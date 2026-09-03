@@ -567,12 +567,12 @@ describe("PasswordAuthService", () => {
 
         expect(result.error).toBeUndefined();
         expect(result.data?.success).toBe(true);
+        expect(result.data?.register).toBe(true);
         expect(result.data?.token).toBeDefined();
 
-        // Verify user was created
+        // Verify user was NOT created yet (registration not completed)
         const dbResult = sqlite.prepare(`SELECT * FROM users WHERE email = 'new@example.com'`).all() as any[];
-        expect(dbResult.length).toBe(1);
-        expect(dbResult[0].username).toBe("new@example.com");
+        expect(dbResult.length).toBe(0);
       } finally {
         global.fetch = originalFetch;
       }

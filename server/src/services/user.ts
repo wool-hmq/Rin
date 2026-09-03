@@ -463,12 +463,18 @@ export function UserService(): Hono {
 
         let result: { insertedId: number }[];
         try {
-            result = await profileAsync(c, 'user_register_insert', () => db.insert(users).values({
+            const userData: any = {
                 openid: payload.openid,
                 username: cleanName,
                 avatar: payload.avatar,
                 permission,
-            }).returning({ insertedId: users.id }));
+            };
+
+            if (payload.platform === 'email' && payload.email) {
+                userData.email = payload.email;
+            }
+
+            result = await profileAsync(c, 'user_register_insert', () => db.insert(users).values(userData).returning({ insertedId: users.id }));
         } catch (e: any) {
             if (String(e?.message ?? '').includes('UNIQUE constraint failed')) {
                 throw new ConflictError('Username already taken');

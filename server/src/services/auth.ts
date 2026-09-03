@@ -270,34 +270,40 @@ export function PasswordAuthService(): Hono<{
         let authToken: string;
         if (user) {
             authToken = await profileAsync(c, 'email_existing_token', () => jwt.sign({ id: user.id }));
+            setJWTCookie(c, authToken);
+            setCookie(c, 'auth_token', authToken, {
+                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                path: '/',
+                sameSite: 'Lax',
+            });
+
+            return c.json({
+                success: true,
+                token: authToken,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    avatar: user.avatar,
+                    permission: user.permission === 1,
+                },
+            });
         } else {
-            const result = await profileAsync(c, 'email_user_insert', () => db.insert(users).values({
-                email: cleanEmail,
-                username: cleanEmail,
+            const regToken = await profileAsync(c, 'email_reg_token', () => jwt.sign({
+                type: 'register',
                 openid: `email:${cleanEmail}`,
                 avatar: '',
-                permission: 0,
-            }).returning({ insertedId: users.id }));
-            authToken = await profileAsync(c, 'email_new_token', () => jwt.sign({ id: result[0].insertedId }));
+                platform: 'email',
+                suggestedUsername: cleanEmail,
+                email: cleanEmail,
+                exp: Math.floor(Date.now() / 1000) + 600,
+            }));
+
+            return c.json({
+                success: true,
+                register: true,
+                token: regToken,
+            });
         }
-
-        setJWTCookie(c, authToken);
-        setCookie(c, 'auth_token', authToken, {
-            expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-            path: '/',
-            sameSite: 'Lax',
-        });
-
-        return c.json({
-            success: true,
-            token: authToken,
-            user: user ? {
-                id: user.id,
-                username: user.username,
-                avatar: user.avatar,
-                permission: user.permission === 1,
-            } : undefined
-        });
     });
 
     return app;

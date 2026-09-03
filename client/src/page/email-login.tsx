@@ -74,8 +74,14 @@ export function EmailLoginPage() {
             }
 
             if (data?.success) {
-                window.location.href = "/";
-                window.location.reload();
+                if (data.register) {
+                    const regUrl = new URL('/register', window.location.origin);
+                    regUrl.searchParams.set('token', data.token);
+                    window.location.href = regUrl.toString();
+                } else {
+                    window.location.href = "/";
+                    window.location.reload();
+                }
             } else {
                 setError(t('email_login.error.failed'));
             }

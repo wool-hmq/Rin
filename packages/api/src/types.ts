@@ -156,6 +156,7 @@ export interface EmailLoginResponse {
   success: boolean;
   token?: string;
   user?: UserProfile;
+  register?: boolean;
 }
 
 export interface LoginResponse {
