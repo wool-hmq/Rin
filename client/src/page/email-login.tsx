@@ -74,7 +74,7 @@ export function EmailLoginPage() {
             }
 
             if (data?.success) {
-                if (data.register) {
+                if (data.register && data.token) {
                     const regUrl = new URL('/register', window.location.origin);
                     regUrl.searchParams.set('token', data.token);
                     window.location.href = regUrl.toString();
