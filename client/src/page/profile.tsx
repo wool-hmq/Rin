@@ -6,6 +6,7 @@ import { client } from "../app/runtime";
 import { ImageUploadInput } from "../components/image-upload-input";
 import { Input } from "../components/input";
 import { Icon } from "../components/icon";
+import { GiteeIcon } from "../components/gitee-icon";
 import { ProfileContext } from "../state/profile";
 
 
@@ -149,7 +150,7 @@ export function ProfilePage() {
 
     const providers = [
         { key: 'github', label: 'GitHub', icon: 'ri-github-fill' },
-        { key: 'gitee', label: 'Gitee', icon: 'ri-gitlab-fill' },
+        { key: 'gitee', label: 'Gitee', icon: '' },
         { key: 'qq', label: 'QQ', icon: 'ri-qq-fill' },
         { key: 'email', label: 'Email', icon: 'ri-mail-fill' },
     ];
@@ -226,7 +227,11 @@ export function ProfilePage() {
                                     return (
                                         <div key={provider.key} className="flex items-center justify-between p-3 bg-w-secondary rounded-lg">
                                             <div className="flex items-center space-x-3">
-                                                <Icon label={provider.label} name={provider.icon} onClick={() => {}} />
+                                                {provider.key === 'gitee' ? (
+                                                    <GiteeIcon label={provider.label} onClick={() => {}} />
+                                                ) : (
+                                                    <Icon label={provider.label} name={provider.icon} onClick={() => {}} />
+                                                )}
                                                 <span className="text-sm">{provider.label}</span>
                                                 {bound && (
                                                     <span className="text-xs text-green-500">{t('profile.bound')}</span>
