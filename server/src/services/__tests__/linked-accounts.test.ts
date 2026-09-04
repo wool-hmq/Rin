@@ -5,7 +5,7 @@ import { createMiddleware } from "hono/factory";
 import type { Variables, JWTUtils } from "../../core/hono-types";
 import { setupTestApp, TestCacheImpl, cleanupTestDB, createMockEnv } from '../../../tests/fixtures';
 import { eq, and } from "drizzle-orm";
-import { users, linkedAccounts } from "../../src/db/schema";
+import { users, linkedAccounts } from "../../db/schema";
 
 describe('LinkedAccountsService', () => {
     let db: any;
