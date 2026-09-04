@@ -251,7 +251,11 @@
     "title": "登录",
     "username": {
       "placeholder": "请输入用户名"
-    }
+    },
+    "github": "GitHub",
+    "gitee": "Gitee",
+    "qq": "QQ",
+    "email": "邮箱"
   },
   "email_login": {
     "title": "邮箱登录",
@@ -686,7 +690,20 @@
       "empty_username": "昵称不能为空",
       "update_failed": "更新失败",
       "network": "网络错误，请重试"
-    }
+    },
+    "linked_accounts": "已绑定登录方式",
+    "loading_accounts": "正在加载...",
+    "bound": "已绑定",
+    "bind": "绑定",
+    "unbind": "解绑",
+    "unbind_confirm": "确定要解绑 {{provider}} 吗？解绑后将无法通过该方式登录。",
+    "unbind_success": "已成功解绑 {{provider}}",
+    "unbind_failed": "解绑失败",
+    "bind_success": "成功绑定 {{provider}}",
+    "bind_failed": "绑定失败",
+    "bind_email_prompt": "请输入要绑定的邮箱：",
+    "bind_email_code_prompt": "请输入验证码：",
+    "bind_email_send_failed": "发送验证码失败"
   },
   "health": {
     "generated_at": "最近检查时间：{{date}}",

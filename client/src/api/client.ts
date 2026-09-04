@@ -37,6 +37,7 @@ import type {
   EmailLoginRequest,
   EmailLoginResponse,
   LoginResponse,
+  LinkedAccount,
   SearchResponse,
   SearchMode,
 } from "@rin/api";
@@ -408,6 +409,21 @@ class UserAPI {
     user: { id: number; username: string; avatar: string | null; permission: boolean };
   }>> {
     return this.http.post("/api/user/register", body);
+  }
+
+  // GET /api/user/linked-accounts
+  async getLinkedAccounts(): Promise<ApiResponse<{ accounts: LinkedAccount[] }>> {
+    return this.http.get<{ accounts: LinkedAccount[] }>("/api/user/linked-accounts");
+  }
+
+  // POST /api/user/bind/:provider
+  async bindAccount(provider: string, body?: { email?: string; code?: string }): Promise<ApiResponse<{ success: boolean; provider: string; linked?: boolean }>> {
+    return this.http.post<{ success: boolean; provider: string; linked?: boolean }>(`/api/user/bind/${provider}`, body);
+  }
+
+  // DELETE /api/user/unbind/:provider
+  async unbindAccount(provider: string): Promise<ApiResponse<{ success: boolean; provider: string }>> {
+    return this.http.delete<{ success: boolean; provider: string }>(`/api/user/unbind/${provider}`);
   }
 
   // GET /api/user/github

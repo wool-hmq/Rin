@@ -244,6 +244,10 @@
     "no_methods": "沒有可用的登入方式",
     "oauth_only": "請登入後繼續",
     "or": "或",
+    "github": "GitHub",
+    "gitee": "Gitee",
+    "qq": "QQ",
+    "email": "電子郵件",
     "password": {
       "placeholder": "請輸入密碼"
     },
@@ -680,6 +684,21 @@
     "save": "儲存",
     "saving": "儲存中...",
     "success": "儲存成功",
+    "linked_accounts": {
+      "title": "已綁定登入方式",
+      "loading_accounts": "載入中...",
+      "bound": "已綁定",
+      "bind": "綁定",
+      "unbind": "解綁",
+      "unbind_confirm": "確定要解綁 {{provider}} 嗎？解綁後將無法透過該方式登入。",
+      "unbind_success": "已成功解綁 {{provider}}",
+      "unbind_failed": "解綁失敗",
+      "bind_success": "成功綁定 {{provider}}",
+      "bind_failed": "綁定失敗",
+      "bind_email_prompt": "請輸入要綁定的電子郵件：",
+      "bind_email_code_prompt": "請輸入驗證碼：",
+      "bind_email_send_failed": "發送驗證碼失敗"
+    },
     "error": {
       "file_too_large": "文件大小不能超過 2MB",
       "invalid_file_type": "請上傳圖片文件",

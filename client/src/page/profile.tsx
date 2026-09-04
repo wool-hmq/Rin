@@ -5,6 +5,7 @@ import { ButtonWithLoading } from "../components/button";
 import { client } from "../app/runtime";
 import { ImageUploadInput } from "../components/image-upload-input";
 import { Input } from "../components/input";
+import { Icon } from "../components/icon";
 import { ProfileContext } from "../state/profile";
 
 
@@ -16,6 +17,8 @@ export function ProfilePage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [linkedAccounts, setLinkedAccounts] = useState<Array<{ provider: string; providerId: string; linkedAt: string }>>([]);
+    const [loadingAccounts, setLoadingAccounts] = useState(false);
 
     // Load current profile data and redirect to login if not authenticated
     useEffect(() => {
@@ -31,7 +34,22 @@ export function ProfilePage() {
         // Load current profile data
         setUsername(profile.name || '');
         setAvatar(profile.avatar || '');
+        loadLinkedAccounts();
     }, [profile, setLocation]);
+
+    const loadLinkedAccounts = async () => {
+        setLoadingAccounts(true);
+        try {
+            const response = await client.user.getLinkedAccounts();
+            if (response.data?.accounts) {
+                setLinkedAccounts(response.data.accounts);
+            }
+        } catch (err) {
+            // Silent fail for linked accounts loading
+        } finally {
+            setLoadingAccounts(false);
+        }
+    };
 
     const handleSubmit = async () => {
         if (!username.trim()) {
@@ -66,6 +84,75 @@ export function ProfilePage() {
             setIsLoading(false);
         }
     };
+
+    const handleBind = (provider: string) => {
+        if (provider === 'email') {
+            // For email, show a simple inline form or navigate to email-login with bind mode
+            const email = prompt(t('profile.bind_email_prompt') || 'Enter your email:');
+            if (!email) return;
+            
+            // Send verification code first
+            client.auth.sendEmailCode({ email }).then(({ error }) => {
+                if (error) {
+                    setError(t('profile.bind_email_send_failed'));
+                    return;
+                }
+                const code = prompt(t('profile.bind_email_code_prompt') || 'Enter verification code:');
+                if (!code) return;
+                
+                client.user.bindAccount(provider, { email, code }).then(({ error }) => {
+                    if (error) {
+                        setError(t('profile.bind_failed'));
+                        return;
+                    }
+                    setSuccess(t('profile.bind_success', { provider: t(`login.${provider}`) }));
+                    loadLinkedAccounts();
+                });
+            });
+        } else {
+            // For OAuth providers, redirect to OAuth with bind=true
+            const authUrl = client.user.githubAuth().replace('/api/user/github', `/api/user/${provider}`);
+            const url = new URL(authUrl);
+            url.searchParams.set('bind', 'true');
+            window.location.href = url.toString();
+        }
+    };
+
+    const handleUnbind = async (provider: string) => {
+        if (!confirm(t('profile.unbind_confirm', { provider: t(`login.${provider}`) }))) {
+            return;
+        }
+
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const { error: apiError } = await client.user.unbindAccount(provider);
+            if (apiError) {
+                setError(t('profile.unbind_failed'));
+                setIsLoading(false);
+                return;
+            }
+            setSuccess(t('profile.unbind_success', { provider: t(`login.${provider}`) }));
+            loadLinkedAccounts();
+        } catch (err) {
+            setError(t('profile.unbind_failed'));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const isProviderBound = (provider: string) => {
+        return linkedAccounts.some(account => account.provider === provider);
+    };
+
+    const providers = [
+        { key: 'github', label: 'GitHub', icon: 'ri-github-fill' },
+        { key: 'gitee', label: 'Gitee', icon: 'ri-gitlab-fill' },
+        { key: 'qq', label: 'QQ', icon: 'ri-qq-fill' },
+        { key: 'email', label: 'Email', icon: 'ri-mail-fill' },
+    ];
 
     if (profile === undefined) {
         return (
@@ -124,6 +211,49 @@ export function ProfilePage() {
                             placeholder={t('profile.username_placeholder')}
                             disabled={isLoading}
                         />
+                    </div>
+
+                    {/* Linked Accounts section */}
+                    <div className="space-y-4">
+                        <label className="text-sm font-medium t-secondary">{t('profile.linked_accounts')}</label>
+                        
+                        {loadingAccounts ? (
+                            <p className="text-xs t-secondary">{t('profile.loading_accounts')}</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {providers.map((provider) => {
+                                    const bound = isProviderBound(provider.key);
+                                    return (
+                                        <div key={provider.key} className="flex items-center justify-between p-3 bg-w-secondary rounded-lg">
+                                            <div className="flex items-center space-x-3">
+                                                <Icon label={provider.label} name={provider.icon} onClick={() => {}} />
+                                                <span className="text-sm">{provider.label}</span>
+                                                {bound && (
+                                                    <span className="text-xs text-green-500">{t('profile.bound')}</span>
+                                                )}
+                                            </div>
+                                            {bound ? (
+                                                <button
+                                                    onClick={() => handleUnbind(provider.key)}
+                                                    disabled={isLoading}
+                                                    className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                                                >
+                                                    {t('profile.unbind')}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleBind(provider.key)}
+                                                    disabled={isLoading}
+                                                    className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
+                                                >
+                                                    {t('profile.bind')}
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {/* Submit button */}

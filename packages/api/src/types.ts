@@ -115,6 +115,12 @@ export interface UserProfile {
   permission: boolean;
 }
 
+export interface LinkedAccount {
+  provider: string;
+  providerId: string;
+  linkedAt: string;
+}
+
 export interface UpdateProfileRequest {
   username?: string;
   avatar?: string | null;

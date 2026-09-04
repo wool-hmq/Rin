@@ -74,6 +74,14 @@ export const users = sqliteTable("users", {
     updatedAt: updated_at,
 });
 
+export const linkedAccounts = sqliteTable("linked_accounts", {
+    id: integer("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+    provider: text("provider").notNull(),
+    providerId: text("provider_id").notNull(),
+    linkedAt: integer("linked_at").notNull(),
+});
+
 export const comments = sqliteTable("comments", {
     id: integer("id").primaryKey(),
     feedId: integer("feed_id").references(() => feeds.id, { onDelete: 'cascade' }).notNull(),

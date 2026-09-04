@@ -249,6 +249,10 @@
     },
     "required": "Please log in to continue",
     "title": "Login",
+    "github": "GitHub",
+    "gitee": "Gitee",
+    "qq": "QQ",
+    "email": "Email",
     "username": {
       "placeholder": "Please enter your username"
     }
@@ -686,7 +690,20 @@
       "empty_username": "Username cannot be empty",
       "update_failed": "Update failed",
       "network": "Network error, please try again"
-    }
+    },
+    "linked_accounts": "Linked Accounts",
+    "loading_accounts": "Loading...",
+    "bound": "Bound",
+    "bind": "Bind",
+    "unbind": "Unbind",
+    "unbind_confirm": "Are you sure you want to unbind {{provider}}? You will not be able to login with this method after unbinding.",
+    "unbind_success": "Successfully unbound {{provider}}",
+    "unbind_failed": "Failed to unbind",
+    "bind_success": "Successfully bound {{provider}}",
+    "bind_failed": "Failed to bind",
+    "bind_email_prompt": "Enter the email to bind:",
+    "bind_email_code_prompt": "Enter verification code:",
+    "bind_email_send_failed": "Failed to send verification code"
   },
   "health": {
     "generated_at": "Last checked: {{date}}",

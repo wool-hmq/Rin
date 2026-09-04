@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { setJWTCookie } from "../core/hono-middleware";
-import { users } from "../db/schema";
+import { users, linkedAccounts } from "../db/schema";
 import {
     BadRequestError,
     ConflictError,
@@ -65,6 +65,8 @@ export function UserService(): Hono {
 
         const query = c.req.query();
         const stateCookie = getCookie(c, 'state');
+        const bindMode = query.bind === 'true';
+        const currentUid = c.get('uid');
 
         console.log('param_state', query.state);
         console.log('cookie_state', stateCookie);
@@ -99,7 +101,7 @@ export function UserService(): Hono {
             avatar: string;
             permission: number | null;
         } = {
-            openid: user.id,
+            openid: String(user.id),
             username: user.name || user.login,
             avatar: user.avatar_url,
             permission: 0
@@ -107,37 +109,100 @@ export function UserService(): Hono {
 
         let authToken: string | undefined;
 
-        // Check if user exists
-        const existingUser = await profileAsync(c, 'user_existing_lookup', () => db.query.users.findFirst({
-            where: eq(users.openid, profile.openid)
+        // Bind mode: link this GitHub account to current logged-in user
+        if (bindMode && currentUid) {
+            // Check if this GitHub account is already linked to another user
+            const existingLink = await profileAsync(c, 'github_bind_link_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.provider, 'github'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (existingLink && existingLink.userId !== currentUid) {
+                throw new ConflictError('This GitHub account is already bound to another user');
+            }
+
+            // Check if already linked to current user
+            const currentLink = await profileAsync(c, 'github_bind_current_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.userId, currentUid),
+                    eq(linkedAccounts.provider, 'github'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (!currentLink) {
+                await profileAsync(c, 'github_bind_insert', () => db.insert(linkedAccounts).values({
+                    userId: currentUid,
+                    provider: 'github',
+                    providerId: profile.openid,
+                    linkedAt: Date.now(),
+                }));
+            }
+
+            const redirectTo = getCookie(c, 'redirect_to');
+            const redirect_url = new URL(redirectTo || '/');
+            redirect_url.pathname = '/profile';
+            return c.redirect(redirect_url.toString(), 302);
+        }
+
+        // Check linked_accounts first
+        const linkedAccount = await profileAsync(c, 'github_linked_lookup', () => db.query.linkedAccounts.findFirst({
+            where: and(
+                eq(linkedAccounts.provider, 'github'),
+                eq(linkedAccounts.providerId, profile.openid)
+            ),
         }));
 
-        if (existingUser) {
-            profile.permission = existingUser.permission;
-            // Only refresh the avatar. Never overwrite the user-chosen username.
-            await profileAsync(c, 'user_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
-            authToken = await profileAsync(c, 'user_existing_token', () => jwt.sign({ id: existingUser.id }));
-            setJWTCookie(c, authToken);
-            // Store token in cookie for frontend to read (not HttpOnly)
-            setCookie(c, 'auth_token', authToken, {
-                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-                path: '/',
-                sameSite: 'Lax',
-            });
-        } else {
-            const regToken = await profileAsync(c, 'user_github_reg_token', () => jwt.sign({
-                type: 'register',
-                openid: profile.openid,
-                avatar: profile.avatar,
-                platform: 'github',
-                suggestedUsername: profile.username,
-                exp: Math.floor(Date.now() / 1000) + 600,
+        if (linkedAccount) {
+            // Login the linked user
+            const linkedUser = await profileAsync(c, 'github_linked_user_lookup', () => db.query.users.findFirst({
+                where: eq(users.id, linkedAccount.userId),
             }));
-            const redirectTo = getCookie(c, 'redirect_to');
-            const regUrl = new URL(redirectTo || '/');
-            regUrl.pathname = '/register';
-            regUrl.searchParams.set('token', regToken);
-            return c.redirect(regUrl.toString(), 302);
+
+            if (linkedUser) {
+                profile.permission = linkedUser.permission;
+                authToken = await profileAsync(c, 'github_linked_token', () => jwt.sign({ id: linkedUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+            }
+        } else {
+            // Check users.openid for backward compatibility
+            const existingUser = await profileAsync(c, 'user_existing_lookup', () => db.query.users.findFirst({
+                where: eq(users.openid, profile.openid)
+            }));
+
+            if (existingUser) {
+                profile.permission = existingUser.permission;
+                // Only refresh the avatar. Never overwrite the user-chosen username.
+                await profileAsync(c, 'user_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
+                authToken = await profileAsync(c, 'user_existing_token', () => jwt.sign({ id: existingUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+            } else {
+                const regToken = await profileAsync(c, 'user_github_reg_token', () => jwt.sign({
+                    type: 'register',
+                    openid: profile.openid,
+                    avatar: profile.avatar,
+                    platform: 'github',
+                    suggestedUsername: profile.username,
+                    exp: Math.floor(Date.now() / 1000) + 600,
+                }));
+                const redirectTo = getCookie(c, 'redirect_to');
+                const regUrl = new URL(redirectTo || '/');
+                regUrl.pathname = '/register';
+                regUrl.searchParams.set('token', regToken);
+                return c.redirect(regUrl.toString(), 302);
+            }
         }
 
         const redirectTo = getCookie(c, 'redirect_to');
@@ -192,6 +257,8 @@ export function UserService(): Hono {
 
         const query = c.req.query();
         const stateCookie = getCookie(c, 'state');
+        const bindMode = query.bind === 'true';
+        const currentUid = c.get('uid');
 
         console.log('gitee param_state', query.state);
         console.log('gitee cookie_state', stateCookie);
@@ -233,37 +300,100 @@ export function UserService(): Hono {
 
         let authToken: string | undefined;
 
-        // Check if user exists
-        const existingUser = await profileAsync(c, 'user_gitee_existing_lookup', () => db.query.users.findFirst({
-            where: eq(users.openid, profile.openid)
+        // Bind mode: link this Gitee account to current logged-in user
+        if (bindMode && currentUid) {
+            // Check if this Gitee account is already linked to another user
+            const existingLink = await profileAsync(c, 'gitee_bind_link_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.provider, 'gitee'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (existingLink && existingLink.userId !== currentUid) {
+                throw new ConflictError('This Gitee account is already bound to another user');
+            }
+
+            // Check if already linked to current user
+            const currentLink = await profileAsync(c, 'gitee_bind_current_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.userId, currentUid),
+                    eq(linkedAccounts.provider, 'gitee'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (!currentLink) {
+                await profileAsync(c, 'gitee_bind_insert', () => db.insert(linkedAccounts).values({
+                    userId: currentUid,
+                    provider: 'gitee',
+                    providerId: profile.openid,
+                    linkedAt: Date.now(),
+                }));
+            }
+
+            const redirectTo = getCookie(c, 'redirect_to');
+            const redirect_url = new URL(redirectTo || '/');
+            redirect_url.pathname = '/profile';
+            return c.redirect(redirect_url.toString(), 302);
+        }
+
+        // Check linked_accounts first
+        const linkedAccount = await profileAsync(c, 'gitee_linked_lookup', () => db.query.linkedAccounts.findFirst({
+            where: and(
+                eq(linkedAccounts.provider, 'gitee'),
+                eq(linkedAccounts.providerId, profile.openid)
+            ),
         }));
 
-        if (existingUser) {
-            profile.permission = existingUser.permission;
-            // Only refresh the avatar. Never overwrite the user-chosen username.
-            await profileAsync(c, 'user_gitee_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
-            authToken = await profileAsync(c, 'user_gitee_existing_token', () => jwt.sign({ id: existingUser.id }));
-            setJWTCookie(c, authToken);
-            // Store token in cookie for frontend to read (not HttpOnly)
-            setCookie(c, 'auth_token', authToken, {
-                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-                path: '/',
-                sameSite: 'Lax',
-            });
-        } else {
-            const regToken = await profileAsync(c, 'user_gitee_reg_token', () => jwt.sign({
-                type: 'register',
-                openid: profile.openid,
-                avatar: profile.avatar,
-                platform: 'gitee',
-                suggestedUsername: profile.username,
-                exp: Math.floor(Date.now() / 1000) + 600,
+        if (linkedAccount) {
+            // Login the linked user
+            const linkedUser = await profileAsync(c, 'gitee_linked_user_lookup', () => db.query.users.findFirst({
+                where: eq(users.id, linkedAccount.userId),
             }));
-            const redirectTo = getCookie(c, 'redirect_to');
-            const regUrl = new URL(redirectTo || '/');
-            regUrl.pathname = '/register';
-            regUrl.searchParams.set('token', regToken);
-            return c.redirect(regUrl.toString(), 302);
+
+            if (linkedUser) {
+                profile.permission = linkedUser.permission;
+                authToken = await profileAsync(c, 'gitee_linked_token', () => jwt.sign({ id: linkedUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+            }
+        } else {
+            // Check users.openid for backward compatibility
+            const existingUser = await profileAsync(c, 'user_gitee_existing_lookup', () => db.query.users.findFirst({
+                where: eq(users.openid, profile.openid)
+            }));
+
+            if (existingUser) {
+                profile.permission = existingUser.permission;
+                // Only refresh the avatar. Never overwrite the user-chosen username.
+                await profileAsync(c, 'user_gitee_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
+                authToken = await profileAsync(c, 'user_gitee_existing_token', () => jwt.sign({ id: existingUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+            } else {
+                const regToken = await profileAsync(c, 'user_gitee_reg_token', () => jwt.sign({
+                    type: 'register',
+                    openid: profile.openid,
+                    avatar: profile.avatar,
+                    platform: 'gitee',
+                    suggestedUsername: profile.username,
+                    exp: Math.floor(Date.now() / 1000) + 600,
+                }));
+                const redirectTo = getCookie(c, 'redirect_to');
+                const regUrl = new URL(redirectTo || '/');
+                regUrl.pathname = '/register';
+                regUrl.searchParams.set('token', regToken);
+                return c.redirect(regUrl.toString(), 302);
+            }
         }
 
         const redirectTo = getCookie(c, 'redirect_to');
@@ -314,6 +444,8 @@ export function UserService(): Hono {
 
         const query = c.req.query();
         const stateCookie = getCookie(c, 'qq_state');
+        const bindMode = query.bind === 'true';
+        const currentUid = c.get('uid');
 
         if (!query.msg || query.msg !== stateCookie) {
             throw new BadRequestError('Invalid state parameter');
@@ -359,35 +491,100 @@ export function UserService(): Hono {
 
         let authToken: string | undefined;
 
-        const existingUser = await profileAsync(c, 'user_qq_existing_lookup', () => db.query.users.findFirst({
-            where: eq(users.openid, profile.openid),
+        // Bind mode: link this QQ account to current logged-in user
+        if (bindMode && currentUid) {
+            // Check if this QQ account is already linked to another user
+            const existingLink = await profileAsync(c, 'qq_bind_link_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.provider, 'qq'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (existingLink && existingLink.userId !== currentUid) {
+                throw new ConflictError('This QQ account is already bound to another user');
+            }
+
+            // Check if already linked to current user
+            const currentLink = await profileAsync(c, 'qq_bind_current_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.userId, currentUid),
+                    eq(linkedAccounts.provider, 'qq'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (!currentLink) {
+                await profileAsync(c, 'qq_bind_insert', () => db.insert(linkedAccounts).values({
+                    userId: currentUid,
+                    provider: 'qq',
+                    providerId: profile.openid,
+                    linkedAt: Date.now(),
+                }));
+            }
+
+            const redirectTo = getCookie(c, 'redirect_to');
+            const redirect_url = new URL(redirectTo || '/');
+            redirect_url.pathname = '/profile';
+            return c.redirect(redirect_url.toString(), 302);
+        }
+
+        // Check linked_accounts first
+        const linkedAccount = await profileAsync(c, 'qq_linked_lookup', () => db.query.linkedAccounts.findFirst({
+            where: and(
+                eq(linkedAccounts.provider, 'qq'),
+                eq(linkedAccounts.providerId, profile.openid)
+            ),
         }));
 
-        if (existingUser) {
-            profile.permission = existingUser.permission;
-            // Only refresh the avatar. Never overwrite the user-chosen username.
-            await profileAsync(c, 'user_qq_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
-            authToken = await profileAsync(c, 'user_qq_existing_token', () => jwt.sign({ id: existingUser.id }));
-            setJWTCookie(c, authToken);
-            setCookie(c, 'auth_token', authToken, {
-                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-                path: '/',
-                sameSite: 'Lax',
-            });
-        } else {
-            const regToken = await profileAsync(c, 'user_qq_reg_token', () => jwt.sign({
-                type: 'register',
-                openid: profile.openid,
-                avatar: profile.avatar,
-                platform: 'xinyueqq',
-                suggestedUsername: profile.username,
-                exp: Math.floor(Date.now() / 1000) + 600,
+        if (linkedAccount) {
+            // Login the linked user
+            const linkedUser = await profileAsync(c, 'qq_linked_user_lookup', () => db.query.users.findFirst({
+                where: eq(users.id, linkedAccount.userId),
             }));
-            const redirectTo = getCookie(c, 'redirect_to');
-            const regUrl = new URL(redirectTo || '/');
-            regUrl.pathname = '/register';
-            regUrl.searchParams.set('token', regToken);
-            return c.redirect(regUrl.toString(), 302);
+
+            if (linkedUser) {
+                profile.permission = linkedUser.permission;
+                authToken = await profileAsync(c, 'qq_linked_token', () => jwt.sign({ id: linkedUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+            }
+        } else {
+            // Check users.openid for backward compatibility
+            const existingUser = await profileAsync(c, 'user_qq_existing_lookup', () => db.query.users.findFirst({
+                where: eq(users.openid, profile.openid)
+            }));
+
+            if (existingUser) {
+                profile.permission = existingUser.permission;
+                // Only refresh the avatar. Never overwrite the user-chosen username.
+                await profileAsync(c, 'user_qq_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
+                authToken = await profileAsync(c, 'user_qq_existing_token', () => jwt.sign({ id: existingUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+            } else {
+                const regToken = await profileAsync(c, 'user_qq_reg_token', () => jwt.sign({
+                    type: 'register',
+                    openid: profile.openid,
+                    avatar: profile.avatar,
+                    platform: 'xinyueqq',
+                    suggestedUsername: profile.username,
+                    exp: Math.floor(Date.now() / 1000) + 600,
+                }));
+                const redirectTo = getCookie(c, 'redirect_to');
+                const regUrl = new URL(redirectTo || '/');
+                regUrl.pathname = '/register';
+                regUrl.searchParams.set('token', regToken);
+                return c.redirect(regUrl.toString(), 302);
+            }
         }
 
         const redirectTo = getCookie(c, 'redirect_to');

@@ -233,6 +233,10 @@
   "listed": "記事にリスト",
   "load_more": "もっと読み込む",
   "login": {
+    "github": "GitHub",
+    "gitee": "Gitee",
+    "qq": "QQ",
+    "email": "メール",
     "back": "ログインに戻る",
     "error": {
       "empty": "ユーザー名とパスワードを入力してください",
@@ -686,7 +690,20 @@
       "empty_username": "ユーザー名は空にできません",
       "update_failed": "更新に失敗しました",
       "network": "ネットワークエラー、もう一度お試しください"
-    }
+    },
+    "linked_accounts": "連携済みログイン方法",
+    "loading_accounts": "読み込み中...",
+    "bound": "連携済み",
+    "bind": "連携",
+    "unbind": "連携解除",
+    "unbind_confirm": "{{provider}} の連携を解除してもよろしいですか？解除後はこの方法でログインできなくなります。",
+    "unbind_success": "{{provider}} の連携を解除しました",
+    "unbind_failed": "連携解除に失敗しました",
+    "bind_success": "{{provider}} を連携しました",
+    "bind_failed": "連携に失敗しました",
+    "bind_email_prompt": "連携するメールアドレスを入力してください：",
+    "bind_email_code_prompt": "認証コードを入力してください：",
+    "bind_email_send_failed": "認証コードの送信に失敗しました"
   },
   "health": {
     "generated_at": "最終確認: {{date}}",
