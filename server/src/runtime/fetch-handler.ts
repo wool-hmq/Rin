@@ -47,7 +47,7 @@ async function serveSpaEntry(request: Request, env: Env) {
 
   try {
     const url = new URL(request.url);
-    const indexRequest = new Request(new URL("/", url.origin), request);
+    const indexRequest = new Request(new URL("/index.html", url.origin), request);
     const indexResponse = await env.ASSETS.fetch(indexRequest);
     if (indexResponse.status === 200 || (indexResponse.status >= 300 && indexResponse.status < 400)) {
       return indexResponse;
