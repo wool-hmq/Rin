@@ -236,6 +236,7 @@ export function UserService(): Hono {
                 regUrl.pathname = '/register';
                 regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
+                console.log('github callback new user redirect:', regUrl.toString(), 'redirectTo:', redirectTo);
                 return c.redirect(regUrl.toString(), 302);
             }
         }
@@ -246,6 +247,7 @@ export function UserService(): Hono {
         if (authToken) {
             redirect_url.searchParams.set('token', authToken);
         }
+        console.log('github callback existing user redirect:', redirect_url.toString(), 'redirectTo:', redirectTo, 'hasAuthToken:', !!authToken);
         return c.redirect(redirect_url.toString(), 302);
     });
 
@@ -444,6 +446,7 @@ export function UserService(): Hono {
                 regUrl.pathname = '/register';
                 regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
+                console.log('gitee callback new user redirect:', regUrl.toString(), 'redirectTo:', redirectTo);
                 return c.redirect(regUrl.toString(), 302);
             }
         }
@@ -454,6 +457,7 @@ export function UserService(): Hono {
         if (authToken) {
             redirect_url.searchParams.set('token', authToken);
         }
+        console.log('gitee callback existing user redirect:', redirect_url.toString(), 'redirectTo:', redirectTo, 'hasAuthToken:', !!authToken);
         return c.redirect(redirect_url.toString(), 302);
     });
 
@@ -654,6 +658,7 @@ export function UserService(): Hono {
                 regUrl.pathname = '/register';
                 regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
+                console.log('qq callback new user redirect:', regUrl.toString(), 'redirectTo:', redirectTo);
                 return c.redirect(regUrl.toString(), 302);
             }
         }
@@ -663,6 +668,7 @@ export function UserService(): Hono {
         if (authToken) {
             redirect_url.searchParams.set('token', authToken);
         }
+        console.log('qq callback existing user redirect:', redirect_url.toString(), 'redirectTo:', redirectTo, 'hasAuthToken:', !!authToken);
         return c.redirect(redirect_url.toString(), 302);
     });
 
