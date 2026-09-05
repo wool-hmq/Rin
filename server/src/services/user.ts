@@ -56,7 +56,8 @@ export function UserService(): Hono {
 
         // Build callback URL from referer
         const refererUrl = new URL(referer);
-        setCookie(c, 'redirect_to', refererUrl.toString(), {
+        const callbackUrl = new URL('/callback', refererUrl.origin);
+        setCookie(c, 'redirect_to', callbackUrl.toString(), {
             path: '/',
         });
 
@@ -264,7 +265,8 @@ export function UserService(): Hono {
 
         // Build callback URL from referer
         const refererUrl = new URL(referer);
-        setCookie(c, 'redirect_to', refererUrl.toString(), {
+        const callbackUrl = new URL('/callback', refererUrl.origin);
+        setCookie(c, 'redirect_to', callbackUrl.toString(), {
             path: '/',
         });
 
@@ -477,7 +479,8 @@ export function UserService(): Hono {
         setCookie(c, 'qq_state', state, { path: '/' });
 
         const refererUrl = new URL(referer);
-        setCookie(c, 'redirect_to', refererUrl.toString(), { path: '/' });
+        const callbackUrl = new URL('/callback', refererUrl.origin);
+        setCookie(c, 'redirect_to', callbackUrl.toString(), { path: '/' });
 
         const qqUrl = new URL('https://qq.wch666.com/api/qq.php');
         qqUrl.searchParams.set('token', token);
