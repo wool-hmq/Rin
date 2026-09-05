@@ -131,7 +131,7 @@ export const authMiddleware = createMiddleware<{
             if (authHeader && authHeader.startsWith('Bearer ')) {
                 return authHeader.substring(7);
             }
-            return getCookie(c, 'token');
+            return getCookie(c, 'token') || getCookie(c, 'auth_token');
         });
 
         if (token && jwt) {

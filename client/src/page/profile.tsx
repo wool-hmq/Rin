@@ -8,6 +8,7 @@ import { Input } from "../components/input";
 import { Icon } from "../components/icon";
 import { GiteeIcon } from "../components/gitee-icon";
 import { ProfileContext } from "../state/profile";
+import { getAuthToken } from "../utils/auth";
 
 
 export function ProfilePage() {
@@ -110,7 +111,10 @@ export function ProfilePage() {
             });
         } else {
             document.cookie = `redirect_to=/profile; path=/; SameSite=Lax`;
-            // QQ uses /xinyueqq endpoint, not /qq
+            const token = getAuthToken();
+            if (token) {
+                document.cookie = `token=${token}; path=/; SameSite=Lax`;
+            }
             const endpoint = provider === 'qq' ? 'xinyueqq' : provider;
             window.location.href = `/api/user/${endpoint}?bind=true`;
         }
