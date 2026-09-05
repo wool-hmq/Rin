@@ -1,10 +1,11 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { Hono } from "hono";
 import type { AppContext, Variables } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { setJWTCookie, clearJWTCookie } from "../core/hono-middleware";
 import { setCookie } from "hono/cookie";
-import { users } from "../db/schema";
+import { users, linkedAccounts } from "../db/schema";
+import { emailCodeStore, cleanExpiredCodes } from "./email-code-store";
 import {
     BadRequestError,
     ForbiddenError,
@@ -183,18 +184,6 @@ export function PasswordAuthService(): Hono<{
         });
     });
 
-    // Email verification code storage (in-memory, TTL 5 min)
-    const emailCodeStore = new Map<string, { code: string; expires: number }>();
-
-    function cleanExpiredCodes() {
-        const now = Date.now();
-        for (const [key, value] of emailCodeStore.entries()) {
-            if (value.expires < now) {
-                emailCodeStore.delete(key);
-            }
-        }
-    }
-
     function generateCode() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
@@ -276,6 +265,23 @@ export function PasswordAuthService(): Hono<{
                 path: '/',
                 sameSite: 'Lax',
             });
+
+            // Create linked_accounts record if not exists
+            const existingLink = await profileAsync(c, 'email_existing_link_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.userId, user.id),
+                    eq(linkedAccounts.provider, 'email'),
+                    eq(linkedAccounts.providerId, cleanEmail)
+                ),
+            }));
+            if (!existingLink) {
+                await profileAsync(c, 'email_existing_link_insert', () => db.insert(linkedAccounts).values({
+                    userId: user.id,
+                    provider: 'email',
+                    providerId: cleanEmail,
+                    linkedAt: Date.now(),
+                }));
+            }
 
             return c.json({
                 success: true,

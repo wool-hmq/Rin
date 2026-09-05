@@ -38,9 +38,7 @@ export function UserService(): Hono {
 
         // Build callback URL from referer
         const refererUrl = new URL(referer);
-        const callbackUrl = new URL('/callback', refererUrl.origin);
-
-        setCookie(c, 'redirect_to', callbackUrl.toString(), {
+        setCookie(c, 'redirect_to', refererUrl.toString(), {
             path: '/',
         });
 
@@ -188,6 +186,23 @@ export function UserService(): Hono {
                     path: '/',
                     sameSite: 'Lax',
                 });
+
+                // Create linked_accounts record if not exists
+                const existingLink = await profileAsync(c, 'github_existing_link_check', () => db.query.linkedAccounts.findFirst({
+                    where: and(
+                        eq(linkedAccounts.userId, existingUser.id),
+                        eq(linkedAccounts.provider, 'github'),
+                        eq(linkedAccounts.providerId, profile.openid)
+                    ),
+                }));
+                if (!existingLink) {
+                    await profileAsync(c, 'github_existing_link_insert', () => db.insert(linkedAccounts).values({
+                        userId: existingUser.id,
+                        provider: 'github',
+                        providerId: profile.openid,
+                        linkedAt: Date.now(),
+                    }));
+                }
             } else {
                 const regToken = await profileAsync(c, 'user_github_reg_token', () => jwt.sign({
                     type: 'register',
@@ -230,9 +245,7 @@ export function UserService(): Hono {
 
         // Build callback URL from referer
         const refererUrl = new URL(referer);
-        const callbackUrl = new URL('/callback', refererUrl.origin);
-
-        setCookie(c, 'redirect_to', callbackUrl.toString(), {
+        setCookie(c, 'redirect_to', refererUrl.toString(), {
             path: '/',
         });
 
@@ -379,6 +392,23 @@ export function UserService(): Hono {
                     path: '/',
                     sameSite: 'Lax',
                 });
+
+                // Create linked_accounts record if not exists
+                const existingLink = await profileAsync(c, 'gitee_existing_link_check', () => db.query.linkedAccounts.findFirst({
+                    where: and(
+                        eq(linkedAccounts.userId, existingUser.id),
+                        eq(linkedAccounts.provider, 'gitee'),
+                        eq(linkedAccounts.providerId, profile.openid)
+                    ),
+                }));
+                if (!existingLink) {
+                    await profileAsync(c, 'gitee_existing_link_insert', () => db.insert(linkedAccounts).values({
+                        userId: existingUser.id,
+                        provider: 'gitee',
+                        providerId: profile.openid,
+                        linkedAt: Date.now(),
+                    }));
+                }
             } else {
                 const regToken = await profileAsync(c, 'user_gitee_reg_token', () => jwt.sign({
                     type: 'register',
@@ -427,7 +457,7 @@ export function UserService(): Hono {
         setCookie(c, 'qq_state', state, { path: '/' });
 
         const refererUrl = new URL(referer);
-        setCookie(c, 'redirect_to', new URL('/callback', refererUrl.origin).toString(), { path: '/' });
+        setCookie(c, 'redirect_to', refererUrl.toString(), { path: '/' });
 
         const qqUrl = new URL('https://qq.wch666.com/api/qq.php');
         qqUrl.searchParams.set('token', token);
@@ -570,6 +600,23 @@ export function UserService(): Hono {
                     path: '/',
                     sameSite: 'Lax',
                 });
+
+                // Create linked_accounts record if not exists
+                const existingLink = await profileAsync(c, 'qq_existing_link_check', () => db.query.linkedAccounts.findFirst({
+                    where: and(
+                        eq(linkedAccounts.userId, existingUser.id),
+                        eq(linkedAccounts.provider, 'qq'),
+                        eq(linkedAccounts.providerId, profile.openid)
+                    ),
+                }));
+                if (!existingLink) {
+                    await profileAsync(c, 'qq_existing_link_insert', () => db.insert(linkedAccounts).values({
+                        userId: existingUser.id,
+                        provider: 'qq',
+                        providerId: profile.openid,
+                        linkedAt: Date.now(),
+                    }));
+                }
             } else {
                 const regToken = await profileAsync(c, 'user_qq_reg_token', () => jwt.sign({
                     type: 'register',
@@ -682,6 +729,15 @@ export function UserService(): Hono {
         if (!result || result.length === 0) {
             throw new InternalServerError('Failed to register user');
         }
+
+        const provider = payload.platform || 'unknown';
+        const providerId = provider === 'email' ? (payload.email || payload.openid) : payload.openid;
+        await profileAsync(c, 'user_register_link_insert', () => db.insert(linkedAccounts).values({
+            userId: result[0].insertedId,
+            provider,
+            providerId,
+            linkedAt: Date.now(),
+        }));
 
         const authToken = await profileAsync(c, 'user_register_token', () => jwt.sign({ id: result[0].insertedId }));
         setJWTCookie(c, authToken);

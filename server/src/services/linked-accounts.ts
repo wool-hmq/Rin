@@ -3,6 +3,7 @@ import { eq, and } from "drizzle-orm";
 import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { users, linkedAccounts } from "../db/schema";
+import { emailCodeStore, cleanExpiredCodes } from "./email-code-store";
 import {
     BadRequestError,
     ConflictError,
@@ -60,13 +61,14 @@ export function LinkedAccountsService(): Hono {
 
             const cleanEmail = email.toLowerCase().trim();
             const key = `email_code:${cleanEmail}`;
-            const stored = (c.env as any).emailCodeStore?.get(key);
+            cleanExpiredCodes();
+            const stored = emailCodeStore.get(key);
 
             if (!stored || stored.code !== code || stored.expires < Date.now()) {
                 throw new BadRequestError('Invalid or expired verification code');
             }
 
-            (c.env as any).emailCodeStore?.delete(key);
+            emailCodeStore.delete(key);
 
             // Check if email is already bound to another user
             const existingEmailUser = await profileAsync(c, 'bind_email_lookup', () => db.query.users.findFirst({

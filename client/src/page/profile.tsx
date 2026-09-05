@@ -88,11 +88,9 @@ export function ProfilePage() {
 
     const handleBind = (provider: string) => {
         if (provider === 'email') {
-            // For email, show a simple inline form or navigate to email-login with bind mode
             const email = prompt(t('profile.bind_email_prompt') || 'Enter your email:');
             if (!email) return;
             
-            // Send verification code first
             client.auth.sendEmailCode({ email }).then(({ error }) => {
                 if (error) {
                     setError(t('profile.bind_email_send_failed'));
@@ -111,11 +109,8 @@ export function ProfilePage() {
                 });
             });
         } else {
-            // For OAuth providers, redirect to OAuth with bind=true
-            const authUrl = client.user.githubAuth().replace('/api/user/github', `/api/user/${provider}`);
-            const url = new URL(authUrl);
-            url.searchParams.set('bind', 'true');
-            window.location.href = url.toString();
+            document.cookie = `redirect_to=/profile; path=/; SameSite=Lax`;
+            window.location.href = `/api/user/${provider}?bind=true`;
         }
     };
 

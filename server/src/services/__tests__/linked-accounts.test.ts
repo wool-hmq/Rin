@@ -6,6 +6,7 @@ import type { Variables, JWTUtils } from "../../core/hono-types";
 import { setupTestApp, TestCacheImpl, cleanupTestDB, createMockEnv } from '../../../tests/fixtures';
 import { eq, and } from "drizzle-orm";
 import { users, linkedAccounts } from "../../db/schema";
+import { emailCodeStore, cleanExpiredCodes } from "../email-code-store";
 
 describe('LinkedAccountsService', () => {
     let db: any;
@@ -95,18 +96,12 @@ describe('LinkedAccountsService', () => {
     });
 
     describe('POST /bind/:provider', () => {
-        it('should bind email with valid verification code', async () => {
-            // Setup email code store in env
-            const emailCodeStore = new Map<string, { code: string; expires: number }>();
-            const envWithStore = {
-                ...env,
-                emailCodeStore: {
-                    get: (key: string) => emailCodeStore.get(key),
-                    set: (key: string, value: any) => emailCodeStore.set(key, value),
-                    delete: (key: string) => emailCodeStore.delete(key),
-                }
-            };
+        beforeEach(() => {
+            cleanExpiredCodes();
+            emailCodeStore.clear();
+        });
 
+        it('should bind email with valid verification code', async () => {
             // Pre-store a verification code
             emailCodeStore.set('email_code:test@example.com', { code: '123456', expires: Date.now() + 300000 });
 
@@ -117,7 +112,7 @@ describe('LinkedAccountsService', () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ email: 'test@example.com', code: '123456' })
-            }, envWithStore);
+            }, env);
 
             expect(res.status).toBe(200);
             const data = await res.json() as { success: boolean; provider: string };
@@ -132,16 +127,6 @@ describe('LinkedAccountsService', () => {
         });
 
         it('should reject binding email already bound to another user', async () => {
-            const emailCodeStore = new Map<string, { code: string; expires: number }>();
-            const envWithStore = {
-                ...env,
-                emailCodeStore: {
-                    get: (key: string) => emailCodeStore.get(key),
-                    set: (key: string, value: any) => emailCodeStore.set(key, value),
-                    delete: (key: string) => emailCodeStore.delete(key),
-                }
-            };
-
             // User 2 already has this email
             sqlite.exec(`
                 INSERT INTO users (id, username, avatar, permission, openid, email) VALUES 
@@ -157,7 +142,7 @@ describe('LinkedAccountsService', () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ email: 'existing@example.com', code: '123456' })
-            }, envWithStore);
+            }, env);
 
             expect(res.status).toBe(409);
             const data = await res.json() as { error: { message: string } };
