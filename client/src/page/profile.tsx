@@ -8,7 +8,6 @@ import { Input } from "../components/input";
 import { Icon } from "../components/icon";
 import { GiteeIcon } from "../components/gitee-icon";
 import { ProfileContext } from "../state/profile";
-import { getAuthToken } from "../utils/auth";
 
 
 export function ProfilePage() {
