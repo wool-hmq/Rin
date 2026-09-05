@@ -110,7 +110,9 @@ export function ProfilePage() {
             });
         } else {
             document.cookie = `redirect_to=/profile; path=/; SameSite=Lax`;
-            window.location.href = `/api/user/${provider}?bind=true`;
+            // QQ uses /xinyueqq endpoint, not /qq
+            const endpoint = provider === 'qq' ? 'xinyueqq' : provider;
+            window.location.href = `/api/user/${endpoint}?bind=true`;
         }
     };
 
