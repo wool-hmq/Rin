@@ -47,10 +47,22 @@ async function serveSpaEntry(request: Request, env: Env) {
 
   try {
     const url = new URL(request.url);
-    const indexRequest = new Request(new URL("/index.html", url.origin), request);
-    const indexResponse = await env.ASSETS.fetch(indexRequest);
-    if (indexResponse.status === 200 || (indexResponse.status >= 300 && indexResponse.status < 400)) {
-      return indexResponse;
+    let currentPath = "/index.html";
+    let response = await env.ASSETS.fetch(new Request(new URL(currentPath, url.origin), request));
+
+    for (let i = 0; i < 3; i++) {
+      if (response.status === 200) {
+        return response;
+      }
+
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get('Location');
+        if (!location) break;
+        currentPath = location;
+        response = await env.ASSETS.fetch(new Request(new URL(currentPath, url.origin), request));
+      } else {
+        break;
+      }
     }
   } catch {}
 
