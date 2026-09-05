@@ -288,7 +288,9 @@
     "submit": "アカウント作成",
     "submitting": "作成中...",
     "failed": "アカウント作成に失敗しました。再度お試しください",
-    "suggested": "推奨ユーザー名: {{name}}"
+    "suggested": "推奨ユーザー名: {{name}}",
+    "bind_code_title": "バインドコード",
+    "bind_code_hint": "このコードをコピーして、プロフィールページに戻ってアカウントをバインドしてください。"
   },
   "logout": "ログアウト",
   "main_content": "本文",
@@ -703,7 +705,9 @@
     "bind_failed": "連携に失敗しました",
     "bind_email_prompt": "連携するメールアドレスを入力してください：",
     "bind_email_code_prompt": "認証コードを入力してください：",
-    "bind_email_send_failed": "認証コードの送信に失敗しました"
+    "bind_email_send_failed": "認証コードの送信に失敗しました",
+    "get_code": "コードを取得",
+    "bind_code_prompt": "バインドコードを入力してください："
   },
   "health": {
     "generated_at": "最終確認: {{date}}",

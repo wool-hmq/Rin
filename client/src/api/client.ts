@@ -426,6 +426,11 @@ class UserAPI {
     return this.http.delete<{ success: boolean; provider: string }>(`/api/user/unbind/${provider}`);
   }
 
+  // POST /api/user/verify-bind-code
+  async verifyBindCode(code: string): Promise<ApiResponse<{ success: boolean; provider: string }>> {
+    return this.http.post<{ success: boolean; provider: string }>('/api/user/verify-bind-code', { code });
+  }
+
   // GET /api/user/github
   githubAuth(): string {
     return `${endpoint}/api/user/github`;

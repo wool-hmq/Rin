@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { eq, and } from "drizzle-orm";
 import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
-import { users, linkedAccounts } from "../db/schema";
+import { users, linkedAccounts, cache } from "../db/schema";
 import { emailCodeStore, cleanExpiredCodes } from "./email-code-store";
 import {
     BadRequestError,
@@ -112,14 +112,97 @@ export function LinkedAccountsService(): Hono {
             return c.json({ success: true, provider: 'email', linked: true });
         }
 
-        // For OAuth providers (github, gitee, qq), the binding is done during OAuth callback
-        // This endpoint just returns a message indicating the user should use OAuth flow
+        // For OAuth providers, return bind URL for redirect flow
         return c.json({
             success: true,
             provider,
-            message: `Please complete the ${provider} OAuth flow to bind your account`,
             bindUrl: `/api/user/${provider}?bind=true`,
         });
+    });
+
+    // POST /user/verify-bind-code - Verify bind code and link OAuth account
+    app.post('/verify-bind-code', async (c: AppContext) => {
+        const uid = c.get('uid');
+        const db = c.get('db');
+
+        if (!uid) {
+            throw new ForbiddenError('Authentication required');
+        }
+
+        const body = await c.req.json().catch(() => ({})) as { code?: string };
+        const code = (body.code || '').trim().toUpperCase();
+
+        if (!code) {
+            throw new BadRequestError('Bind code is required');
+        }
+
+        // Find bind code
+        const bindRecord = await profileAsync(c, 'bind_code_lookup', () => db.query.cache.findFirst({
+            where: and(
+                eq(cache.key, code),
+                eq(cache.type, 'bind_code'),
+            ),
+        }));
+
+        if (!bindRecord) {
+            throw new BadRequestError('Invalid or expired bind code');
+        }
+
+        // Check expiration
+        if (bindRecord.expiresAt && bindRecord.expiresAt < Math.floor(Date.now() / 1000)) {
+            await profileAsync(c, 'bind_code_delete_expired', () => db.delete(cache).where(eq(cache.id, bindRecord.id)));
+            throw new BadRequestError('Bind code has expired');
+        }
+
+        let provider: string;
+        let providerId: string;
+        try {
+            const payload = JSON.parse(bindRecord.value) as { provider: string; providerId: string };
+            provider = payload.provider;
+            providerId = payload.providerId;
+        } catch {
+            throw new BadRequestError('Invalid bind code data');
+        }
+
+        const validProviders = ['github', 'gitee', 'qq'];
+        if (!validProviders.includes(provider)) {
+            throw new BadRequestError('Invalid provider in bind code');
+        }
+
+        // Check if this provider account is already linked to another user
+        const existingLink = await profileAsync(c, 'verify_bind_existing_link', () => db.query.linkedAccounts.findFirst({
+            where: and(
+                eq(linkedAccounts.provider, provider),
+                eq(linkedAccounts.providerId, providerId),
+            ),
+        }));
+
+        if (existingLink && existingLink.userId !== uid) {
+            throw new ConflictError('This account is already bound to another user');
+        }
+
+        // Check if already linked to current user
+        const currentLink = await profileAsync(c, 'verify_bind_current_link', () => db.query.linkedAccounts.findFirst({
+            where: and(
+                eq(linkedAccounts.userId, uid),
+                eq(linkedAccounts.provider, provider),
+                eq(linkedAccounts.providerId, providerId),
+            ),
+        }));
+
+        if (!currentLink) {
+            await profileAsync(c, 'verify_bind_insert', () => db.insert(linkedAccounts).values({
+                userId: uid,
+                provider,
+                providerId,
+                linkedAt: Date.now(),
+            }));
+        }
+
+        // Delete used bind code
+        await profileAsync(c, 'bind_code_delete', () => db.delete(cache).where(eq(cache.id, bindRecord.id)));
+
+        return c.json({ success: true, provider });
     });
 
     // DELETE /user/unbind/:provider - Unbind a third-party account from current user

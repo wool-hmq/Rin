@@ -27,6 +27,7 @@ function createTestDB() {
             type TEXT DEFAULT 'cache' NOT NULL,
             created_at INTEGER DEFAULT (unixepoch()),
             updated_at INTEGER DEFAULT (unixepoch()),
+            expires_at INTEGER,
             UNIQUE(key, type)
         );
         CREATE INDEX IF NOT EXISTS idx_cache_type ON cache(type);

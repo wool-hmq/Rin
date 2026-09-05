@@ -239,6 +239,7 @@ Stores application cache data.
 | `type` | text | DEFAULT 'cache' | Cache type, for categorization (e.g. `cache`, `server_config`, `client_config`) |
 | `created_at` | integer | DEFAULT (unixepoch()) | Creation timestamp |
 | `updated_at` | integer | DEFAULT (unixepoch()) | Update timestamp |
+| `expires_at` | integer | NULL | Expiration timestamp (Unix time), NULL means never expires |
 
 **Constraints:**
 - Composite unique constraint `cache_key_type_unique` ON (`key`, `type`)

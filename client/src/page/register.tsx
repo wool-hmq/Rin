@@ -27,6 +27,7 @@ function decodeRegistrationToken(token: string): { avatar?: string; suggestedUse
 export function RegisterPage() {
     const [, setLocation] = useLocation();
     const [token, setToken] = useState<string | null>(null);
+    const [bindCode, setBindCode] = useState<string | null>(null);
     const [avatar, setAvatar] = useState("");
     const [suggested, setSuggested] = useState("");
     const [username, setUsername] = useState("");
@@ -38,11 +39,13 @@ export function RegisterPage() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const tk = params.get('token');
+        const code = params.get('code');
         if (!tk) {
             setError(t('register.invalid_token'));
             return;
         }
         setToken(tk);
+        setBindCode(code);
         const decoded = decodeRegistrationToken(tk);
         if (decoded) {
             setAvatar(decoded.avatar || "");
@@ -100,6 +103,14 @@ export function RegisterPage() {
 
                 {error && (
                     <p className="text-sm text-red-500">{error}</p>
+                )}
+
+                {bindCode && (
+                    <div className="w-full p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                        <p className="font-medium text-yellow-800">{t('register.bind_code_title')}</p>
+                        <p className="text-xs text-yellow-700 mt-1">{t('register.bind_code_hint')}</p>
+                        <p className="text-lg font-mono font-bold text-yellow-900 mt-2 select-all">{bindCode}</p>
+                    </div>
                 )}
 
                 {avatar && (

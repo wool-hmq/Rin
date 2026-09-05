@@ -162,6 +162,7 @@ export function createMockDB() {
             type TEXT DEFAULT 'cache' NOT NULL,
             created_at INTEGER DEFAULT (unixepoch()),
             updated_at INTEGER DEFAULT (unixepoch()),
+            expires_at INTEGER,
             UNIQUE(key, type)
         );
 

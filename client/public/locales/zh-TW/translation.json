@@ -288,7 +288,9 @@
     "submit": "建立帳號",
     "submitting": "建立中...",
     "failed": "建立失敗，請重試",
-    "suggested": "建議使用者名稱：{{name}}"
+    "suggested": "建議使用者名稱：{{name}}",
+    "bind_code_title": "綁定 Code",
+    "bind_code_hint": "請複製此 Code，然後回到個人資料頁綁定該帳號。"
   },
   "logout": "登出",
   "main_content": "正文",
@@ -697,7 +699,9 @@
       "bind_failed": "綁定失敗",
       "bind_email_prompt": "請輸入要綁定的電子郵件：",
       "bind_email_code_prompt": "請輸入驗證碼：",
-      "bind_email_send_failed": "發送驗證碼失敗"
+      "bind_email_send_failed": "發送驗證碼失敗",
+      "get_code": "獲取 Code",
+      "bind_code_prompt": "請輸入綁定 Code："
     },
     "error": {
       "file_too_large": "文件大小不能超過 2MB",

@@ -4,7 +4,7 @@ import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { setJWTCookie } from "../core/hono-middleware";
-import { users, linkedAccounts } from "../db/schema";
+import { users, linkedAccounts, cache } from "../db/schema";
 import {
     BadRequestError,
     ConflictError,
@@ -17,6 +17,24 @@ function generateRandomState(): string {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function generateBindCode(): string {
+    const array = new Uint8Array(4);
+    crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 8).toUpperCase();
+}
+
+async function storeBindCode(db: any, provider: string, providerId: string): Promise<string> {
+    const code = generateBindCode();
+    const expiresAt = Math.floor(Date.now() / 1000) + 600; // 10 minutes
+    await db.insert(cache).values({
+        key: code,
+        value: JSON.stringify({ provider, providerId }),
+        type: 'bind_code',
+        expiresAt,
+    });
+    return code;
 }
 
 export function UserService(): Hono {
@@ -204,6 +222,7 @@ export function UserService(): Hono {
                     }));
                 }
             } else {
+                const bindCode = await profileAsync(c, 'user_github_bind_code', () => storeBindCode(db, 'github', profile.openid));
                 const regToken = await profileAsync(c, 'user_github_reg_token', () => jwt.sign({
                     type: 'register',
                     openid: profile.openid,
@@ -215,6 +234,7 @@ export function UserService(): Hono {
                 const redirectTo = getCookie(c, 'redirect_to');
                 const regUrl = new URL(redirectTo || '/');
                 regUrl.pathname = '/register';
+                regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
                 return c.redirect(regUrl.toString(), 302);
             }
@@ -410,6 +430,7 @@ export function UserService(): Hono {
                     }));
                 }
             } else {
+                const bindCode = await profileAsync(c, 'user_gitee_bind_code', () => storeBindCode(db, 'gitee', profile.openid));
                 const regToken = await profileAsync(c, 'user_gitee_reg_token', () => jwt.sign({
                     type: 'register',
                     openid: profile.openid,
@@ -421,6 +442,7 @@ export function UserService(): Hono {
                 const redirectTo = getCookie(c, 'redirect_to');
                 const regUrl = new URL(redirectTo || '/');
                 regUrl.pathname = '/register';
+                regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
                 return c.redirect(regUrl.toString(), 302);
             }
@@ -618,17 +640,19 @@ export function UserService(): Hono {
                     }));
                 }
             } else {
+                const bindCode = await profileAsync(c, 'user_qq_bind_code', () => storeBindCode(db, 'qq', profile.openid));
                 const regToken = await profileAsync(c, 'user_qq_reg_token', () => jwt.sign({
                     type: 'register',
                     openid: profile.openid,
                     avatar: profile.avatar,
-                    platform: 'xinyueqq',
+                    platform: 'qq',
                     suggestedUsername: profile.username,
                     exp: Math.floor(Date.now() / 1000) + 600,
                 }));
                 const redirectTo = getCookie(c, 'redirect_to');
                 const regUrl = new URL(redirectTo || '/');
                 regUrl.pathname = '/register';
+                regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
                 return c.redirect(regUrl.toString(), 302);
             }

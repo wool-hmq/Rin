@@ -114,6 +114,7 @@ export const cache = sqliteTable("cache", {
     key: text("key").notNull(),
     value: text("value").notNull(),
     type: text("type").default("cache").notNull(),
+    expiresAt: integer("expires_at"),
     createdAt: created_at,
     updatedAt: updated_at,
 }, (table) => ({

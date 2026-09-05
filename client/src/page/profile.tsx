@@ -110,14 +110,23 @@ export function ProfilePage() {
                 });
             });
         } else {
-            document.cookie = `redirect_to=/profile; path=/; SameSite=Lax`;
-            const token = getAuthToken();
-            if (token) {
-                document.cookie = `token=${token}; path=/; SameSite=Lax`;
-            }
-            const endpoint = provider === 'qq' ? 'xinyueqq' : provider;
-            window.location.href = `/api/user/${endpoint}?bind=true`;
+            const bindCode = prompt(t('profile.bind_code_prompt') || 'Enter bind code:');
+            if (!bindCode) return;
+            
+            client.user.verifyBindCode(bindCode.trim()).then(({ error }) => {
+                if (error) {
+                    setError(t('profile.bind_failed'));
+                    return;
+                }
+                setSuccess(t('profile.bind_success', { provider: t(`login.${provider}`) }));
+                loadLinkedAccounts();
+            });
         }
+    };
+
+    const handleGetBindCode = (provider: string) => {
+        const endpoint = provider === 'qq' ? 'xinyueqq' : provider;
+        window.open(`/api/user/${endpoint}?bind=true`, '_blank');
     };
 
     const handleUnbind = async (provider: string) => {
@@ -238,23 +247,40 @@ export function ProfilePage() {
                                                     <span className="text-xs text-green-500">{t('profile.bound')}</span>
                                                 )}
                                             </div>
-                                            {bound ? (
-                                                <button
-                                                    onClick={() => handleUnbind(provider.key)}
-                                                    disabled={isLoading}
-                                                    className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-                                                >
-                                                    {t('profile.unbind')}
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleBind(provider.key)}
-                                                    disabled={isLoading}
-                                                    className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
-                                                >
-                                                    {t('profile.bind')}
-                                                </button>
-                                            )}
+                                             {bound ? (
+                                                 <button
+                                                     onClick={() => handleUnbind(provider.key)}
+                                                     disabled={isLoading}
+                                                     className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                                                 >
+                                                     {t('profile.unbind')}
+                                                 </button>
+                                             ) : provider.key === 'email' ? (
+                                                 <button
+                                                     onClick={() => handleBind(provider.key)}
+                                                     disabled={isLoading}
+                                                     className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
+                                                 >
+                                                     {t('profile.bind')}
+                                                 </button>
+                                             ) : (
+                                                 <div className="flex items-center space-x-2">
+                                                     <button
+                                                         onClick={() => handleGetBindCode(provider.key)}
+                                                         disabled={isLoading}
+                                                         className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                                                     >
+                                                         {t('profile.get_code')}
+                                                     </button>
+                                                     <button
+                                                         onClick={() => handleBind(provider.key)}
+                                                         disabled={isLoading}
+                                                         className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
+                                                     >
+                                                         {t('profile.bind')}
+                                                     </button>
+                                                 </div>
+                                             )}
                                         </div>
                                     );
                                 })}

@@ -239,6 +239,7 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 11 张表。
 | `type` | text | DEFAULT 'cache' | 缓存类型，用于分类（如 `cache`、`server_config`、`client_config`） |
 | `created_at` | integer | DEFAULT (unixepoch()) | 创建时间戳 |
 | `updated_at` | integer | DEFAULT (unixepoch()) | 更新时间戳 |
+| `expires_at` | integer | NULL | 过期时间戳（Unix 时间），NULL 表示永不过期 |
 
 **约束：**
 - 复合唯一约束 `cache_key_type_unique` ON (`key`, `type`)
