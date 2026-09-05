@@ -159,7 +159,6 @@ export function UserService(): Hono {
 
             const redirectTo = getCookie(c, 'redirect_to');
             const redirect_url = new URL(redirectTo || '/');
-            redirect_url.pathname = '/profile';
             return c.redirect(redirect_url.toString(), 302);
         }
 
@@ -367,7 +366,6 @@ export function UserService(): Hono {
 
             const redirectTo = getCookie(c, 'redirect_to');
             const redirect_url = new URL(redirectTo || '/');
-            redirect_url.pathname = '/profile';
             return c.redirect(redirect_url.toString(), 302);
         }
 
@@ -577,7 +575,6 @@ export function UserService(): Hono {
 
             const redirectTo = getCookie(c, 'redirect_to');
             const redirect_url = new URL(redirectTo || '/');
-            redirect_url.pathname = '/profile';
             return c.redirect(redirect_url.toString(), 302);
         }
 
