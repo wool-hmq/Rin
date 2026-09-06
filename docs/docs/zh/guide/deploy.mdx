@@ -13,6 +13,7 @@
 ### 第一步：Fork 仓库
 
 1. 访问 [Rin GitHub 仓库](https://github.com/openRin/Rin)
+羊角快车二创版 Rin Github 仓库：[https://github.com/wool-hmq/Rin](https://github.com/wool-hmq/Rin)
 2. 点击右上角的 **"Fork"** 按钮
 ![1000000657](https://github.com/OXeu/Rin/assets/36541432/df3607ca-a8a9-49b8-92ce-6b348afeb13f)
 3. 选择您的个人账户，保持默认设置，点击 **"Create fork"**
@@ -233,6 +234,15 @@ Rin 支持两种存储方式：**Cloudflare R2**（推荐）或 **S3 兼容存�
 
 ```bash
 git remote add upstream https://github.com/openRin/Rin.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+或 羊角快车二创版手动更新方式
+```bash
+git remote add upstream https://github.com/wool-hmq/Rin.git
 git fetch upstream
 git checkout main
 git merge upstream/main

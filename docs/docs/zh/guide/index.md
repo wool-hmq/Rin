@@ -5,6 +5,7 @@ Rin 是一个基于 Cloudflare Pages + Workers + D1 + R2 全家桶的博客，�
 ## 演示地址
 
 [xeu.life](https://xeu.life)
+[羊角快车Blog](https://jiaoblog.dpdns.org)
 
 
 ## 特性
@@ -25,4 +26,4 @@ Rin 是一个基于 Cloudflare Pages + Workers + D1 + R2 全家桶的博客，�
 15. 支持通过 Webhook 发送评论通知
 16. 支持自动识别文章中的第一张图片并作为头图展示在文章列表中
 17. 支持输入形如"#博客 #部署 #Cloudflare"之类的标签文本并自动解析为标签
-18. 更多特性请参考 https://xeu.life
+18. 更多特性请参考 https://xeu.life 或 https://jiaoblog.dpdns.org

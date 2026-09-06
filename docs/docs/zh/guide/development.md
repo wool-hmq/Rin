@@ -11,6 +11,13 @@ git clone https://github.com/openRin/Rin.git
 cd Rin
 ```
 
+或
+
+```bash
+git clone https://github.com/openRin/Rin.git
+cd Rin
+```
+
 ### 2. 安装依赖
 
 ```bash
