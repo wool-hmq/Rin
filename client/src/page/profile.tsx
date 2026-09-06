@@ -123,9 +123,16 @@ export function ProfilePage() {
         }
     };
 
-    const handleGetBindCode = (provider: string) => {
-        const endpoint = provider === 'qq' ? 'xinyueqq' : provider;
-        window.open(`/api/user/${endpoint}?bind=true`, '_blank');
+    const handleGetBindCode = async (provider: string) => {
+        if (provider === 'wechat') {
+            const { data } = await client.user.getWechatLoginUrl();
+            if (data?.url) {
+                window.open(data.url, '_blank');
+            }
+        } else {
+            const endpoint = provider === 'qq' ? 'xinyueqq' : provider;
+            window.open(`/api/user/${endpoint}?bind=true`, '_blank');
+        }
     };
 
     const handleUnbind = async (provider: string) => {
