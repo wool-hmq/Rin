@@ -708,7 +708,8 @@
     "bind_email_code_prompt": "認証コードを入力してください：",
     "bind_email_send_failed": "認証コードの送信に失敗しました",
     "get_code": "コードを取得",
-    "bind_code_prompt": "バインドコードを入力してください："
+    "bind_code_prompt": "バインドコードを入力してください：",
+    "wechat_bind_hint": "WeChatはバインドコード不要です。認証フローを完了すると連携されます。"
   },
   "health": {
     "generated_at": "最終確認: {{date}}",

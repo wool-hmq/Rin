@@ -702,7 +702,8 @@
       "bind_email_code_prompt": "請輸入驗證碼：",
       "bind_email_send_failed": "發送驗證碼失敗",
       "get_code": "獲取 Code",
-      "bind_code_prompt": "請輸入綁定 Code："
+      "bind_code_prompt": "請輸入綁定 Code：",
+      "wechat_bind_hint": "微信無需綁定 Code，完成授權流程即可綁定。"
     },
     "error": {
       "file_too_large": "文件大小不能超過 2MB",

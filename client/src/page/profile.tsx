@@ -108,6 +108,12 @@ export function ProfilePage() {
                     loadLinkedAccounts();
                 });
             });
+        } else if (provider === 'wechat') {
+            client.user.getWechatLoginUrl(true).then(({ data }) => {
+                if (data?.url) {
+                    window.open(data.url, '_blank');
+                }
+            });
         } else {
             const bindCode = prompt(t('profile.bind_code_prompt') || 'Enter bind code:');
             if (!bindCode) return;
@@ -262,32 +268,43 @@ export function ProfilePage() {
                                                  >
                                                      {t('profile.unbind')}
                                                  </button>
-                                             ) : provider.key === 'email' ? (
-                                                 <button
-                                                     onClick={() => handleBind(provider.key)}
-                                                     disabled={isLoading}
-                                                     className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
-                                                 >
-                                                     {t('profile.bind')}
-                                                 </button>
-                                             ) : (
-                                                 <div className="flex items-center space-x-2">
-                                                     <button
-                                                         onClick={() => handleGetBindCode(provider.key)}
-                                                         disabled={isLoading}
-                                                         className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-                                                     >
-                                                         {t('profile.get_code')}
-                                                     </button>
-                                                     <button
-                                                         onClick={() => handleBind(provider.key)}
-                                                         disabled={isLoading}
-                                                         className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
-                                                     >
-                                                         {t('profile.bind')}
-                                                     </button>
-                                                 </div>
-                                             )}
+                                              ) : provider.key === 'wechat' ? (
+                                                  <div>
+                                                      <button
+                                                          onClick={() => handleBind(provider.key)}
+                                                          disabled={isLoading}
+                                                          className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
+                                                      >
+                                                          {t('profile.bind')}
+                                                      </button>
+                                                      <p className="text-xs text-gray-500 mt-1">{t('profile.wechat_bind_hint')}</p>
+                                                  </div>
+                                              ) : provider.key === 'email' ? (
+                                                  <button
+                                                      onClick={() => handleBind(provider.key)}
+                                                      disabled={isLoading}
+                                                      className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
+                                                  >
+                                                      {t('profile.bind')}
+                                                  </button>
+                                              ) : (
+                                                  <div className="flex items-center space-x-2">
+                                                      <button
+                                                          onClick={() => handleGetBindCode(provider.key)}
+                                                          disabled={isLoading}
+                                                          className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                                                      >
+                                                          {t('profile.get_code')}
+                                                      </button>
+                                                      <button
+                                                          onClick={() => handleBind(provider.key)}
+                                                          disabled={isLoading}
+                                                          className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
+                                                      >
+                                                          {t('profile.bind')}
+                                                      </button>
+                                                  </div>
+                                              )}
                                         </div>
                                     );
                                 })}

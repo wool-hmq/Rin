@@ -708,7 +708,8 @@
     "bind_email_code_prompt": "Enter verification code:",
     "bind_email_send_failed": "Failed to send verification code",
     "get_code": "Get Code",
-    "bind_code_prompt": "Enter bind code:"
+    "bind_code_prompt": "Enter bind code:",
+    "wechat_bind_hint": "WeChat does not require a bind code. Complete the authorization flow to bind."
   },
   "health": {
     "generated_at": "Last checked: {{date}}",
