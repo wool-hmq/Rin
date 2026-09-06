@@ -179,6 +179,7 @@ export function PasswordAuthService(): Hono<{
             github: !!(env.RIN_GITHUB_CLIENT_ID && env.RIN_GITHUB_CLIENT_SECRET),
             gitee: !!(env.RIN_GITEE_CLIENT_ID && env.RIN_GITEE_CLIENT_SECRET),
             qq: !!env.RIN_QQ_TOKEN,
+            wechat: !!(env.RIN_WECHAT_APPID && env.RIN_WECHAT_APPKEY),
             email: !!(env.EMAIL_RESEND_URL && env.EMAIL_RESEND_PASS),
             password: !!(env.ADMIN_USERNAME && env.ADMIN_PASSWORD),
         });

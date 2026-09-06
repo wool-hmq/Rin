@@ -85,8 +85,6 @@ export function UserService(): Hono {
         const bindMode = query.bind === 'true';
         const currentUid = c.get('uid');
 
-        console.log('param_state', query.state);
-        console.log('cookie_state', stateCookie);
 
         // Verify state to prevent CSRF attacks
         if (query.state !== stateCookie) {
@@ -236,7 +234,6 @@ export function UserService(): Hono {
                 regUrl.pathname = '/register';
                 regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
-                console.log('github callback new user redirect:', regUrl.toString(), 'redirectTo:', redirectTo);
                 return c.redirect(regUrl.toString(), 302);
             }
         }
@@ -247,7 +244,6 @@ export function UserService(): Hono {
         if (authToken) {
             redirect_url.searchParams.set('token', authToken);
         }
-        console.log('github callback existing user redirect:', redirect_url.toString(), 'redirectTo:', redirectTo, 'hasAuthToken:', !!authToken);
         return c.redirect(redirect_url.toString(), 302);
     });
 
@@ -296,8 +292,6 @@ export function UserService(): Hono {
         const bindMode = query.bind === 'true';
         const currentUid = c.get('uid');
 
-        console.log('gitee param_state', query.state);
-        console.log('gitee cookie_state', stateCookie);
 
         // Verify state to prevent CSRF attacks
         if (query.state !== stateCookie) {
@@ -446,7 +440,6 @@ export function UserService(): Hono {
                 regUrl.pathname = '/register';
                 regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
-                console.log('gitee callback new user redirect:', regUrl.toString(), 'redirectTo:', redirectTo);
                 return c.redirect(regUrl.toString(), 302);
             }
         }
@@ -457,7 +450,6 @@ export function UserService(): Hono {
         if (authToken) {
             redirect_url.searchParams.set('token', authToken);
         }
-        console.log('gitee callback existing user redirect:', redirect_url.toString(), 'redirectTo:', redirectTo, 'hasAuthToken:', !!authToken);
         return c.redirect(redirect_url.toString(), 302);
     });
 
@@ -658,7 +650,6 @@ export function UserService(): Hono {
                 regUrl.pathname = '/register';
                 regUrl.searchParams.set('code', bindCode);
                 regUrl.searchParams.set('token', regToken);
-                console.log('qq callback new user redirect:', regUrl.toString(), 'redirectTo:', redirectTo);
                 return c.redirect(regUrl.toString(), 302);
             }
         }
@@ -668,7 +659,197 @@ export function UserService(): Hono {
         if (authToken) {
             redirect_url.searchParams.set('token', authToken);
         }
-        console.log('qq callback existing user redirect:', redirect_url.toString(), 'redirectTo:', redirectTo, 'hasAuthToken:', !!authToken);
+        return c.redirect(redirect_url.toString(), 302);
+    });
+
+    // GET /user/wechat - Redirect to 聚合登录 (Mapay) WeChat OAuth
+    app.get("/wechat", async (c: AppContext) => {
+        const appid = c.env.RIN_WECHAT_APPID;
+        const appkey = c.env.RIN_WECHAT_APPKEY;
+        if (!appid || !appkey) {
+            throw new BadRequestError('WeChat login is not configured');
+        }
+
+        const referer = c.req.header('referer');
+        if (!referer) {
+            throw new BadRequestError('Referer header is required');
+        }
+
+        const refererUrl = new URL(referer);
+        const callbackUrl = new URL('/callback', refererUrl.origin);
+        setCookie(c, 'redirect_to', callbackUrl.toString(), { path: '/' });
+
+        const loginUrl = new URL('https://login.mapay.cn/connect.php');
+        loginUrl.searchParams.set('act', 'login');
+        loginUrl.searchParams.set('appid', appid);
+        loginUrl.searchParams.set('appkey', appkey);
+        loginUrl.searchParams.set('type', 'wx');
+        loginUrl.searchParams.set('redirect_uri', new URL('/api/user/wechat/callback', refererUrl.origin).toString());
+
+        return c.redirect(loginUrl.toString(), 302);
+    });
+
+    // GET /user/wechat/callback - 聚合登录 WeChat OAuth callback
+    app.get("/wechat/callback", async (c: AppContext) => {
+        const jwt = c.get('jwt');
+        const db = c.get('db');
+        const appid = c.env.RIN_WECHAT_APPID;
+        const appkey = c.env.RIN_WECHAT_APPKEY;
+
+        if (!appid || !appkey) {
+            throw new BadRequestError('WeChat login is not configured');
+        }
+
+        const query = c.req.query();
+        const bindMode = query.bind === 'true';
+        const currentUid = c.get('uid');
+
+        if (!query.code) {
+            throw new BadRequestError('Missing code parameter');
+        }
+
+        // Exchange code for user info
+        const callbackUrl = new URL('https://login.mapay.cn/connect.php');
+        callbackUrl.searchParams.set('act', 'callback');
+        callbackUrl.searchParams.set('appid', appid);
+        callbackUrl.searchParams.set('appkey', appkey);
+        callbackUrl.searchParams.set('type', 'wx');
+        callbackUrl.searchParams.set('code', query.code);
+
+        const infoResp = await profileAsync(c, 'user_wechat_fetch', () => fetch(callbackUrl.toString()));
+        const infoData = await profileAsync(c, 'user_wechat_parse', () => infoResp.json()) as any;
+
+        if (!infoResp.ok || infoData.code !== 0) {
+            throw new BadRequestError(infoData.msg || 'Failed to get WeChat user info');
+        }
+
+        const profile: {
+            openid: string;
+            username: string;
+            avatar: string;
+            permission: number | null;
+        } = {
+            openid: `wechat:${String(infoData.social_uid)}`,
+            username: infoData.nickname || `wechat_${String(infoData.social_uid)}`,
+            avatar: infoData.faceimg || '',
+            permission: 0
+        };
+
+        let authToken: string | undefined;
+
+        // Bind mode: link this WeChat account to current logged-in user
+        if (bindMode && currentUid) {
+            const existingLink = await profileAsync(c, 'wechat_bind_link_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.provider, 'wechat'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (existingLink && existingLink.userId !== currentUid) {
+                throw new ConflictError('This WeChat account is already bound to another user');
+            }
+
+            const currentLink = await profileAsync(c, 'wechat_bind_current_check', () => db.query.linkedAccounts.findFirst({
+                where: and(
+                    eq(linkedAccounts.userId, currentUid),
+                    eq(linkedAccounts.provider, 'wechat'),
+                    eq(linkedAccounts.providerId, profile.openid)
+                ),
+            }));
+
+            if (!currentLink) {
+                await profileAsync(c, 'wechat_bind_insert', () => db.insert(linkedAccounts).values({
+                    userId: currentUid,
+                    provider: 'wechat',
+                    providerId: profile.openid,
+                    linkedAt: Date.now(),
+                }));
+            }
+
+            const redirectTo = getCookie(c, 'redirect_to');
+            const redirect_url = new URL(redirectTo || '/');
+            return c.redirect(redirect_url.toString(), 302);
+        }
+
+        // Check linked_accounts first
+        const linkedAccount = await profileAsync(c, 'wechat_linked_lookup', () => db.query.linkedAccounts.findFirst({
+            where: and(
+                eq(linkedAccounts.provider, 'wechat'),
+                eq(linkedAccounts.providerId, profile.openid)
+            ),
+        }));
+
+        if (linkedAccount) {
+            const linkedUser = await profileAsync(c, 'wechat_linked_user_lookup', () => db.query.users.findFirst({
+                where: eq(users.id, linkedAccount.userId),
+            }));
+
+            if (linkedUser) {
+                profile.permission = linkedUser.permission;
+                authToken = await profileAsync(c, 'wechat_linked_token', () => jwt.sign({ id: linkedUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+            }
+        } else {
+            const existingUser = await profileAsync(c, 'user_wechat_existing_lookup', () => db.query.users.findFirst({
+                where: eq(users.openid, profile.openid)
+            }));
+
+            if (existingUser) {
+                profile.permission = existingUser.permission;
+                await profileAsync(c, 'user_wechat_existing_update', () => db.update(users).set({ avatar: profile.avatar }).where(eq(users.id, existingUser.id)));
+                authToken = await profileAsync(c, 'user_wechat_existing_token', () => jwt.sign({ id: existingUser.id }));
+                setJWTCookie(c, authToken);
+                setCookie(c, 'auth_token', authToken, {
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    path: '/',
+                    sameSite: 'Lax',
+                });
+
+                const existingLink = await profileAsync(c, 'wechat_existing_link_check', () => db.query.linkedAccounts.findFirst({
+                    where: and(
+                        eq(linkedAccounts.userId, existingUser.id),
+                        eq(linkedAccounts.provider, 'wechat'),
+                        eq(linkedAccounts.providerId, profile.openid)
+                    ),
+                }));
+                if (!existingLink) {
+                    await profileAsync(c, 'wechat_existing_link_insert', () => db.insert(linkedAccounts).values({
+                        userId: existingUser.id,
+                        provider: 'wechat',
+                        providerId: profile.openid,
+                        linkedAt: Date.now(),
+                    }));
+                }
+            } else {
+                const bindCode = await profileAsync(c, 'user_wechat_bind_code', () => storeBindCode(db, 'wechat', profile.openid));
+                const regToken = await profileAsync(c, 'user_wechat_reg_token', () => jwt.sign({
+                    type: 'register',
+                    openid: profile.openid,
+                    avatar: profile.avatar,
+                    platform: 'wechat',
+                    suggestedUsername: profile.username,
+                    exp: Math.floor(Date.now() / 1000) + 600,
+                }));
+                const redirectTo = getCookie(c, 'redirect_to');
+                const regUrl = new URL(redirectTo || '/');
+                regUrl.pathname = '/register';
+                regUrl.searchParams.set('code', bindCode);
+                regUrl.searchParams.set('token', regToken);
+                return c.redirect(regUrl.toString(), 302);
+            }
+        }
+
+        const redirectTo = getCookie(c, 'redirect_to');
+        const redirect_url = new URL(redirectTo || '/');
+        if (authToken) {
+            redirect_url.searchParams.set('token', authToken);
+        }
         return c.redirect(redirect_url.toString(), 302);
     });
 

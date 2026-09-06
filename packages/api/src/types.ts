@@ -134,6 +134,7 @@ export interface AuthStatus {
   github: boolean;
   gitee: boolean;
   qq: boolean;
+  wechat: boolean;
   email: boolean;
   password: boolean;
 }

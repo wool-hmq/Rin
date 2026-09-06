@@ -161,6 +161,7 @@ export function ProfilePage() {
         { key: 'github', label: 'GitHub', icon: 'ri-github-fill' },
         { key: 'gitee', label: 'Gitee', icon: '' },
         { key: 'qq', label: 'QQ', icon: 'ri-qq-fill' },
+        { key: 'wechat', label: 'WeChat', icon: 'ri-wechat-fill' },
         { key: 'email', label: 'Email', icon: 'ri-mail-fill' },
     ];
 
