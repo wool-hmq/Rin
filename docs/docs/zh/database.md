@@ -297,3 +297,18 @@ moments (N) >── (1) users
 3. **时间戳格式**：所有时间戳使用 Unix 时间戳（整数，单位秒）
 4. **外键约束**：SQLite 默认不强制外键约束，应用层负责维护数据一致性
 5. **游客评论**：`comments.user_id` 可为空，删除对应用户时级联删除该用户的所有评论
+
+---
+
+## sqlite_sequence 表
+
+`sqlite_sequence` 是 SQLite 内部系统表，不需要手动创建或修改。
+
+**作用**：
+- 记录使用 `AUTOINCREMENT` 的表的当前最大 ROWID
+- 确保 `INTEGER PRIMARY KEY AUTOINCREMENT` 列的值单调递增，避免 ROWID 复用
+- 每次插入新行时，SQLite 会自动从该表读取并更新序列值
+
+**注意**：
+- 这是 SQLite 自动维护的内部表，不应直接修改
+- 如果某张表的序列值出现异常，可使用 `UPDATE sqlite_sequence SET seq = N WHERE name = 'table_name'` 修复，但通常不需要

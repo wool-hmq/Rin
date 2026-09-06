@@ -297,3 +297,18 @@ moments (N) >── (1) users
 3. **Timestamp format**: All timestamps use Unix timestamp (integer, seconds)
 4. **Foreign key constraints**: SQLite does not enforce foreign key constraints by default, application layer is responsible for data consistency
 5. **Guest comments**: `comments.user_id` can be NULL, when user is deleted, all their comments are CASCADE deleted
+
+---
+
+## sqlite_sequence Table
+
+`sqlite_sequence` is an internal SQLite system table. It is created and maintained automatically by SQLite.
+
+**Purpose**:
+- Records the current maximum ROWID for tables that use `AUTOINCREMENT`
+- Ensures `INTEGER PRIMARY KEY AUTOINCREMENT` columns increment monotonically, preventing ROWID reuse
+- SQLite automatically reads and updates the sequence value from this table each time a new row is inserted
+
+**Notes**:
+- This is an internal table maintained by SQLite and should not be modified directly
+- If a table's sequence value becomes corrupted, you can fix it with `UPDATE sqlite_sequence SET seq = N WHERE name = 'table_name'`, but this is rarely needed
