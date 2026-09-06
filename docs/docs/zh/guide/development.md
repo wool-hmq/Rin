@@ -11,7 +11,7 @@ git clone https://github.com/openRin/Rin.git
 cd Rin
 ```
 
-或(别和用户抢权限，用户在改文档)
+或
 
 ```bash
 git clone https://github.com/wool-hmq/Rin.git
