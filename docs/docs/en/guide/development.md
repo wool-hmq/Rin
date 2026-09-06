@@ -12,6 +12,13 @@ git clone https://github.com/openRin/Rin.git
 cd Rin
 ```
 
+Or
+
+```bash
+git clone https://github.com/openRin/Rin.git
+cd Rin
+```
+
 ### 2. Install Dependencies
 
 ```bash
