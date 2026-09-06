@@ -662,7 +662,7 @@ export function UserService(): Hono {
         return c.redirect(redirect_url.toString(), 302);
     });
 
-    // GET /user/wechat - Redirect to 聚合登录 (Mapay) WeChat OAuth
+    // GET /user/wechat - Get WeChat OAuth login URL from 聚合登录 (Mapay)
     app.get("/wechat", async (c: AppContext) => {
         const appid = c.env.RIN_WECHAT_APPID;
         const appkey = c.env.RIN_WECHAT_APPKEY;
@@ -686,7 +686,14 @@ export function UserService(): Hono {
         loginUrl.searchParams.set('type', 'wx');
         loginUrl.searchParams.set('redirect_uri', new URL('/api/user/wechat/callback', refererUrl.origin).toString());
 
-        return c.redirect(loginUrl.toString(), 302);
+        const resp = await profileAsync(c, 'user_wechat_login_url', () => fetch(loginUrl.toString()));
+        const data = await profileAsync(c, 'user_wechat_login_parse', () => resp.json()) as any;
+
+        if (!resp.ok || data.code !== 0) {
+            throw new BadRequestError(data.msg || 'Failed to get WeChat login URL');
+        }
+
+        return c.json({ url: data.url });
     });
 
     // GET /user/wechat/callback - 聚合登录 WeChat OAuth callback

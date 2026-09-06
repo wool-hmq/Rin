@@ -11,7 +11,6 @@ import { getLoginRedirectPath } from "../utils/auth-redirect";
 
 const gitee_oauth_url = oauth_url.replace('/github', '/gitee');
 const qq_oauth_url = oauth_url.replace('/github', '/xinyueqq');
-const wechat_oauth_url = oauth_url.replace('/github', '/wechat');
 
 export function LoginPage() {
     const [username, setUsername] = useState('')
@@ -125,8 +124,11 @@ export function LoginPage() {
                                 }} hover={true} />
                             )}
                             {authStatus.wechat && (
-                                <Icon label={t('wechat_login')} name="ri-wechat-line" onClick={() => {
-                                    window.location.href = `${wechat_oauth_url}`
+                                <Icon label={t('wechat_login')} name="ri-wechat-line" onClick={async () => {
+                                    const { data } = await client.user.getWechatLoginUrl();
+                                    if (data?.url) {
+                                        window.location.href = data.url;
+                                    }
                                 }} hover={true} />
                             )}
                             {authStatus.email && (

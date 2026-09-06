@@ -403,6 +403,11 @@ class UserAPI {
     return this.http.get<{ available: boolean }>(`/api/user/check-username?username=${encodeURIComponent(username)}`);
   }
 
+  // GET /api/user/wechat
+  async getWechatLoginUrl(): Promise<ApiResponse<{ url: string }>> {
+    return this.http.get<{ url: string }>('/api/user/wechat');
+  }
+
   // POST /api/user/register
   async register(body: { token: string; username: string }): Promise<ApiResponse<{
     token: string;
