@@ -45,7 +45,7 @@ export function LinkedAccountsService(): Hono {
             throw new ForbiddenError('Authentication required');
         }
 
-        const validProviders = ['github', 'gitee', 'qq', 'email'];
+        const validProviders = ['github', 'gitee', 'qq', 'email', 'wechat'];
         if (!validProviders.includes(provider)) {
             throw new BadRequestError('Invalid provider');
         }
@@ -164,7 +164,7 @@ export function LinkedAccountsService(): Hono {
             throw new BadRequestError('Invalid bind code data');
         }
 
-        const validProviders = ['github', 'gitee', 'qq'];
+        const validProviders = ['github', 'gitee', 'qq', 'wechat'];
         if (!validProviders.includes(provider)) {
             throw new BadRequestError('Invalid provider in bind code');
         }
@@ -215,7 +215,7 @@ export function LinkedAccountsService(): Hono {
             throw new ForbiddenError('Authentication required');
         }
 
-        const validProviders = ['github', 'gitee', 'qq', 'email'];
+        const validProviders = ['github', 'gitee', 'qq', 'email', 'wechat'];
         if (!validProviders.includes(provider)) {
             throw new BadRequestError('Invalid provider');
         }
