@@ -15,7 +15,7 @@ cd Rin
 Or
 
 ```bash
-git clone https://github.com/openRin/Rin.git
+git clone https://github.com/wool-hmq/Rin.git
 cd Rin
 ```
 
