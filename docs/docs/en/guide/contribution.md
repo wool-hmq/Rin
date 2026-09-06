@@ -46,7 +46,7 @@ If you want to skip the hook (not recommended), run `git commit` with the `--no-
 
 :::tip
 Typically, you only need to fill in `AVATAR`, `NAME` and `DESCRIPTION`.
-For GitHub OAuth, you need to create a separate OAuth App with a callback address of `http://localhost:11498/api/user/github/callback`
+For OAuth, you need to create an OAuth App with callback address `http://localhost:11498/api/user/github/callback` (GitHub), `http://localhost:11498/api/user/gitee/callback` (Gitee), or contact Xinyue for QQ login token.
 :::
 
 5. Run the setup script to generate configuration files

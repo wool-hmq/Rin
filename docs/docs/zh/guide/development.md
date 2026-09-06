@@ -76,6 +76,11 @@ bun run dev
 |--------|------|
 | `RIN_GITHUB_CLIENT_ID` | GitHub OAuth Client ID |
 | `RIN_GITHUB_CLIENT_SECRET` | GitHub OAuth Client Secret |
+| `RIN_GITEE_CLIENT_ID` | Gitee OAuth Client ID |
+| `RIN_GITEE_CLIENT_SECRET` | Gitee OAuth Client Secret |
+| `RIN_QQ_TOKEN` | 心月互联 QQ 登录 Token |
+| `RIN_WECHAT_APPID` | 聚合登录 WeChat App ID |
+| `RIN_WECHAT_APPKEY` | 聚合登录 WeChat App Secret |
 | `JWT_SECRET` | JWT 签名密钥 |
 | `S3_ACCESS_KEY_ID` | S3 Access Key |
 | `S3_SECRET_ACCESS_KEY` | S3 Secret Key |

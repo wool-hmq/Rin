@@ -71,6 +71,8 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 | `RIN_GITEE_CLIENT_ID` | 条件 | Gitee OAuth 客户端 ID | Gitee OAuth App 设置 |
 | `RIN_GITEE_CLIENT_SECRET` | 条件 | Gitee OAuth 客户端密钥 | Gitee OAuth App 设置 |
 | `RIN_QQ_TOKEN` | 条件 | 心月互联 QQ 登录 Token | 心月互联 https://qq.wch666.com/ 申请 |
+| `RIN_WECHAT_APPID` | 条件 | 聚合登录 WeChat 应用 ID | 聚合登录 https://login.mapay.cn/ 申请 |
+| `RIN_WECHAT_APPKEY` | 条件 | 聚合登录 WeChat 应用密钥 | 聚合登录 https://login.mapay.cn/ 申请 |
 | `EMAIL_RESEND_URL` | 条件 | 邮件转发服务 URL（Vercel 部署的 Rin-Email 项目地址） | 自行部署 Rin-Email 到 Vercel 获取 |
 | `EMAIL_RESEND_PASS` | 条件 | 邮件转发服务认证密码（与 Vercel 项目中 EMAIL_PASS 相同） | 自行设定 |
 | `JWT_SECRET` | **是** | JWT 签名密钥（任意随机字符串） | 自行生成 |
@@ -80,6 +82,7 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 - GitHub OAuth（`RIN_GITHUB_CLIENT_ID` + `RIN_GITHUB_CLIENT_SECRET`）
 - Gitee OAuth（`RIN_GITEE_CLIENT_ID` + `RIN_GITEE_CLIENT_SECRET`）
 - QQ 登录（`RIN_QQ_TOKEN`）
+- 微信登录（`RIN_WECHAT_APPID` + `RIN_WECHAT_APPKEY`）
 - 邮箱验证码登录（`EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`）
 - 账号密码登录（`ADMIN_USERNAME` + `ADMIN_PASSWORD`）
 
@@ -213,14 +216,18 @@ RIN_GITEE_CLIENT_SECRET=xxx
 # 方式三：心月互联 QQ 登录
 RIN_QQ_TOKEN=xxx
 
-# 方式四：邮箱验证码登录
+# 方式四：聚合登录 WeChat
+RIN_WECHAT_APPID=xxx
+RIN_WECHAT_APPKEY=xxx
+
+# 方式五：邮箱验证码登录
 # 部署 Rin-Email 项目到 Vercel 后，配置以下环境变量：
 # - Vercel 项目环境变量：SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_MAIL, EMAIL_PASS
 # - Rin 博客环境变量：
 EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
 EMAIL_RESEND_PASS=your-email-pass
 
-# 方式五：账号密码登录
+# 方式六：账号密码登录
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=secure_password
 

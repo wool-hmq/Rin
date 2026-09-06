@@ -71,6 +71,8 @@ These sensitive values must be configured as **Cloudflare Workers Secrets**, ent
 | `RIN_GITEE_CLIENT_ID` | Conditional | Gitee OAuth client ID | Gitee OAuth App settings |
 | `RIN_GITEE_CLIENT_SECRET` | Conditional | Gitee OAuth client secret | Gitee OAuth App settings |
 | `RIN_QQ_TOKEN` | Conditional | Xinyue QQ login token | Apply at https://qq.wch666.com/ |
+| `RIN_WECHAT_APPID` | Conditional | 聚合登录 WeChat App ID | Apply at https://login.mapay.cn/ |
+| `RIN_WECHAT_APPKEY` | Conditional | 聚合登录 WeChat App Secret | Apply at https://login.mapay.cn/ |
 | `EMAIL_RESEND_URL` | Conditional | Email relay service URL (Vercel-deployed Rin-Email project) | Deploy Rin-Email to Vercel to get the URL |
 | `EMAIL_RESEND_PASS` | Conditional | Email relay service auth password (same as EMAIL_PASS in Vercel project) | Set yourself |
 | `JWT_SECRET` | **Yes** | JWT signing key (any random string) | Generate yourself |
@@ -89,6 +91,7 @@ You must configure at least **one** of the following authentication methods:
 - GitHub OAuth (`RIN_GITHUB_CLIENT_ID` + `RIN_GITHUB_CLIENT_SECRET`)
 - Gitee OAuth (`RIN_GITEE_CLIENT_ID` + `RIN_GITEE_CLIENT_SECRET`)
 - QQ Login (`RIN_QQ_TOKEN`)
+- WeChat Login (`RIN_WECHAT_APPID` + `RIN_WECHAT_APPKEY`)
 - Email Verification Code Login (`EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`)
 - Username/Password (`ADMIN_USERNAME` + `ADMIN_PASSWORD`)
 
@@ -217,14 +220,18 @@ RIN_GITEE_CLIENT_SECRET=xxx
 # Option 3: Xinyue QQ Login
 RIN_QQ_TOKEN=xxx
 
-# Option 4: Email Verification Code Login
+# Option 4: 聚合登录 WeChat
+RIN_WECHAT_APPID=xxx
+RIN_WECHAT_APPKEY=xxx
+
+# Option 5: Email Verification Code Login
 # After deploying Rin-Email to Vercel, configure these variables:
 # - Vercel project env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_MAIL, EMAIL_PASS
 # - Rin blog env vars:
 EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
 EMAIL_RESEND_PASS=your-email-pass
 
-# Option 5: Username/Password Login
+# Option 6: Username/Password Login
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=secure_password
 

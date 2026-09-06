@@ -1,6 +1,6 @@
 # 数据库结构文档
 
-Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 11 张表。
+Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 12 张表。
 
 ## 表概览
 
@@ -17,6 +17,7 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 11 张表。
 | `feed_hashtags` | 文章-标签关联表 |
 | `info` | 系统配置表 |
 | `cache` | 缓存表 |
+| `linked_accounts` | 第三方登录绑定表 |
 
 ---
 
@@ -250,12 +251,34 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 11 张表。
 
 ---
 
+## linked_accounts（第三方登录绑定表）
+
+存储用户绑定的第三方登录账号（GitHub、Gitee、QQ、WeChat 等）。
+
+| 字段名 | 类型 | 约束 | 说明 |
+|--------|------|------|------|
+| `id` | integer | PRIMARY KEY, NOT NULL | 自增主键 |
+| `user_id` | integer | NOT NULL | 用户 ID，关联 `users.id` |
+| `provider` | text | NOT NULL | 登录提供商，如 `github`、`gitee`、`qq`、`wechat` |
+| `provider_id` | text | NOT NULL | 提供商侧的用户标识（OpenID 等） |
+| `linked_at` | integer | DEFAULT (unixepoch()) | 绑定时间戳 |
+
+**关系：**
+- `user_id` → `users.id` ON DELETE CASCADE
+
+**注意：**
+- 同一用户可绑定多个第三方账号
+- 同一第三方账号不可绑定到多个用户
+
+---
+
 ## 表关系图
 
 ```text
 users (1) ──< (N) feeds
-                ├──< (N) comments
-                └──< (N) friends
+                 ├──< (N) comments
+                 ├──< (N) friends
+                 └──< (N) linked_accounts
 
 feeds (1) ──< (N) comments
 feeds (1) ──< (N) visits

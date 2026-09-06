@@ -1,6 +1,6 @@
 # Database Schema Documentation
 
-Rin uses SQLite database (via Drizzle ORM) with 11 tables.
+Rin uses SQLite database (via Drizzle ORM) with 12 tables.
 
 ## Table Overview
 
@@ -17,6 +17,7 @@ Rin uses SQLite database (via Drizzle ORM) with 11 tables.
 | `feed_hashtags` | Post-tag associations |
 | `info` | System configuration |
 | `cache` | Application cache |
+| `linked_accounts` | Third-party login bindings |
 
 ---
 
@@ -250,12 +251,34 @@ Stores application cache data.
 
 ---
 
+## linked_accounts (Third-Party Login Bindings Table)
+
+Stores third-party login accounts bound to users (GitHub, Gitee, QQ, WeChat, etc.).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | integer | PRIMARY KEY, NOT NULL | Auto-incrementing ID |
+| `user_id` | integer | NOT NULL | User ID, references `users.id` |
+| `provider` | text | NOT NULL | Login provider, e.g. `github`, `gitee`, `qq`, `wechat` |
+| `provider_id` | text | NOT NULL | Provider-side user identifier (OpenID, etc.) |
+| `linked_at` | integer | DEFAULT (unixepoch()) | Binding timestamp |
+
+**Relations:**
+- `user_id` → `users.id` ON DELETE CASCADE
+
+**Notes:**
+- One user can bind multiple third-party accounts
+- One third-party account cannot be bound to multiple users
+
+---
+
 ## Table Relationship Diagram
 
 ```text
 users (1) ──< (N) feeds
-                ├──< (N) comments
-                └──< (N) friends
+                 ├──< (N) comments
+                 ├──< (N) friends
+                 └──< (N) linked_accounts
 
 feeds (1) ──< (N) comments
 feeds (1) ──< (N) visits
