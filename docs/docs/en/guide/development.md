@@ -8,6 +8,7 @@ This document explains how to develop and debug the Rin project locally.
 
 ```bash
 git clone https://github.com/openRin/Rin.git
+# or use the fork: git clone https://github.com/wool-hmq/Rin.git
 cd Rin
 ```
 
@@ -292,4 +293,4 @@ Please refer to the [Deployment Guide](./deploy.mdx) for production deployment p
 
 - 📖 Full documentation: https://docs.openrin.org
 - 💬 Discord: https://discord.gg/JWbSTHvAPN
-- 🐛 Submit Issue: https://github.com/openRin/Rin/issues
+- 🐛 Submit Issue: https://github.com/openRin/Rin/issues | https://github.com/wool-hmq/Rin/issues

@@ -11,7 +11,7 @@ hero:
       link: /zh/guide/
     - theme: alt
       text: GitHub
-      link: https://github.com/openRin/Rin
+      link: https://github.com/wool-hmq/Rin
 features:
   - title: 构建速度极快
     details: 30秒构建与部署

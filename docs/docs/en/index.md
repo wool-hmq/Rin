@@ -11,7 +11,7 @@ hero:
       link: /guide/
     - theme: alt
       text: Github
-      link: https://github.com/openRin/Rin
+      link: https://github.com/wool-hmq/Rin
 features:
   - title: Blazing fast build speed
     details: 30s build & deploy
