@@ -125,7 +125,7 @@ export function ProfilePage() {
 
     const handleGetBindCode = async (provider: string) => {
         if (provider === 'wechat') {
-            const { data } = await client.user.getWechatLoginUrl();
+            const { data } = await client.user.getWechatLoginUrl(true);
             if (data?.url) {
                 window.open(data.url, '_blank');
             }

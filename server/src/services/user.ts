@@ -679,12 +679,19 @@ export function UserService(): Hono {
         const callbackUrl = new URL('/callback', refererUrl.origin);
         setCookie(c, 'redirect_to', callbackUrl.toString(), { path: '/' });
 
+        const bindMode = c.req.query('bind') === 'true';
+
+        const callbackRedirect = new URL('/api/user/wechat/callback', refererUrl.origin);
+        if (bindMode) {
+            callbackRedirect.searchParams.set('bind', 'true');
+        }
+
         const loginUrl = new URL('https://login.mapay.cn/connect.php');
         loginUrl.searchParams.set('act', 'login');
         loginUrl.searchParams.set('appid', appid);
         loginUrl.searchParams.set('appkey', appkey);
         loginUrl.searchParams.set('type', 'wx');
-        loginUrl.searchParams.set('redirect_uri', new URL('/api/user/wechat/callback', refererUrl.origin).toString());
+        loginUrl.searchParams.set('redirect_uri', callbackRedirect.toString());
 
         const resp = await profileAsync(c, 'user_wechat_login_url', () => fetch(loginUrl.toString()));
         const data = await profileAsync(c, 'user_wechat_login_parse', () => resp.json()) as any;

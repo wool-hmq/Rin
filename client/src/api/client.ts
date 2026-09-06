@@ -404,8 +404,9 @@ class UserAPI {
   }
 
   // GET /api/user/wechat
-  async getWechatLoginUrl(): Promise<ApiResponse<{ url: string }>> {
-    return this.http.get<{ url: string }>('/api/user/wechat');
+  async getWechatLoginUrl(bind: boolean = false): Promise<ApiResponse<{ url: string }>> {
+    const params = bind ? '?bind=true' : '';
+    return this.http.get<{ url: string }>(`/api/user/wechat${params}`);
   }
 
   // POST /api/user/register
