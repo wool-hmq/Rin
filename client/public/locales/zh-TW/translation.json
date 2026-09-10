@@ -902,7 +902,7 @@
     "window_title_title": "視窗標題",
     "window_title_desc": "Supportly 聊天視窗顯示的標題",
     "widget_url_title": "Widget 腳本 URL",
-    "widget_url_desc": "Supportly widget 腳本網址，如果你自訂了 Supportly 部署域名，請修改此項"
+    "widget_url_desc": "Supportly widget 腳本網址（必填）。如果你自訂了 Supportly 部署域名，請修改此項"
   }
 }
 }

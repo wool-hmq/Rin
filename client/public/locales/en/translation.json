@@ -900,6 +900,6 @@
     "window_title_title": "Window Title",
     "window_title_desc": "Title displayed in the Supportly chat window",
     "widget_url_title": "Widget Script URL",
-    "widget_url_desc": "Supportly widget script URL, change if you deploy Supportly on a custom domain"
+    "widget_url_desc": "Supportly widget script URL (required). Change this if you deploy Supportly on a custom domain"
   }
 }

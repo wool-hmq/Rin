@@ -900,6 +900,6 @@
     "window_title_title": "ウィンドウタイトル",
     "window_title_desc": "Supportly チャットウィンドウに表示されるタイトル",
     "widget_url_title": "Widget スクリプト URL",
-    "widget_url_desc": "Supportly widget スクリプト URL。カスタムドメインにデプロイする場合は変更してください"
+    "widget_url_desc": "Supportly widget スクリプト URL（必須）。カスタムドメインにデプロイする場合は変更してください"
   }
 }

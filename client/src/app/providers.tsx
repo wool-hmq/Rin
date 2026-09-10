@@ -17,14 +17,14 @@ export function AppProviders({
   const supportlyEnabled = config.getBoolean("supportly.enabled");
   const supportlyChannelId = String(config.get("supportly.channelId") || "");
   const supportlyTitle = String(config.get("supportly.title") || "在线客服");
-  const supportlyWidgetUrl = String(config.get("supportly.widgetUrl") || "https://supportly-api.jiaoblog.dpdns.org/widget/supportly.js");
+  const supportlyWidgetUrl = String(config.get("supportly.widgetUrl") || "");
 
   return (
     <ClientConfigContext.Provider value={config}>
       <ProfileContext.Provider value={profile}>
         <Helmet>
           <link rel="icon" href="/favicon.ico" />
-          {supportlyEnabled && supportlyChannelId && (
+          {supportlyEnabled && supportlyChannelId && supportlyWidgetUrl && (
             <script
               src={supportlyWidgetUrl}
               data-channel-id={supportlyChannelId}

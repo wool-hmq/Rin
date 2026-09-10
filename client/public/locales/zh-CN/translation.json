@@ -900,6 +900,6 @@
     "window_title_title": "窗口标题",
     "window_title_desc": "Supportly 聊天窗口显示的标题",
     "widget_url_title": "Widget 脚本 URL",
-    "widget_url_desc": "Supportly widget 脚本地址，如果你自定义了 Supportly 部署域名，请修改此项"
+    "widget_url_desc": "Supportly widget 脚本地址（必填）。如果你自定义了 Supportly 部署域名，请修改此项"
   }
 }
