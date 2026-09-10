@@ -900,6 +900,9 @@
     "channel_id_title": "Channel ID",
     "channel_id_desc": "從 Supportly 後台獲取的渠道 ID，如 ch_xxx",
     "window_title_title": "視窗標題",
-    "window_title_desc": "Supportly 聊天視窗顯示的標題"
+    "window_title_desc": "Supportly 聊天視窗顯示的標題",
+    "widget_url_title": "Widget 腳本 URL",
+    "widget_url_desc": "Supportly widget 腳本網址，如果你自訂了 Supportly 部署域名，請修改此項"
   }
+}
 }

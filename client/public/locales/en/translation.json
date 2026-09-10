@@ -898,6 +898,8 @@
     "channel_id_title": "Channel ID",
     "channel_id_desc": "Channel ID obtained from Supportly admin panel, e.g. ch_xxx",
     "window_title_title": "Window Title",
-    "window_title_desc": "Title displayed in the Supportly chat window"
+    "window_title_desc": "Title displayed in the Supportly chat window",
+    "widget_url_title": "Widget Script URL",
+    "widget_url_desc": "Supportly widget script URL, change if you deploy Supportly on a custom domain"
   }
 }

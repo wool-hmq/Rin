@@ -898,6 +898,8 @@
     "channel_id_title": "Channel ID",
     "channel_id_desc": "Supportly 管理画面から取得したチャネル ID（例：ch_xxx）",
     "window_title_title": "ウィンドウタイトル",
-    "window_title_desc": "Supportly チャットウィンドウに表示されるタイトル"
+    "window_title_desc": "Supportly チャットウィンドウに表示されるタイトル",
+    "widget_url_title": "Widget スクリプト URL",
+    "widget_url_desc": "Supportly widget スクリプト URL。カスタムドメインにデプロイする場合は変更してください"
   }
 }

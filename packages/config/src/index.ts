@@ -25,6 +25,7 @@ export const CLIENT_CONFIG_DEFAULTS = new Map(
     "supportly.enabled": false,
     "supportly.channelId": "",
     "supportly.title": "在线客服",
+    "supportly.widgetUrl": "https://supportly-api.jiaoblog.dpdns.org/widget/supportly.js",
   }),
 );
 

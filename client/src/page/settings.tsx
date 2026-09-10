@@ -881,6 +881,15 @@ export function Settings() {
                   setConfigValue("client", "supportly.title", value);
                 }}
               />
+              <ItemInput
+                title={t("supportly.widget_url_title")}
+                description={t("supportly.widget_url_desc")}
+                configKeyTitle="Supportly Widget URL"
+                value={String(clientConfig.get("supportly.widgetUrl") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "supportly.widgetUrl", value);
+                }}
+              />
             </>
           )}
 

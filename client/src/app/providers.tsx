@@ -17,6 +17,7 @@ export function AppProviders({
   const supportlyEnabled = config.getBoolean("supportly.enabled");
   const supportlyChannelId = String(config.get("supportly.channelId") || "");
   const supportlyTitle = String(config.get("supportly.title") || "在线客服");
+  const supportlyWidgetUrl = String(config.get("supportly.widgetUrl") || "https://supportly-api.jiaoblog.dpdns.org/widget/supportly.js");
 
   return (
     <ClientConfigContext.Provider value={config}>
@@ -25,7 +26,7 @@ export function AppProviders({
           <link rel="icon" href="/favicon.ico" />
           {supportlyEnabled && supportlyChannelId && (
             <script
-              src="https://supportly-api.jiaoblog.dpdns.org/widget/supportly.js"
+              src={supportlyWidgetUrl}
               data-channel-id={supportlyChannelId}
               data-title={supportlyTitle}
               async
