@@ -22,6 +22,9 @@ export const CLIENT_CONFIG_DEFAULTS = new Map(
     "announcement.content": "",
     "announcement.speed": 22,
     "ai_search.enabled": false,
+    "supportly.enabled": false,
+    "supportly.channelId": "",
+    "supportly.title": "在线客服",
   }),
 );
 

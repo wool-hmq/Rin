@@ -890,5 +890,14 @@
   "sponsor": {
     "title": "Sponsor",
     "btc": "Bitcoin"
+  },
+  "supportly": {
+    "title": "Supportly Customer Service",
+    "enable_title": "Enable Supportly online customer service",
+    "enable_desc": "Display Supportly customer service chat window in the bottom right corner of the blog",
+    "channel_id_title": "Channel ID",
+    "channel_id_desc": "Channel ID obtained from Supportly admin panel, e.g. ch_xxx",
+    "window_title_title": "Window Title",
+    "window_title_desc": "Title displayed in the Supportly chat window"
   }
 }

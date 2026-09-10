@@ -890,5 +890,14 @@
   "sponsor": {
     "title": "赞助支持",
     "btc": "比特币"
+  },
+  "supportly": {
+    "title": "Supportly 客服",
+    "enable_title": "启用 Supportly 在线客服",
+    "enable_desc": "在博客右下角显示 Supportly 客服聊天窗口",
+    "channel_id_title": "Channel ID",
+    "channel_id_desc": "从 Supportly 后台获取的渠道 ID，如 ch_xxx",
+    "window_title_title": "窗口标题",
+    "window_title_desc": "Supportly 聊天窗口显示的标题"
   }
 }

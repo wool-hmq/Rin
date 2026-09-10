@@ -852,6 +852,38 @@ export function Settings() {
             </>
           )}
 
+          <ItemTitle title={t("supportly.title")} />
+          <ItemSwitch
+            title={t("supportly.enable_title")}
+            description={t("supportly.enable_desc")}
+            checked={clientConfig.getBoolean("supportly.enabled")}
+            onChange={(checked) => {
+              setConfigValue("client", "supportly.enabled", checked);
+            }}
+          />
+          {clientConfig.getBoolean("supportly.enabled") && (
+            <>
+              <ItemInput
+                title={t("supportly.channel_id_title")}
+                description={t("supportly.channel_id_desc")}
+                configKeyTitle="Supportly Channel ID"
+                value={String(clientConfig.get("supportly.channelId") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "supportly.channelId", value);
+                }}
+              />
+              <ItemInput
+                title={t("supportly.window_title_title")}
+                description={t("supportly.window_title_desc")}
+                configKeyTitle="Supportly Title"
+                value={String(clientConfig.get("supportly.title") ?? "")}
+                onChange={(value) => {
+                  setConfigValue("client", "supportly.title", value);
+                }}
+              />
+            </>
+          )}
+
           <ItemTitle title={t("settings.webhook.title")} />
           <ItemInput
             title={t("settings.webhook.url.title")}
