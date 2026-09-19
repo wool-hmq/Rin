@@ -19,6 +19,8 @@ Rin is a modern, serverless blog platform built entirely on Cloudflare's develop
 ## Live Demo
 
 https://xeu.life
+**or**
+https://jiaoblog.dpdns.org
 
 ## Features
 
