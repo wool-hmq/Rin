@@ -13,8 +13,12 @@ const AI_PROVIDER_URLS: Record<string, string> = {
     deepseek: "https://api.deepseek.com/v1",
     cerebras: "https://api.cerebras.ai/v1",
     "Agnes-ai": "https://apihub.agnes-ai.com/v1",
-    "Opencode": "https://opencode.ai/zen/v1",
+    "Kilo-code": "https://api.kilo.ai/api/gateway",
+    "baizhi-cloud": "https://ai-api-gateway.app.baizhi.cloud/api/openai",
 };
+
+// Providers that accept requests without an API key (e.g. free gateways)
+const API_KEY_OPTIONAL_PROVIDERS = new Set<string>(["Kilo-code"]);
 
 // Cloudflare Worker AI models mapping (short name -> full model ID)
 export const WORKER_AI_MODELS: Record<string, string> = {
@@ -123,7 +127,7 @@ async function executeExternalAI(
 ): Promise<string | null> {
     const { provider, model, api_key, api_url } = config;
 
-    if (!api_key) {
+    if (!api_key && !API_KEY_OPTIONAL_PROVIDERS.has(provider)) {
         throw new Error("API key not configured");
     }
 
@@ -133,7 +137,7 @@ async function executeExternalAI(
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${api_key}`,
+            ...(api_key ? { "Authorization": `Bearer ${api_key}` } : {}),
         },
         body: JSON.stringify({
             model: model,
@@ -419,5 +423,5 @@ export function getAvailableModels(provider: string): string[] {
  * Check if provider requires API key
  */
 export function requiresApiKey(provider: string): boolean {
-    return provider !== 'worker-ai';
+    return provider !== 'worker-ai' && !API_KEY_OPTIONAL_PROVIDERS.has(provider);
 }

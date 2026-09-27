@@ -30,6 +30,7 @@ export const AI_PROVIDER_PRESETS = [
   { value: "Omaleai", label: "Cerebras", url: "https://omaleai.qzz.io/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Agnes-ai", label: "Agnes-ai", url: "https://apihub.agnes-ai.com/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Kilo-code", label: "Kilo-code", url: "https://api.kilo.ai/api/gateway", requiresApiKey: false, requiresApiUrl: true },
+  { value: "baizhi-cloud", label: "长亭百智云大模型网关", url: "https://ai-api-gateway.app.baizhi.cloud/api/openai", requiresApiKey: true, requiresApiUrl: true },
   // ✅ 保留 custom 作为通用兜底（可手动填任何 URL 和模型）
   { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: true },
 ] as const;
@@ -46,8 +47,9 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   openrouter: ["openrouter/free", "nvidia/nemotron-3-ultra-550b-a55b:free", "poolside/laguna-s-2.1:free", "nvidia/nemotron-3.5-lightning:free", "nvidia/nemotron-3-super-120b-a12b:free", "cohere/north-mini-code:free", "poolside/laguna-xs-2.1:free", "nvidia/nemotron-3-nano-30b-a3b:free", "dots-studio/dots-3-note-preview:free", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "google/gemma-4-26b-a4b-it:free", "openai/gpt-oss-20b:free", "google/gemma-4-31b-it:free", "nvidia/nemotron-3.5-content-safety:free", "fish-audio/s2.1-pro-free:free", "deepgram/flux-tts:free"],
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
   Omaleai: ["deepseek-v4-flash"],
-  "Agnes-ai": ["agnes-2.0-flash", "agnes-2.5-flash"],
+  "Agnes-ai": ["agnes-2.5-flash", "agnes-3.0-flash", "agnes-2.5-pro-beta", "agnes-2.5-pro"],
    "Kilo-code": ["kilo-auto/free", "openrouter/free", "dots-studio/dots-3-note-preview:free"],
+  "baizhi-cloud": [],
   // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
 };
