@@ -29,7 +29,7 @@ export const AI_PROVIDER_PRESETS = [
   { value: "Zenmux", label: "Zenmux", url: "https://zenmux.ai/api/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Omaleai", label: "Cerebras", url: "https://omaleai.qzz.io/v1", requiresApiKey: true, requiresApiUrl: true },
   { value: "Agnes-ai", label: "Agnes-ai", url: "https://apihub.agnes-ai.com/v1", requiresApiKey: true, requiresApiUrl: true },
-  { value: "Opencode", label: "Opencode", url: "https://opencode.ai/zen/v1", requiresApiKey: true, requiresApiUrl: true },
+  { value: "Kilo-code", label: "Kilo-code", url: "https://api.kilo.ai/api/gateway", requiresApiKey: false, requiresApiUrl: true },
   // ✅ 保留 custom 作为通用兜底（可手动填任何 URL 和模型）
   { value: "custom", label: "自定义", url: "", requiresApiKey: true, requiresApiUrl: true },
 ] as const;
@@ -47,7 +47,7 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
   Zenmux: ["google/gemini-3.1-flash-lite-image-free"],
   Omaleai: ["deepseek-v4-flash"],
   "Agnes-ai": ["agnes-2.0-flash", "agnes-2.5-flash"],
-  Opencode: ["deepseek-v4-flash-free", "mimo-v2.5-free", "longcat-2.0-free"],
+   "Kilo-code": ["kilo-auto/free", "openrouter/free", "dots-studio/dots-3-note-preview:free"],
   // ✅ 自定义模型（保留，方便手动填任何模型）
   custom: ["openai/gpt-oss-120b:free"],
 };

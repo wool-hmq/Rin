@@ -39,6 +39,16 @@ Entries discovered by the Agent during task execution should follow this format:
   - 例外情况（不做默认推送，需与用户确认）：代码中有不确定之处（如 ad 广告栏这类需求模糊的代码）、用户刻意要求不推送时。
 
 [Project Knowledge Summary]
+- Date: 2026-09-27
+- Context: 用户恢复旧开发环境（克隆参考仓库）时说明的身份信息
+- Category: Workflow & Collaboration
+- Instructions:
+  - 用户 GitHub 账号之一为 wool-hmq；网名主要使用「羊角快车」，部分特殊场景使用其它网名。
+  - 本仓库（羊角快车版二创 Rin）与上游参考仓库的关系：/tmp/Rin-cunzhang（村长版二创，思路参考）、/tmp/Rin-original（原版 OpenRin/Rin，升级对比用）。
+  - 上游仓库出现的其他贡献者（如 MarshaveYang）与用户无关。
+  - 用户暂时没有将二创合入上游仓库的想法。
+
+[Project Knowledge Summary]
 - Date: 2026-08-17
 - Context: Discovered by Agent while troubleshooting Gitee OAuth login error and Cloudflare secrets propagation
 - Category: Operations & Deployment
