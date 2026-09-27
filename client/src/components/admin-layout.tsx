@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
 import { useSiteConfig } from "../hooks/useSiteConfig";
+import { ImageWithFallback } from "./image-with-fallback";
 
 function AdminNavItem({
   href,
@@ -49,7 +50,7 @@ export function AdminLayout({
           <div className="rounded-2xl border border-black/10 bg-w p-5 dark:border-white/10">
             <Link href="/" className="flex items-center gap-4 rounded-xl px-2 py-2 transition-colors hover:bg-neutral-50 dark:hover:bg-white/5">
               {siteConfig.avatar ? (
-                <img src={siteConfig.avatar} alt="Avatar" className="h-12 w-12 rounded-2xl border border-black/10 dark:border-white/10" />
+                <ImageWithFallback src={siteConfig.avatar} alt={siteConfig.name} className="h-12 w-12 rounded-2xl border border-black/10 dark:border-white/10" />
               ) : null}
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold t-primary">{siteConfig.name}</p>

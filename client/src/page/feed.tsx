@@ -13,6 +13,7 @@ import { client } from "../app/runtime";
 import { ClientConfigContext } from "../state/config";
 import { ProfileContext } from "../state/profile";
 import { useSiteConfig } from "../hooks/useSiteConfig";
+import { ImageWithFallback } from "../components/image-with-fallback";
 import { siteName } from "../utils/constants";
 import { timeago } from "../utils/timeago";
 import { Button } from "../components/button";
@@ -297,10 +298,11 @@ export function FeedPage({ id, TOC, clean }: { id: string, TOC: () => JSX.Elemen
                       ))}
                     </div>
                   )}
-                  <div className="flex flex-row items-center">
-                    <img
+                  <div className="flex min-w-0 flex-row items-center">
+                    <ImageWithFallback
                       src={feed.user.avatar || "/avatar.png"}
-                      className="w-8 h-8 rounded-full"
+                      alt={feed.user.username}
+                      className="h-8 w-8 rounded-full"
                     />
                     <div className="ml-2">
                       <span className="text-gray-400 text-sm cursor-default">
@@ -710,9 +712,10 @@ function CommentItem({
   }
   return (
     <div className="flex flex-row items-start rounded-xl mt-2">
-      <img
+      <ImageWithFallback
         src={commenterAvatar}
-        className="w-8 h-8 rounded-full mt-4"
+        alt={commenterName}
+        className="mt-4 h-8 w-8 rounded-full"
       />
       <div className="flex flex-col flex-1 w-0 ml-2 bg-w rounded-xl p-4">
         <div className="flex flex-row">

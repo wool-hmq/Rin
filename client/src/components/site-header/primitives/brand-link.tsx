@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { ImageWithFallback } from "../../image-with-fallback";
 import type { SiteHeaderConfig } from "../shared";
 
 export function BrandLink({
@@ -23,9 +24,9 @@ export function BrandLink({
   return (
     <Link aria-label="home" href="/" className={className}>
       {showAvatar && siteConfig.avatar ? (
-        <img
+        <ImageWithFallback
           src={siteConfig.avatar}
-          alt="Avatar"
+          alt={siteConfig.name}
           className={avatarClassName || (compact ? "h-10 w-10 rounded-full border-2" : "h-12 w-12 rounded-2xl border-2")}
         />
       ) : null}

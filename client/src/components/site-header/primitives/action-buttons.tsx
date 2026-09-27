@@ -9,6 +9,7 @@ import { type Profile } from "../../../state/profile";
 import { removeAuthToken } from "../../../utils/auth";
 import { Button } from "../../button";
 import { Input } from "../../input";
+import { ImageWithFallback } from "../../image-with-fallback";
 import { HEADER_POPUP_PANEL_CLASS } from "../shared";
 
 export function HeaderActions({
@@ -183,10 +184,11 @@ export function UserAvatar({
               }
             >
               {profile.avatar ? (
-                <img
+                <ImageWithFallback
                   src={profile.avatar}
-                  alt="Avatar"
-                  className="h-8 w-8 cursor-pointer rounded-full object-cover transition duration-200 group-hover:brightness-95"
+                  alt={profile.name || t("profile.title")}
+                  className="h-8 w-8 cursor-pointer rounded-full"
+                  imageClassName="transition duration-200 group-hover:brightness-95"
                 />
               ) : (
                 <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-secondary transition-colors group-hover:bg-black/5 dark:group-hover:bg-white/10">
@@ -205,7 +207,7 @@ export function UserAvatar({
               className="mb-2 flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/10"
             >
               {profile.avatar ? (
-                <img src={profile.avatar} alt="Avatar" className="h-10 w-10 rounded-full object-cover" />
+                <ImageWithFallback src={profile.avatar} alt={profile.name || t("profile.title")} className="h-10 w-10 rounded-full" />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
                   <i className="ri-user-line text-lg t-secondary" />
