@@ -24,6 +24,7 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 | `AVATAR` | 否 | 网站头像 URL | - |
 | `PAGE_SIZE` | 否 | 默认分页大小 | 5 |
 | `RSS_ENABLE` | 否 | 启用 RSS 链接 | false |
+| `FRONTEND_URL` | 否 | 站点根地址（sitemap.xml 与 robots.txt 生成基准，多域名部署时建议配置） | 请求 origin |
 
 :::tip
 站点配置可在部署后通过**设置页面**修改，环境变量仅作为初始值。

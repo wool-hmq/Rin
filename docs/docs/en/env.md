@@ -24,6 +24,7 @@ These variables are stored in plaintext in `wrangler.toml` or GitHub Actions and
 | `AVATAR` | No | Site avatar URL | - |
 | `PAGE_SIZE` | No | Default pagination size | 5 |
 | `RSS_ENABLE` | No | Enable RSS link | false |
+| `FRONTEND_URL` | No | Canonical site origin for sitemap.xml and robots.txt generation (recommended for multi-domain deployments) | request origin |
 
 :::tip
 Site configuration can be modified via the **Settings Page** after deployment. Environment variables serve as initial defaults only.

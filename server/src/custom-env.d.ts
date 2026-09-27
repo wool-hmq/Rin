@@ -7,6 +7,7 @@ declare global {
     RIN_QQ_TOKEN?: string;
     RIN_WECHAT_APPID?: string;
     RIN_WECHAT_APPKEY?: string;
+    FRONTEND_URL?: string;
   }
 }
 
