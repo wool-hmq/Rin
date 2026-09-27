@@ -1,7 +1,7 @@
 import { $ } from "bun";
 import { readdir, unlink } from "node:fs/promises";
 import stripIndent from "strip-indent";
-import { fixTopField, getMigrationFileVersion, getMigrationVersion, isInfoExist, updateMigrationVersion } from "../lib/db-migration";
+import { fixTopField, getMigrationFileVersion, getMigrationVersion, updateMigrationVersion } from "../lib/db-migration";
 const bunExec = process.execPath;
 
 function env(name: string, defaultValue?: string, required = false) {
@@ -271,7 +271,8 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
   }
 
   const migrationVersion = await getMigrationVersion("remote", dbName);
-  const infoExists = await isInfoExist("remote", dbName);
+  // Migration 0015 indexes feeds.top, so repair the column before pending SQL runs.
+  await fixTopField("remote", dbName);
   const files = await readdir("./server/sql", { recursive: false });
   const sqlFiles = files
     .filter((name) => name.endsWith(".sql"))
@@ -293,7 +294,6 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
       await updateMigrationVersion("remote", dbName, lastVersion);
     }
   }
-  await fixTopField("remote", dbName, infoExists);
 
   if (target === "server") {
     await $`${bunExec} x wrangler deploy`;
