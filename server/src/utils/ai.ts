@@ -137,7 +137,7 @@ async function executeExternalAI(
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            ...(api_key ? { "Authorization": `Bearer ${api_key}` } : {}),
+            "Authorization": `Bearer ${api_key}`,
         },
         body: JSON.stringify({
             model: model,
