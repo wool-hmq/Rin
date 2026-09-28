@@ -45,6 +45,13 @@ export function collectWorkerSecrets(source: Record<string, string | undefined> 
   return secrets;
 }
 
+const SECRET_BULK_MAX_ATTEMPTS = 5;
+const SECRET_BULK_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 30_000];
+
+function isSecretBulkVersionRaceError(stderr: string) {
+  return stderr.includes("[code: 10214]") || stderr.includes("the latest version isn't currently deployed");
+}
+
 async function syncWorkerSecrets(workerName: string) {
   const secrets = collectWorkerSecrets();
   const secretKeys = Object.keys(secrets);
@@ -58,8 +65,31 @@ async function syncWorkerSecrets(workerName: string) {
   await Bun.write(tempFile, JSON.stringify(secrets, null, 2));
 
   try {
-    await $`${bunExec} x wrangler secret bulk ${tempFile} --name ${workerName}`;
-    console.log(`✅ Synced ${secretKeys.length} worker secret(s)`);
+    let lastStderr = "";
+    for (let attempt = 1; attempt <= SECRET_BULK_MAX_ATTEMPTS; attempt++) {
+      const result = await $`${bunExec} x wrangler secret bulk ${tempFile} --name ${workerName}`.nothrow();
+      if (result.exitCode === 0) {
+        console.log(`✅ Synced ${secretKeys.length} worker secret(s)`);
+        return;
+      }
+
+      lastStderr = result.stderr.toString();
+      const delayMs = SECRET_BULK_RETRY_DELAYS_MS[attempt - 1];
+      if (delayMs === undefined) {
+        break;
+      }
+
+      if (!isSecretBulkVersionRaceError(lastStderr)) {
+        break;
+      }
+
+      console.log(
+        `⚠️ Secret sync failed (attempt ${attempt}/${SECRET_BULK_MAX_ATTEMPTS}) with a version deployment race; retrying in ${delayMs / 1000}s`,
+      );
+      await Bun.sleep(delayMs);
+    }
+
+    throw new Error(`Failed to sync worker secrets via wrangler secret bulk:\n${lastStderr}`);
   } finally {
     await unlink(tempFile).catch(() => {});
   }
