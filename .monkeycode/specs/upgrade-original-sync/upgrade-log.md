@@ -15,6 +15,7 @@
 | B5 | feed repository 层（DB 分页、LIKE 转义、admin 缓存隔离）+ feed.ts 三方合并（守卫 + schema 校验）；保留羊角版 AI 增强搜索；clear-feed-cache 拆出 clearFeedCollectionCaches；schemas.ts 加 minLength | 16eb9b7 |
 | B6 | 0015/0016.sql（原版 0011/0012 重编号）；CLI fixTopField 改为迁移前执行（原版方案）；修复羊角版 0012.sql 反引号笔误 | 1e4049d |
 | 收尾 | useTableOfContents 采用原版 useCallback 稳定化（修复 TOC 滚动位置测试） | d5f7167 |
+| 部署回归修复 | syncWorkerSecrets 对 wrangler secret bulk 加版本传播竞态重试（Cloudflare code 10214） | 80b44a3 |
 
 ## 用户决策记录
 
@@ -32,5 +33,6 @@
 
 ## 遗留事项
 
+- GitHub Actions Deploy 曾因 Cloudflare 版本化部署竞态报 code 10214（wrangler deploy 后立即 secret bulk，新版本尚未成为当前已部署版本）；已通过 secret bulk 重试退避修复（80b44a3）。CI 用 bun 1.3.13 + wrangler，若再偶发需确认部署顺序或改用 script-level settings API。
 - rss/favicon 测试超时为预存环境问题（S3 mock 不适用本沙箱），未在本项目范围内修复。
 - 原版 server 若未来再升级，需检查 0016 之后的迁移号与羊角版 0015/0016 的衔接。
