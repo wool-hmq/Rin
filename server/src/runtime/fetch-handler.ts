@@ -3,7 +3,7 @@ import { getApp } from "./app-instance";
 const ROOT_FEED_PATTERN = /^\/(rss\.xml|atom\.xml|rss\.json|feed\.json|feed\.xml)$/;
 const APP_PUBLIC_ROUTE_PATTERN = /^\/(favicon|favicon\.ico)(?:\/|$)/;
 // 由 Worker 直接处理的元数据路由（sitemap / robots），需在静态资源分支之前路由到 Hono 应用
-const APP_META_ROUTE_PATTERN = /^\/(sitemap\.xml|robots\.txt)$/;
+const APP_META_ROUTE_PATTERN = /^\/(sitemap\.xml|friends-sitemap\.xml|robots\.txt)$/;
 
 function isApiRequest(pathname: string) {
   return pathname.startsWith("/api/");

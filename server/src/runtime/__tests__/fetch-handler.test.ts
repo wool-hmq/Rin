@@ -33,6 +33,29 @@ describe("handleFetch", () => {
     expect(getAppFetch).toHaveBeenCalledTimes(0);
   });
 
+  it("routes /sitemap.xml, /friends-sitemap.xml and /robots.txt to the app before static assets", async () => {
+    const { handleFetch } = await import("../fetch-handler");
+    const assetFetch = mock(async () => new Response("asset-body", { status: 404 }));
+    getAppFetch.mockImplementation(async () => new Response("sitemap-body", { status: 200 }));
+
+    for (const path of ["/sitemap.xml", "/friends-sitemap.xml", "/robots.txt"]) {
+      getAppFetch.mockClear();
+      const response = await handleFetch(
+        new Request(`http://localhost${path}`),
+        {
+          ASSETS: {
+            fetch: assetFetch,
+          },
+        } as unknown as Env,
+      );
+
+      expect(await response.text()).toBe("sitemap-body");
+      expect(getAppFetch).toHaveBeenCalledTimes(1);
+      expect(assetFetch).toHaveBeenCalledTimes(0);
+      expect(new URL(getAppFetch.mock.calls[0][0].url).pathname).toBe(path);
+    }
+  });
+
   it("routes /api/blob requests to the app before static assets", async () => {
     getAppFetch.mockResolvedValue(new Response("blob-body", { status: 200 }));
 
