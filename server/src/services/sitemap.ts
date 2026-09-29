@@ -44,6 +44,42 @@ function hasConfiguredBaseUrl(env: Env): boolean {
   return Boolean(env.FRONTEND_URL?.trim());
 }
 
+// 从友链 URL 中提取目标地址（to 参数），无 to 则返回原 URL
+function extractFriendTargetUrl(friendUrl: string): string {
+  try {
+    const url = new URL(friendUrl);
+    const to = url.searchParams.get("to");
+    if (to && to.length > 0) return to;
+    return friendUrl;
+  } catch {
+    return friendUrl;
+  }
+}
+
+// 生成 friends-sitemap.xml 内容（每个 accepted=1 友链的外链 URL）
+async function generateFriendsSitemapXml(env: Env, db: DB): Promise<string> {
+  const friendRows = await db
+    .select({ url: friends.url, updatedAt: friends.updatedAt })
+    .from(friends)
+    .where(eq(friends.accepted, 1));
+
+  const urls: string[] = [];
+
+  for (const friend of friendRows) {
+    const loc = escapeXml(extractFriendTargetUrl(friend.url));
+    const lastmodStr = formatLastMod(friend.updatedAt);
+    urls.push(
+      `    <url>\n      <loc>${loc}</loc>${
+        lastmodStr ? `\n      <lastmod>${lastmodStr}</lastmod>` : ""
+      }\n    </url>`,
+    );
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join(
+    "\n",
+  )}\n</urlset>\n`;
+}
+
 // 生成 sitemap.xml 内容（纯函数，供请求实时生成与 cron 预生成复用）
 async function generateSitemapXml(env: Env, db: DB, requestUrl?: string): Promise<string> {
   const baseUrl = getBaseUrl(env, requestUrl);
@@ -127,6 +163,7 @@ Disallow: /login/
 Disallow: /search/
 
 Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/friends-sitemap.xml
 `;
 }
 
@@ -171,6 +208,42 @@ export function SitemapService(): Hono {
     return c.body(xml, 200, {
       "Content-Type": SITEMAP_CONTENT_TYPE,
       "Cache-Control": "public, max-age=600, s-maxage=3600",
+    });
+  });
+
+  app.get("/friends-sitemap.xml", async (c: AppContext) => {
+    const env = c.get("env");
+    const db = c.get("db");
+    const key = path_join(env.S3_CACHE_FOLDER || SITEMAP_CACHE_FOLDER, "friends-sitemap.xml");
+    const canUsePersistentCache = hasConfiguredBaseUrl(env);
+
+    if (canUsePersistentCache) {
+      try {
+        const cached = await getStorageObject(env, key);
+        if (cached) {
+          const text = await cached.text();
+          return c.body(text, 200, {
+            "Content-Type": SITEMAP_CONTENT_TYPE,
+            "Cache-Control": "public, max-age=3600",
+          });
+        }
+      } catch (e: any) {
+        console.log(`[FriendsSitemap] cache read failed: ${e?.message}, falling back to generation`);
+      }
+    }
+
+    const xml = await generateFriendsSitemapXml(env, db);
+    if (canUsePersistentCache) {
+      try {
+        await putStorageObjectAtKey(env, key, xml, "application/xml");
+      } catch (e: any) {
+        console.log(`[FriendsSitemap] cache write failed: ${e?.message}`);
+      }
+    }
+
+    return c.body(xml, 200, {
+      "Content-Type": SITEMAP_CONTENT_TYPE,
+      "Cache-Control": "public, max-age=3600",
     });
   });
 
@@ -227,6 +300,14 @@ export async function sitemapCrontab(env: Env, db: DB) {
     console.log("[Sitemap] Saved sitemap.xml to storage");
   } catch (e: any) {
     console.error(`[Sitemap] Failed to save sitemap.xml: ${e?.message}`);
+  }
+
+  try {
+    const xml = await generateFriendsSitemapXml(env, db);
+    await putStorageObjectAtKey(env, path_join(folder, "friends-sitemap.xml"), xml, "application/xml");
+    console.log("[Sitemap] Saved friends-sitemap.xml to storage");
+  } catch (e: any) {
+    console.error(`[Sitemap] Failed to save friends-sitemap.xml: ${e?.message}`);
   }
 
   try {

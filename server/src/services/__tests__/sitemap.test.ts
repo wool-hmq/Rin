@@ -123,7 +123,7 @@ describe("sitemapCrontab", () => {
 
     await sitemapCrontab(env, ctx.db);
 
-    expect(keys).toEqual(["cache/sitemap.xml", "cache/robots.txt"]);
+    expect(keys).toEqual(["cache/sitemap.xml", "cache/friends-sitemap.xml", "cache/robots.txt"]);
     cleanupTestDB(ctx.sqlite);
   });
 });
