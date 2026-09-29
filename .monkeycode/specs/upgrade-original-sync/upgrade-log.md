@@ -16,6 +16,7 @@
 | B6 | 0015/0016.sql（原版 0011/0012 重编号）；CLI fixTopField 改为迁移前执行（原版方案）；修复羊角版 0012.sql 反引号笔误 | 1e4049d |
 | 收尾 | useTableOfContents 采用原版 useCallback 稳定化（修复 TOC 滚动位置测试） | d5f7167 |
 | 部署回归修复 | syncWorkerSecrets 对 wrangler secret bulk 加版本传播竞态重试（Cloudflare code 10214） | 80b44a3 |
+| 友链 sitemap | 新增 `/friends-sitemap.xml`（只含 accepted=1 友链，提取 url 的 to 参数； robots.txt 自动引用；cron 定时预生成） | f839b70 |
 
 ## 用户决策记录
 
