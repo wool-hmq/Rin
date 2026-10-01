@@ -18,6 +18,7 @@
 | 部署回归修复 | syncWorkerSecrets 对 wrangler secret bulk 加版本传播竞态重试（Cloudflare code 10214） | 80b44a3 |
 | 友链 sitemap | 新增 `/friends-sitemap.xml`（只含 accepted=1 友链，提取 url 的 to 参数； robots.txt 自动引用；cron 定时预生成） | f839b70 |
 | 友链 sitemap 修复 | fetch-handler 白名单补 `friends-sitemap.xml`，否则落到 SPA 回退返回 HTML 而非 XML | 6d9bfb5 |
+| 友链 sitemap 增强 | 每条友链附 `<friend:name>`/`<friend:description>`（自定义命名空间，标准 loc/lastmod 保持首位，不影响爬虫解析） | 6a31ce7 |
 
 ## 用户决策记录
 
