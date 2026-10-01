@@ -56,10 +56,13 @@ function extractFriendTargetUrl(friendUrl: string): string {
   }
 }
 
-// 生成 friends-sitemap.xml 内容（每个 accepted=1 友链的外链 URL）
+// 友链 sitemap 自定义命名空间：附赠站点名称与简介，帮助爬虫识别这是友链 sitemap
+const FRIENDS_SITEMAP_NS = "https://jiaoblog.dpdns.org/friends-sitemap-ns";
+
+// 生成 friends-sitemap.xml 内容（每个 accepted=1 友链的外链 URL + 名称 + 简介）
 async function generateFriendsSitemapXml(env: Env, db: DB): Promise<string> {
   const friendRows = await db
-    .select({ url: friends.url, updatedAt: friends.updatedAt })
+    .select({ url: friends.url, name: friends.name, desc: friends.desc, updatedAt: friends.updatedAt })
     .from(friends)
     .where(eq(friends.accepted, 1));
 
@@ -68,14 +71,18 @@ async function generateFriendsSitemapXml(env: Env, db: DB): Promise<string> {
   for (const friend of friendRows) {
     const loc = escapeXml(extractFriendTargetUrl(friend.url));
     const lastmodStr = formatLastMod(friend.updatedAt);
+    const name = escapeXml(friend.name ?? "");
+    const desc = friend.desc ? escapeXml(friend.desc) : null;
     urls.push(
       `    <url>\n      <loc>${loc}</loc>${
         lastmodStr ? `\n      <lastmod>${lastmodStr}</lastmod>` : ""
+      }\n      <friend:name>${name}</friend:name>${
+        desc ? `\n      <friend:description>${desc}</friend:description>` : ""
       }\n    </url>`,
     );
   }
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join(
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:friend="${FRIENDS_SITEMAP_NS}">\n${urls.join(
     "\n",
   )}\n</urlset>\n`;
 }

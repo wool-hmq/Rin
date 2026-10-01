@@ -63,6 +63,48 @@ describe("SitemapService", () => {
     cleanupTestDB(requestCtx.sqlite);
   });
 
+  it("lists accepted friend links in /friends-sitemap.xml with name/description and to-param extraction", async () => {
+    let getCalls = 0;
+    let putCalls = 0;
+    const env = createMockEnv({
+      R2_BUCKET: {
+        get: async () => {
+          getCalls += 1;
+          return null;
+        },
+        put: async () => {
+          putCalls += 1;
+          return null;
+        },
+      } as unknown as R2Bucket,
+    });
+    const ctx = await setupTestApp(SitemapService, env);
+    ctx.sqlite.exec(`INSERT INTO users (id, username, openid) VALUES (1, 'testuser', 'gh_test')`);
+    ctx.sqlite.exec(`
+      INSERT INTO friends (id, name, desc, avatar, url, uid, accepted) VALUES
+        (1, 'Accepted Blog', 'A friendly blog', 'https://avatar/1.png', 'https://link.jiaoblog.dpdns.org/?from=x&to=https://accepted.example&safe=1&mtj=1', 1, 1),
+        (2, 'No To Param', 'Falls back to full url', 'https://avatar/2.png', 'https://direct.example', 1, 1),
+        (3, 'Pending Blog', 'Should not be listed', 'https://avatar/3.png', 'https://pending.example', 1, 0),
+        (4, 'Rejected Blog', 'Should not be listed', 'https://avatar/4.png', 'https://rejected.example', 1, -1)
+    `);
+
+    const sitemap = await ctx.app.request("https://blog.example/friends-sitemap.xml", { method: "GET" }, env);
+    const xml = await sitemap.text();
+
+    expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
+    expect(xml).toContain("https://accepted.example");
+    expect(xml).toContain("<friend:name>Accepted Blog</friend:name>");
+    expect(xml).toContain("<friend:description>A friendly blog</friend:description>");
+    expect(xml).toContain("https://direct.example");
+    expect(xml).toContain("<friend:name>No To Param</friend:name>");
+    expect(xml).not.toContain("https://pending.example");
+    expect(xml).not.toContain("https://rejected.example");
+    expect(getCalls).toBe(0);
+    expect(putCalls).toBe(0);
+
+    cleanupTestDB(ctx.sqlite);
+  });
+
   it("uses FRONTEND_URL for canonical URLs and persistent storage", async () => {
     const keys: string[] = [];
     const env = createMockEnv({
