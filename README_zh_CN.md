@@ -2,7 +2,7 @@
 
 [English](./README.md) | 简体中文
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wool-hmq/Rin)
+[![Ask DeepWiki](https://pic1.imgdb.cn/i/034YqRniL3rFn8RORsOh6q.svg)](https://deepwiki.com/wool-hmq/Rin)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/openRin/Rin?style=for-the-badge)
 ![GitHub branch check runs](https://img.shields.io/github/check-runs/openRin/Rin/main?style=for-the-badge)
 ![GitHub top language](https://img.shields.io/github/languages/top/openRin/Rin?style=for-the-badge)
