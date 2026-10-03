@@ -19,6 +19,7 @@
 | 友链 sitemap | 新增 `/friends-sitemap.xml`（只含 accepted=1 友链，提取 url 的 to 参数； robots.txt 自动引用；cron 定时预生成） | f839b70 |
 | 友链 sitemap 修复 | fetch-handler 白名单补 `friends-sitemap.xml`，否则落到 SPA 回退返回 HTML 而非 XML | 6d9bfb5 |
 | 友链 sitemap 增强 | 每条友链附 `<friend:name>`/`<friend:description>`（自定义命名空间，标准 loc/lastmod 保持首位，不影响爬虫解析） | 6a31ce7 |
+| 备选模型队列排序 | 后台 AI 设置中每个备选模型加上移/下移按钮，调整 failover 数组顺序即切换优先级；en/ja/zh-CN/zh-TW 文案补充；顺带修复 zh-TW translation.json 末尾多余 `}` | 947d45e |
 
 ## 用户决策记录
 
