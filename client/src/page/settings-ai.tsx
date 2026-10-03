@@ -432,6 +432,36 @@ export function AISummarySettings({
               <div className="space-y-3">
                 {value.failover.map((item, index) => (
                   <div key={index} className="flex flex-wrap items-center gap-2">
+                    <div className="flex shrink-0 flex-col gap-1">
+                      <button
+                        type="button"
+                        title={t("settings.ai_summary.failover.move_up")}
+                        onClick={() => {
+                          if (index === 0) return;
+                          const nextItems = [...value.failover];
+                          [nextItems[index - 1], nextItems[index]] = [nextItems[index], nextItems[index - 1]];
+                          onChange({ failover: nextItems });
+                        }}
+                        disabled={index === 0}
+                        className="inline-flex h-5 w-6 items-center justify-center rounded-lg border border-black/10 text-xs text-neutral-500 transition-colors hover:border-black/20 hover:bg-black/5 disabled:opacity-30 dark:border-white/10 dark:hover:bg-white/10"
+                      >
+                        <i className="ri-arrow-up-line" />
+                      </button>
+                      <button
+                        type="button"
+                        title={t("settings.ai_summary.failover.move_down")}
+                        onClick={() => {
+                          if (index >= value.failover.length - 1) return;
+                          const nextItems = [...value.failover];
+                          [nextItems[index], nextItems[index + 1]] = [nextItems[index + 1], nextItems[index]];
+                          onChange({ failover: nextItems });
+                        }}
+                        disabled={index >= value.failover.length - 1}
+                        className="inline-flex h-5 w-6 items-center justify-center rounded-lg border border-black/10 text-xs text-neutral-500 transition-colors hover:border-black/20 hover:bg-black/5 disabled:opacity-30 dark:border-white/10 dark:hover:bg-white/10"
+                      >
+                        <i className="ri-arrow-down-line" />
+                      </button>
+                    </div>
                     <SearchableSelect
                       value={item.provider}
                       onChange={(nextProvider) => {

@@ -499,7 +499,9 @@
       "failover": {
         "title": "備選模型佇列",
         "desc": "主模型無回應或出錯時，依序嘗試備選模型，直到有模型返回摘要（每個備選條目使用各自的 API Key）",
-        "add": "新增備選模型"
+        "add": "新增備選模型",
+        "move_up": "在佇列中上移",
+        "move_down": "在佇列中下移"
       },
       "retries": {
         "title": "重試次數",
@@ -904,5 +906,4 @@
     "widget_url_title": "Widget 腳本 URL",
     "widget_url_desc": "Supportly widget 腳本網址（必填）。如果你自訂了 Supportly 部署域名，請修改此項"
   }
-}
 }

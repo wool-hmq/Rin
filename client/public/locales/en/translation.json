@@ -499,7 +499,9 @@
       "failover": {
         "title": "Fallback Model Queue",
         "desc": "When the primary model has no response or fails, try each fallback model in order until one returns a summary (each fallback entry uses its own API Key)",
-        "add": "Add Fallback Model"
+        "add": "Add Fallback Model",
+        "move_up": "Move up in queue",
+        "move_down": "Move down in queue"
       },
       "retries": {
         "title": "Retry Count",
