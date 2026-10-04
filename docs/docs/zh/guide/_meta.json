@@ -3,6 +3,7 @@
   "deploy",
   "development",
   "webhook",
+  "email-friend-apply",
   "rss",
   "migration",
   "changelog",
