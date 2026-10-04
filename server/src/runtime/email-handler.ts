@@ -27,19 +27,102 @@ async function probeUrl(url: string): Promise<number> {
 }
 
 // Read the raw MIME stream exactly once and parse it.
-async function parseIncoming(message: ForwardableEmailMessage): Promise<{
+export async function parseIncoming(message: ForwardableEmailMessage): Promise<{
     from: string;
     to: string;
     text: string;
 }> {
-    const buffer = await new Response(message.raw).arrayBuffer();
-    const parser = new PostalMime();
-    const parsed = await parser.parse(buffer);
-    return {
-        from: message.from,
-        to: message.to,
-        text: parsed.text || parsed.html || "",
-    };
+    console.log("[friend-email] parseIncoming: reading raw stream");
+    let buffer: ArrayBuffer;
+    try {
+        buffer = await new Response(message.raw).arrayBuffer();
+    } catch (err: any) {
+        console.error("[friend-email] failed to read raw stream:", err?.name, err?.message);
+        throw err;
+    }
+    console.log(`[friend-email] parseIncoming: read ${buffer.byteLength} bytes`);
+
+    let parsed: { text?: string; html?: string; attachments?: unknown[] };
+    try {
+        const parser = new PostalMime();
+        parsed = await parser.parse(buffer);
+    } catch (err: any) {
+        console.error("[friend-email] postal-mime parse failed:", err?.name, err?.message);
+        const snippet = new TextDecoder("utf-8", { fatal: false }).decode(buffer).slice(0, 600);
+        console.log("[friend-email] raw snippet:", JSON.stringify(snippet));
+        // Fallback: naive extraction so the flow can still proceed.
+        const fallback = fallbackExtractText(buffer);
+        console.log("[friend-email] using fallback extraction, length=", fallback.length);
+        return { from: message.from, to: message.to, text: fallback };
+    }
+
+    let text = parsed.text || parsed.html || "";
+    // HTML-only email: strip tags so keyword matching still works.
+    if (/<[a-z][\s\S]*>/i.test(text)) {
+        text = stripHtml(text);
+    }
+    return { from: message.from, to: message.to, text };
+}
+
+function stripHtml(html: string): string {
+    return html
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, "\n")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&amp;/gi, "&")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+}
+
+// Naive MIME text extraction used only when postal-mime throws.
+function fallbackExtractText(buffer: ArrayBuffer): string {
+    const raw = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+    const headerEnd = raw.search(/\r?\n\r?\n/);
+    const headers = headerEnd === -1 ? "" : raw.slice(0, headerEnd);
+    let body = headerEnd === -1 ? raw : raw.slice(headerEnd + 2);
+
+    // If multipart, prefer the text/plain part.
+    const boundaryMatch = headers.match(/boundary="?([^"\s;]+)"?/i);
+    if (boundaryMatch) {
+        const boundary = boundaryMatch[1];
+        const parts = raw.split(`--${boundary}`);
+        for (const part of parts) {
+            if (/content-type:\s*text\/plain/i.test(part)) {
+                const idx = part.search(/\r?\n\r?\n/);
+                if (idx !== -1) {
+                    body = part.slice(idx + 2);
+                    break;
+                }
+            }
+        }
+    }
+
+    const isBase64 = /content-transfer-encoding:\s*base64/i.test(headers);
+    const isQp = /content-transfer-encoding:\s*quoted-printable/i.test(headers);
+    if (isBase64) {
+        try {
+            const decoded = atob(body.replace(/\s/g, ""));
+            body = new TextDecoder("utf-8", { fatal: false }).decode(
+                Uint8Array.from(decoded, (c) => c.charCodeAt(0)),
+            );
+        } catch {
+            // keep raw
+        }
+    } else if (isQp) {
+        body = body
+            .replace(/=([0-9A-Fa-f]{2})/g, (_m, h) => String.fromCharCode(parseInt(h, 16)))
+            .replace(/=\r?\n/g, "");
+    }
+
+    return body.trim();
 }
 
 export async function handleEmail(
