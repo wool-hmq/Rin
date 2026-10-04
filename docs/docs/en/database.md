@@ -249,6 +249,10 @@ Stores application cache data.
 - `idx_cache_type` ON `type`
 - `idx_cache_key` ON `key`
 
+**`type` values used by email friend-link applications:**
+- `friend.email`: keyed by the applicant's email; stores the in-flight application state (stage, operation, JSON payload, verification code, deadlines).
+- `friend.email.lock`: fixed `key` of `global`, implements the "only one application at a time" concurrency lock.
+
 ---
 
 ## linked_accounts (Third-Party Login Bindings Table)

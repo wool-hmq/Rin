@@ -249,6 +249,10 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 12 张表。
 - `idx_cache_type` ON `type`
 - `idx_cache_key` ON `key`
 
+**邮件自动友链申请使用的 type 值：**
+- `friend.email`：以申请人邮箱为 `key`，存储其在途申请的状态（阶段、操作类型、JSON 载荷、验证码、截止时间等）。
+- `friend.email.lock`：固定 `key` 为 `global`，用于实现「同一时间仅允许一个申请」的并发锁。
+
 ---
 
 ## linked_accounts（第三方登录绑定表）
