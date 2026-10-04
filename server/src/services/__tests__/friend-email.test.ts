@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import type { Database } from "bun:sqlite";
 import { eq } from "drizzle-orm";
 import { createMockDB, cleanupTestDB } from "../../../tests/fixtures";
-import { processFriendEmail, EMAIL_OP_APPLY, EMAIL_OP_MODIFY, EMAIL_OP_DELETE, EMAIL_CONFIRM_TRIGGER } from "../friend-email";
+import { processFriendEmail, EMAIL_OP_APPLY, EMAIL_OP_MODIFY, EMAIL_OP_DELETE, EMAIL_OP_CANCEL, EMAIL_CONFIRM_TRIGGER } from "../friend-email";
 import { friends, cache } from "../../db/schema";
 import type { DB } from "../../core/hono-types";
 
@@ -197,6 +197,43 @@ describe("processFriendEmail", () => {
             expect(sent.at(-1)!.text).toContain("超时");
             expect((await stateRows()).length).toBe(0);
             expect((await lockRows()).length).toBe(0);
+        });
+    });
+
+    describe("cancel", () => {
+        it("should terminate the application on cancel request", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+            expect((await stateRows()).length).toBe(1);
+            expect((await lockRows()).length).toBe(1);
+
+            await process(EMAIL_OP_CANCEL);
+
+            expect(sent.at(-1)!.text).toContain("已结束");
+            expect((await stateRows()).length).toBe(0);
+            expect((await lockRows()).length).toBe(0);
+        });
+
+        it("should allow a new application after cancel", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(EMAIL_OP_CANCEL);
+            await process(EMAIL_OP_APPLY);
+
+            expect((await stateRows()).length).toBe(1);
+            expect((await lockRows()).length).toBe(1);
+        });
+    });
+
+    describe("cancel hint", () => {
+        it("should append the cancel hint to every outgoing email", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            expect(sent.length).toBeGreaterThan(0);
+            for (const m of sent) {
+                expect(m.text).toContain("结束本次友链申请");
+            }
         });
     });
 });

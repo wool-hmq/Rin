@@ -6,6 +6,7 @@ import type { DB } from "../core/hono-types";
 export const EMAIL_OP_APPLY = "友链申请";
 export const EMAIL_OP_MODIFY = "友链修改";
 export const EMAIL_OP_DELETE = "友链删除";
+export const EMAIL_OP_CANCEL = "结束本次友链申请";
 export const EMAIL_CONFIRM_TRIGGER = "请你进行下一步验证";
 
 // ---- Storage types in `cache` table ----
@@ -52,6 +53,12 @@ function generateCode(length = 8): string {
         code += CODE_CHARS[random[i] % CODE_CHARS.length];
     }
     return code;
+}
+
+const CANCEL_HINT = `\n\n————————————\n如需结束本次申请，可回复正文：${EMAIL_OP_CANCEL}`;
+
+function notify(deps: FriendEmailDeps, to: string, subject: string, text: string): Promise<void> {
+    return deps.send(to, subject, text + CANCEL_HINT).catch(() => {});
 }
 
 function normalizeUrl(raw: string): string | null {
@@ -220,7 +227,7 @@ async function terminate(
         await deleteState(deps.db, sender);
     }
     await releaseLock(deps.db);
-    await deps.send(sender, "友链申请已终止", message).catch(() => {});
+    await notify(deps, sender, "友链申请已终止", message);
 }
 
 function jsonTemplateFor(op: "apply" | "modify" | "delete"): string {
@@ -302,6 +309,18 @@ export async function processFriendEmail(
             );
             return;
         }
+
+        // Force-terminate on explicit cancel request.
+        if (firstLine(body) === EMAIL_OP_CANCEL) {
+            console.log("[friend-email] cancel requested, terminating");
+            await terminate(
+                deps,
+                sender,
+                state,
+                "已结束本次友链申请。如需重新申请，请重新发送「友链申请 / 友链修改 / 友链删除」。",
+            );
+            return;
+        }
     }
 
     // ---- Idle: begin a new application ----
@@ -321,9 +340,7 @@ export async function processFriendEmail(
         const applicationExpiresAt = now + APPLICATION_TIMEOUT_MS;
         const acquired = await acquireLock(deps.db, sender, applicationExpiresAt, now);
         if (!acquired) {
-            await deps
-                .send(sender, "友链申请处理中", "当前有另一位申请者正在处理中，请 20 分钟后再试。")
-                .catch(() => {});
+            await notify(deps, sender, "友链申请处理中", "当前有另一位申请者正在处理中，请 20 分钟后再试。");
             return;
         }
 
@@ -337,16 +354,15 @@ export async function processFriendEmail(
             sender,
         };
         await saveState(deps.db, sender, newState);
-        await deps
-            .send(
-                sender,
-                "友链申请 - 请回复 JSON 模板",
-                `收到你的${command === EMAIL_OP_APPLY ? "友链申请" : command === EMAIL_OP_MODIFY ? "友链修改" : "友链删除"}请求。\n\n` +
-                    `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
-                    jsonTemplateFor(op) +
-                    `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`,
-            )
-            .catch(() => {});
+        await notify(
+            deps,
+            sender,
+            "友链申请 - 请回复 JSON 模板",
+            `收到你的${command === EMAIL_OP_APPLY ? "友链申请" : command === EMAIL_OP_MODIFY ? "友链修改" : "友链删除"}请求。\n\n` +
+                `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
+                jsonTemplateFor(op) +
+                `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`,
+        );
         return;
     }
 
@@ -397,15 +413,14 @@ export async function processFriendEmail(
         console.log(`[friend-email] JSON accepted, op=${state.op} targets=${targets.map(t => t.url).join(",")}`);
 
         const first = targets[0];
-        await deps
-            .send(
-                sender,
-                "友链申请 - 站点验证",
-                `请在站点 ${first.url} 的根目录创建文件 ${first.code}.html（文件内容随意），使以下地址可访问：\n\n${first.url}/${first.code}.html\n\n` +
-                    `创建完成后，回复本邮件，正文必须为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
-                    `验证码 ${first.code} 将在 10 分钟内有效。`,
-            )
-            .catch(() => {});
+        await notify(
+            deps,
+            sender,
+            "友链申请 - 站点验证",
+            `请在站点 ${first.url} 的根目录创建文件 ${first.code}.html（文件内容随意），使以下地址可访问：\n\n${first.url}/${first.code}.html\n\n` +
+                `创建完成后，回复本邮件，正文必须为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
+                `验证码 ${first.code} 将在 10 分钟内有效。`,
+        );
         return;
     }
 
@@ -413,13 +428,12 @@ export async function processFriendEmail(
     if (state.stage === "verifying") {
         if (firstLine(body) !== EMAIL_CONFIRM_TRIGGER) {
             console.log("[friend-email] verifying stage but body is not the confirm trigger");
-            await deps
-                .send(
-                    sender,
-                    "友链申请 - 验证提示",
-                    `当前正在进行站点验证。请在站点根目录创建对应的 .html 验证文件后，回复正文为：\n\n${EMAIL_CONFIRM_TRIGGER}`,
-                )
-                .catch(() => {});
+            await notify(
+                deps,
+                sender,
+                "友链申请 - 验证提示",
+                `当前正在进行站点验证。请在站点根目录创建对应的 .html 验证文件后，回复正文为：\n\n${EMAIL_CONFIRM_TRIGGER}`,
+            );
             return;
         }
 
@@ -441,15 +455,14 @@ export async function processFriendEmail(
         // Anything other than 404 (including 200/30x) proves the applicant controls the domain.
         if (status === 404 || status === 0) {
             console.log("[friend-email] verification probe failed");
-            await deps
-                .send(
-                    sender,
-                    "友链申请 - 验证失败",
-                    `无法访问 ${probeUrl}（当前状态 ${status === 0 ? "网络错误/超时" : "404"}）。\n\n` +
-                        `请确认已创建 ${target.code}.html 文件后，重新回复：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
-                        `验证码将在 10 分钟内有效，超时后申请自动结束。`,
-                )
-                .catch(() => {});
+            await notify(
+                deps,
+                sender,
+                "友链申请 - 验证失败",
+                `无法访问 ${probeUrl}（当前状态 ${status === 0 ? "网络错误/超时" : "404"}）。\n\n` +
+                    `请确认已创建 ${target.code}.html 文件后，重新回复：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
+                    `验证码将在 10 分钟内有效，超时后申请自动结束。`,
+            );
             return;
         }
 
@@ -460,15 +473,14 @@ export async function processFriendEmail(
             state.deadline = now + VERIFY_TIMEOUT_MS;
             await saveState(deps.db, sender, state);
             console.log(`[friend-email] first target passed, moving to ${next.url}`);
-            await deps
-                .send(
-                    sender,
-                    "友链申请 - 站点验证（下一步）",
-                    `第一个站点验证通过。\n\n请在站点 ${next.url} 的根目录创建文件 ${next.code}.html（文件内容随意），使以下地址可访问：\n\n${next.url}/${next.code}.html\n\n` +
-                        `创建完成后，回复正文为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
-                        `验证码 ${next.code} 将在 10 分钟内有效。`,
-                )
-                .catch(() => {});
+            await notify(
+                deps,
+                sender,
+                "友链申请 - 站点验证（下一步）",
+                `第一个站点验证通过。\n\n请在站点 ${next.url} 的根目录创建文件 ${next.code}.html（文件内容随意），使以下地址可访问：\n\n${next.url}/${next.code}.html\n\n` +
+                    `创建完成后，回复正文为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
+                    `验证码 ${next.code} 将在 10 分钟内有效。`,
+            );
             return;
         }
 
@@ -484,9 +496,7 @@ export async function processFriendEmail(
         await deps.notifyOwner?.(state.op, state.payload, sender).catch(() => {});
         await deleteState(deps.db, sender);
         await releaseLock(deps.db);
-        await deps
-            .send(sender, "友链申请 - 成功", `「${opLabel}」已成功完成。`)
-            .catch(() => {});
+        await notify(deps, sender, "友链申请 - 成功", `「${opLabel}」已成功完成。`);
         return;
     }
 }
