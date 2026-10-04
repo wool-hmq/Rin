@@ -4,6 +4,7 @@ import type { AppContext, Variables } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { setJWTCookie, clearJWTCookie } from "../core/hono-middleware";
 import { setCookie } from "hono/cookie";
+import { sendEmail } from "../utils/email";
 import { users, linkedAccounts } from "../db/schema";
 import { emailCodeStore, cleanExpiredCodes } from "./email-code-store";
 import {
@@ -19,33 +20,6 @@ async function hashPassword(password: string): Promise<string> {
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function sendEmailViaSMTP(env: Env, to: string, subject: string, text: string): Promise<void> {
-    const resendUrl = env.EMAIL_RESEND_URL;
-    const resendPass = env.EMAIL_RESEND_PASS;
-
-    if (!resendUrl || !resendPass) {
-        throw new Error('Email service is not configured: EMAIL_RESEND_URL and EMAIL_RESEND_PASS are required');
-    }
-
-    const resp = await fetch(resendUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            to,
-            subject,
-            text,
-            pass: resendPass,
-        }),
-    });
-
-    if (!resp.ok) {
-        const errText = await resp.text().catch(() => '');
-        throw new Error(`Email service error ${resp.status}: ${errText}`);
-    }
 }
 
 export function PasswordAuthService(): Hono<{
@@ -224,7 +198,7 @@ export function PasswordAuthService(): Hono<{
         const text = `Your verification code is: ${code}\n\nThis code will expire in 5 minutes.`;
 
         try {
-            await sendEmailViaSMTP(env, email, subject, text);
+            await sendEmail(env, email, subject, text);
         } catch (err: any) {
             throw new InternalServerError(`Failed to send email: ${err.message}`);
         }
