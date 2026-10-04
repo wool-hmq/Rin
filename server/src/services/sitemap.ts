@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import type { AppContext, DB } from "../core/hono-types";
 import { feedHashtags, feeds, friends, hashtags, moments } from "../db/schema";
 import { path_join } from "../utils/path";
+import { extractTargetUrl } from "../utils/url";
 import { getStorageObject, putStorageObjectAtKey } from "../utils/storage";
 
 const SITEMAP_CACHE_FOLDER = "cache/";
@@ -44,18 +45,6 @@ function hasConfiguredBaseUrl(env: Env): boolean {
   return Boolean(env.FRONTEND_URL?.trim());
 }
 
-// 从友链 URL 中提取目标地址（to 参数），无 to 则返回原 URL
-function extractFriendTargetUrl(friendUrl: string): string {
-  try {
-    const url = new URL(friendUrl);
-    const to = url.searchParams.get("to");
-    if (to && to.length > 0) return to;
-    return friendUrl;
-  } catch {
-    return friendUrl;
-  }
-}
-
 // 友链 sitemap 自定义命名空间：附赠站点名称与简介，帮助爬虫识别这是友链 sitemap
 const FRIENDS_SITEMAP_NS = "https://jiaoblog.dpdns.org/friends-sitemap-ns";
 
@@ -69,7 +58,7 @@ async function generateFriendsSitemapXml(env: Env, db: DB): Promise<string> {
   const urls: string[] = [];
 
   for (const friend of friendRows) {
-    const loc = escapeXml(extractFriendTargetUrl(friend.url));
+    const loc = escapeXml(extractTargetUrl(friend.url));
     const lastmodStr = formatLastMod(friend.updatedAt);
     const name = escapeXml(friend.name ?? "");
     const desc = friend.desc ? escapeXml(friend.desc) : null;

@@ -236,4 +236,69 @@ describe("processFriendEmail", () => {
             }
         });
     });
+
+    describe("redirect to param", () => {
+        const REDIRECT_URL = "https://link.jiaoblog.dpdns.org/?from=x&to=https://old.example.com&safe=f";
+
+        it("should delete by matching the to param of a redirect link", async () => {
+            sqlite.exec(`
+                INSERT INTO friends (name, desc, avatar, url, uid, accepted, sort_order)
+                VALUES ('Old', 'd', 'icon', '${REDIRECT_URL}', 1, 1, 0)
+            `);
+
+            await process(EMAIL_OP_DELETE);
+            await process(JSON.stringify({ url: REDIRECT_URL }));
+
+            const targetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(targetMatch).not.toBeNull();
+
+            probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            expect((await friendsTable()).length).toBe(0);
+        });
+
+        it("should match when the user provides the real URL instead of the redirect link", async () => {
+            sqlite.exec(`
+                INSERT INTO friends (name, desc, avatar, url, uid, accepted, sort_order)
+                VALUES ('Old', 'd', 'icon', '${REDIRECT_URL}', 1, 1, 0)
+            `);
+
+            await process(EMAIL_OP_DELETE);
+            await process(JSON.stringify({ url: "https://old.example.com" }));
+
+            const targetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(targetMatch).not.toBeNull();
+
+            probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            expect((await friendsTable()).length).toBe(0);
+        });
+
+        it("should modify by matching the old URL via to param", async () => {
+            sqlite.exec(`
+                INSERT INTO friends (name, desc, avatar, url, uid, accepted, sort_order)
+                VALUES ('Old', 'd', 'icon', '${REDIRECT_URL}', 1, 1, 0)
+            `);
+
+            await process(EMAIL_OP_MODIFY);
+            await process(JSON.stringify({ oldUrl: REDIRECT_URL, newUrl: "https://new.example.com", avatar: "i", name: "New", desc: "hi" }));
+
+            const firstTargetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(firstTargetMatch).not.toBeNull();
+            probeResults[`https://old.example.com/${firstTargetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            const secondTargetMatch = sent[2].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(secondTargetMatch).not.toBeNull();
+            probeResults[`https://new.example.com/${secondTargetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            const rows = await friendsTable();
+            expect(rows.length).toBe(1);
+            expect(rows[0].name).toBe("New");
+            expect(rows[0].url).toBe("https://new.example.com");
+        });
+    });
 });

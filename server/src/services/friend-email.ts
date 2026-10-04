@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { cache, friends } from "../db/schema";
 import type { DB } from "../core/hono-types";
+import { extractTargetUrl } from "../utils/url";
 
 // ---- Supported operations (exact body) ----
 export const EMAIL_OP_APPLY = "友链申请";
@@ -71,7 +72,11 @@ function normalizeUrl(raw: string): string | null {
         const parsed = new URL(value);
         if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
         if (!parsed.hostname) return null;
-        return (parsed.origin + parsed.pathname).replace(/\/+$/, "");
+        // If this is a redirect link (e.g. https://link.example.com/?...&to=https://real.com),
+        // extract the real target from the `to` param.
+        const target = extractTargetUrl(value);
+        const targetParsed = new URL(target);
+        return (targetParsed.origin + targetParsed.pathname).replace(/\/+$/, "");
     } catch {
         return null;
     }
@@ -240,11 +245,24 @@ function jsonTemplateFor(op: "apply" | "modify" | "delete"): string {
     return JSON.stringify({ url: "站点URL" });
 }
 
+// Match a friend by its normalized URL, so redirect links stored in the DB
+// (e.g. https://link.example.com/?...&to=https://real.com) still match the
+// real target extracted from the `to` param.
+async function findFriendByUrl(db: DB, url: string) {
+    const normalized = normalizeUrl(url);
+    if (!normalized) return null;
+    const all = await db.select().from(friends);
+    for (const row of all) {
+        if (normalizeUrl(row.url) === normalized) return row;
+    }
+    return null;
+}
+
 async function applyDbChange(db: DB, op: "apply" | "modify" | "delete", payload: Record<string, unknown>): Promise<void> {
     if (op === "apply") {
         const url = normalizeUrl(String(payload.url))!;
-        const urlMatched = await db.select({ id: friends.id }).from(friends).where(eq(friends.url, url));
-        if (urlMatched.length > 0) {
+        const existing = await findFriendByUrl(db, url);
+        if (existing) {
             throw new Error("友链已存在");
         }
         await db.insert(friends).values({
@@ -259,7 +277,10 @@ async function applyDbChange(db: DB, op: "apply" | "modify" | "delete", payload:
     } else if (op === "modify") {
         const oldUrl = normalizeUrl(String(payload.oldUrl))!;
         const newUrl = normalizeUrl(String(payload.newUrl))!;
-        await db.delete(friends).where(eq(friends.url, oldUrl));
+        const existing = await findFriendByUrl(db, oldUrl);
+        if (existing) {
+            await db.delete(friends).where(eq(friends.id, existing.id));
+        }
         await db.insert(friends).values({
             name: String(payload.name),
             desc: String(payload.desc),
@@ -271,7 +292,10 @@ async function applyDbChange(db: DB, op: "apply" | "modify" | "delete", payload:
         });
     } else {
         const url = normalizeUrl(String(payload.url))!;
-        await db.delete(friends).where(eq(friends.url, url));
+        const existing = await findFriendByUrl(db, url);
+        if (existing) {
+            await db.delete(friends).where(eq(friends.id, existing.id));
+        }
     }
 }
 
