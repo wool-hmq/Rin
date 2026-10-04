@@ -28,6 +28,7 @@ Notes:
 - Modifying requires two verifications, one code for the old site and one for the new site.
 - Replying `结束本次友链申请` at any stage terminates the current application and frees the slot for others.
 - Every system email ends with the cancel hint so applicants can abort at any time.
+- Site URLs support redirect links: if a URL looks like `https://link.your-domain/?...&to=https://real-site&...`, the system extracts the real address from the `to` param for matching, so modify/delete works whether you provide the redirect link or the real URL.
 - Outbound emails are sent by the Rin-Email service on Vercel, sharing the existing `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`.
 
 ## Prerequisites
