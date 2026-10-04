@@ -1,10 +1,18 @@
-import PostalMime from "postal-mime";
+import PostalMimeModule from "postal-mime";
 import { drizzle } from "drizzle-orm/d1";
 import { CacheImpl } from "../utils/cache";
 import { sendEmail } from "../utils/email";
 import { notify } from "../utils/webhook";
 import { resolveWebhookConfig } from "../services/config-helpers";
 import { processFriendEmail } from "../services/friend-email";
+
+// postal-mime's UMD factory returns { default: PostalMime }, and bundlers wrap
+// that again, so the class can sit at `.default` or `.default.default` depending
+// on the runtime's CJS/ESM interop. Resolve it defensively so it works both in
+// bun (tests) and in the esbuild-bundled Worker.
+const PostalMime = (PostalMimeModule as any)?.default?.default
+    ?? (PostalMimeModule as any)?.default
+    ?? PostalMimeModule;
 
 const PROBE_TIMEOUT_MS = 8 * 1000;
 
