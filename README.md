@@ -1,5 +1,7 @@
 ![Cover](./docs/docs/public/rin-logo.png)
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wool-hmq/Rin)
+
 English | [简体中文](./README_zh_CN.md)
 
 [![Ask DeepWiki](https://pic1.imgdb.cn/i/034YqRniL3rFn8RORsOh6q.svg)](https://deepwiki.com/wool-hmq/Rin)
