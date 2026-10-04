@@ -20,11 +20,14 @@ Visitors email your dedicated address (e.g. `friend-request@your-domain.com`). R
 | Apply | `友链申请` | `name`, `url` (site URL), `avatar` (site icon URL), `desc` (site description) |
 | Modify | `友链修改` | `oldUrl`, `newUrl`, `avatar`, `name`, `desc` |
 | Delete | `友链删除` | `url` (site URL) |
+| Cancel | `结束本次友链申请` | none (terminates the current application immediately) |
 
 Notes:
 
 - The reply body must contain **only** that JSON.
 - Modifying requires two verifications, one code for the old site and one for the new site.
+- Replying `结束本次友链申请` at any stage terminates the current application and frees the slot for others.
+- Every system email ends with the cancel hint so applicants can abort at any time.
 - Outbound emails are sent by the Rin-Email service on Vercel, sharing the existing `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`.
 
 ## Prerequisites
