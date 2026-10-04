@@ -47,6 +47,7 @@ export async function handleEmail(
     env: Env,
     ctx: ExecutionContext,
 ): Promise<void> {
+    console.log(`[friend-email] email handler invoked from=${message.from} to=${message.to} rawSize=${message.rawSize}`);
     let mail: { from: string; to: string; text: string };
     try {
         mail = await parseIncoming(message);
@@ -56,8 +57,12 @@ export async function handleEmail(
     }
 
     if (!mail.from) {
+        console.log("[friend-email] no sender address, ignoring");
         return;
     }
+
+    const preview = (mail.text || "").replace(/\s+/g, " ").slice(0, 120);
+    console.log(`[friend-email] parsed textLen=${mail.text.length} preview=${JSON.stringify(preview)}`);
 
     try {
         const schema = await import("../db/schema");

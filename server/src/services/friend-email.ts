@@ -277,17 +277,23 @@ export async function processFriendEmail(
     if (!sender) return;
 
     const enable = await deps.configGet("friend_email_apply_enable", true).catch(() => true);
+    console.log(`[friend-email] sender=${sender} enable=${enable} bodyLen=${(mail.text || "").length}`);
     if (!enable) return;
 
     const body = cleanBody(mail.text || "");
-    if (!body) return;
+    if (!body) {
+        console.log("[friend-email] empty body after cleaning, ignoring");
+        return;
+    }
 
     const state = await loadState(deps.db, sender);
+    console.log(`[friend-email] state=${state ? `${state.op}/${state.stage}` : "none"}`);
 
     // Any staged application that passed its deadlines is ended here.
     if (state) {
         const expired = state.expiresAt <= now || state.deadline <= now;
         if (expired) {
+            console.log("[friend-email] state expired, terminating");
             await terminate(
                 deps,
                 sender,
@@ -306,7 +312,11 @@ export async function processFriendEmail(
             : command === EMAIL_OP_MODIFY ? "modify"
             : command === EMAIL_OP_DELETE ? "delete"
             : null;
-        if (!op) return;
+        if (!op) {
+            console.log(`[friend-email] no matching op for command=${JSON.stringify(command)}`);
+            return;
+        }
+        console.log(`[friend-email] starting op=${op}`);
 
         const applicationExpiresAt = now + APPLICATION_TIMEOUT_MS;
         const acquired = await acquireLock(deps.db, sender, applicationExpiresAt, now);
@@ -344,6 +354,7 @@ export async function processFriendEmail(
     if (state.stage === "awaiting_json") {
         const payload = extractJson(body);
         if (!payload) {
+            console.log("[friend-email] JSON extraction failed, terminating");
             await terminate(
                 deps,
                 sender,
@@ -358,6 +369,7 @@ export async function processFriendEmail(
             : state.op === "modify" ? validateModify(payload)
             : validateDelete(payload);
         if (!valid) {
+            console.log("[friend-email] JSON validation failed, terminating");
             await terminate(
                 deps,
                 sender,
@@ -382,6 +394,7 @@ export async function processFriendEmail(
         state.stage = "verifying";
         state.deadline = now + VERIFY_TIMEOUT_MS;
         await saveState(deps.db, sender, state);
+        console.log(`[friend-email] JSON accepted, op=${state.op} targets=${targets.map(t => t.url).join(",")}`);
 
         const first = targets[0];
         await deps
@@ -399,6 +412,7 @@ export async function processFriendEmail(
     // ---- Verifying domain ownership ----
     if (state.stage === "verifying") {
         if (firstLine(body) !== EMAIL_CONFIRM_TRIGGER) {
+            console.log("[friend-email] verifying stage but body is not the confirm trigger");
             await deps
                 .send(
                     sender,
@@ -422,9 +436,11 @@ export async function processFriendEmail(
         } catch {
             status = 0;
         }
+        console.log(`[friend-email] probing ${probeUrl} status=${status}`);
 
         // Anything other than 404 (including 200/30x) proves the applicant controls the domain.
         if (status === 404 || status === 0) {
+            console.log("[friend-email] verification probe failed");
             await deps
                 .send(
                     sender,
@@ -443,6 +459,7 @@ export async function processFriendEmail(
             const next = state.verifyTargets[0];
             state.deadline = now + VERIFY_TIMEOUT_MS;
             await saveState(deps.db, sender, state);
+            console.log(`[friend-email] first target passed, moving to ${next.url}`);
             await deps
                 .send(
                     sender,
@@ -455,6 +472,7 @@ export async function processFriendEmail(
             return;
         }
 
+        console.log("[friend-email] all targets verified, applying DB change");
         try {
             await applyDbChange(deps.db, state.op, state.payload);
         } catch (err: any) {
