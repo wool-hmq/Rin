@@ -1,0 +1,164 @@
+{
+  "repo_notes": "Rin is a serverless blog platform built on Cloudflare Workers (Hono + Drizzle ORM + D1), with a React/Vite SPA client, a Bun/Turbo monorepo, and a custom CLI. The Worker entrypoint is server/src/_worker.ts which exports fetch, scheduled, queue, AND email event handlers. The email handler receives Cloudflare Email Routing mail and drives a per-sender state machine for self-service friend-link applications (apply/modify/delete) — see the Email Friend-Link Application page. Key conventions: (1) Services are Hono sub-apps registered in server/src/core/register-routes.ts. (2) The cache table (server/src/db/schema.ts) uses a `type` column to namespace entries — important types include 'cache', 'server.config', 'client.config', 'friend.email' (per-sender friend-link application state) and 'friend.email.lock' (global concurrency lock). (3) Friend URLs may be redirect links like https://link.example.com/?...&to=https://real.com — always extract the `to` param via server/src/utils/url.ts extractTargetUrl() before matching. (4) Email-sourced friend links resolve their owner uid by matching the applicant's email against users.email; if no account matches, they fall back to a dedicated self-service account (default uid 7, configurable via friend_email_owner_uid server config). (5) Outbound email is sent via the Vercel-hosted Rin-Email service using EMAIL_RESEND_URL/EMAIL_RESEND_PASS (shared with email-code login). (6) The CLI (cli/src/tasks/deploy-cf.ts) generates wrangler.toml and runs D1 migrations from server/sql/*.sql; migration version is tracked in the info table. (7) Tests: server uses bun:test with in-memory SQLite fixtures (server/tests/fixtures); client uses Vitest with jsdom.",
+  "pages": [
+    {
+      "title": "Overview",
+      "path": "overview"
+    },
+    {
+      "title": "Getting Started & Local Development",
+      "path": "getting-started",
+      "parent": "Overview"
+    },
+    {
+      "title": "Monorepo Structure & Shared Packages",
+      "path": "monorepo-structure",
+      "parent": "Overview"
+    },
+    {
+      "title": "Environment Variables & Configuration Sources",
+      "path": "environment-variables",
+      "parent": "Overview"
+    },
+    {
+      "title": "Server Architecture",
+      "path": "server-architecture"
+    },
+    {
+      "title": "Worker Runtime, Routing & Middleware",
+      "path": "worker-runtime",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Email Friend-Link Application",
+      "path": "email-friend-apply",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Database Schema & Migrations",
+      "path": "database-schema",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Feed & Content Services",
+      "path": "feed-content-services",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Caching, PV/UV and HyperLogLog",
+      "path": "caching-pv-uv",
+      "parent": "Feed & Content Services"
+    },
+    {
+      "title": "RSS, Favicon & SEO Rendering",
+      "path": "rss-favicon-seo",
+      "parent": "Feed & Content Services"
+    },
+    {
+      "title": "Authentication & Users",
+      "path": "authentication-users",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Comments, Friends & Webhooks",
+      "path": "comments-friends-webhooks",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Storage, Images & R2 Management",
+      "path": "storage-images-r2",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "AI Subsystem",
+      "path": "ai-subsystem",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Server Configuration Service & Health",
+      "path": "server-config-health",
+      "parent": "Server Architecture"
+    },
+    {
+      "title": "Client Application",
+      "path": "client-application"
+    },
+    {
+      "title": "Bootstrap, Routing & Global State",
+      "path": "client-bootstrap",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Reading Pages: Feeds, Feed Detail, Timeline, Friends",
+      "path": "client-reading-pages",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Writing & Markdown Pipeline",
+      "path": "client-writing-markdown",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Comment System Integrations",
+      "path": "client-comments",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Admin: Settings, Health, Queue & Compat Tasks",
+      "path": "client-admin",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Auth & Account UI",
+      "path": "client-auth-ui",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Design System: Header, Layout & UI Components",
+      "path": "client-design-system",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Internationalization",
+      "path": "client-i18n",
+      "parent": "Client Application"
+    },
+    {
+      "title": "Tooling, CI/CD & Testing",
+      "path": "tooling-cicd-testing"
+    },
+    {
+      "title": "Rin CLI & Scripts",
+      "path": "rin-cli",
+      "parent": "Tooling, CI/CD & Testing"
+    },
+    {
+      "title": "CI/CD Pipelines & Deployment",
+      "path": "cicd-pipelines",
+      "parent": "Tooling, CI/CD & Testing"
+    },
+    {
+      "title": "Testing Strategy",
+      "path": "testing-strategy",
+      "parent": "Tooling, CI/CD & Testing"
+    },
+    {
+      "title": "Documentation Site & Specs",
+      "path": "docs-site-specs",
+      "parent": "Tooling, CI/CD & Testing"
+    },
+    {
+      "title": "Glossary",
+      "path": "glossary"
+    }
+  ],
+  "page_notes": {
+    "worker-runtime": "CRITICAL: The Worker entrypoint server/src/_worker.ts exports FOUR event handlers: fetch, scheduled, queue, AND email. The email handler (handleEmail in server/src/runtime/email-handler.ts) receives Cloudflare Email Routing mail via the email() export, parses MIME with postal-mime, and delegates to the friend-email state machine. Make sure to document the email handler alongside fetch/scheduled/queue. Also document the request classification pipeline in fetch-handler.ts (isApiRequest, isRootFeedRequest, isAppPublicRoute, isMetaRoute with APP_META_ROUTE_PATTERN covering sitemap.xml/friends-sitemap.xml/robots.txt, isStaticAssetRequest, serveSpaEntry).",
+    "email-friend-apply": "This is a major feature. Document: (1) The email() handler in _worker.ts and handleEmail in server/src/runtime/email-handler.ts (parses raw MIME via postal-mime, buffers message.raw once). (2) The state machine in server/src/services/friend-email.ts (processFriendEmail) — per-sender states: idle -> awaiting_json -> verifying -> done. (3) Exact-body trigger commands: 友链申请/友链修改/友链删除 to start, JSON template reply, 请你进行下一步验证 to confirm file creation, 结束本次友链申请 to force-terminate. (4) Domain verification: generates 8-char code, asks applicant to create {code}.html at site root, then GETs {url}/{code}.html — any non-404 status passes. (5) Modify uses TWO codes (old + new site) verified sequentially. (6) Concurrency=1 via D1 cache lock (type 'friend.email.lock', key 'global'); 10-min verify window, 30-min total window. (7) Cache table types: 'friend.email' (key=sender email, stores state JSON) and 'friend.email.lock'. (8) Owner UID resolution: applicant email matched against users.email -> that account's uid; otherwise default uid 7 (configurable via friend_email_owner_uid). (9) Friend URL matching uses extractTargetUrl (server/src/utils/url.ts) to handle redirect links with `to` param. (10) Outbound email via sendEmail (server/src/utils/email.ts) using EMAIL_RESEND_URL/EMAIL_RESEND_PASS. (11) Optional toggle: friend_email_apply_enable server config.",
+    "database-schema": "Document ALL tables in server/src/db/schema.ts. CRITICAL: The cache table (lines 112-123) has a `type` column for namespacing — important values include 'cache', 'server.config', 'client.config', 'friend.email' (per-sender friend-link application state JSON), and 'friend.email.lock' (global concurrency lock). The unique constraint is on (key, type). Also document the friends table (uid is NOT NULL, references users.id — email-sourced friends use a dedicated uid). Migration files are in server/sql/*.sql with version tracked in the info table under 'migration_version'.",
+    "comments-friends-webhooks": "Document BOTH friend-link paths: (1) HTTP-based via FriendService (server/src/services/friends.ts) — POST/GET/PUT/DELETE /friend with admin/uid auth, webhook notifications. (2) Email-based self-service via friend-email.ts (see the Email Friend-Link Application page for full details). The friendCrontab health check runs every 20 minutes. Friend URLs may be redirect links — always extract the `to` param for matching.",
+    "server-architecture": "The Worker entrypoint is server/src/_worker.ts (NOT server/index.ts or server/src/hono-app.ts). It exports fetch, scheduled, queue, and email handlers. The email handler is a recent addition for self-service friend-link applications. Make sure the architecture diagram and description include the email event path alongside the HTTP fetch path.",
+    "rin-cli": "The CLI (cli/bin/rin.ts) has commands: dev, deploy, db migrate, release. The deploy command (cli/src/tasks/deploy-cf.ts) generates wrangler.toml, runs D1 migrations from server/sql/*.sql, and calls syncWorkerSecrets. The setup-dev command (cli/src/tasks/setup-dev.ts) generates wrangler.toml, .dev.vars, and client/.env from .env.local. Document the 10214 retry logic in syncWorkerSecrets (Cloudflare version deployment race).",
+    "cicd-pipelines": "CI uses GitHub Actions (.github/workflows/deploy.yml) with bun 1.3.13. Production deploys via 'bun run deploy', otherwise 'bun run deploy --preview'. The deploy workflow is triggered on push to main. Document the email routing setup requirement (Cloudflare dashboard) for the friend-link email feature."
+  }
+}
