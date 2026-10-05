@@ -44,11 +44,25 @@ Notes:
 - **30-minute total window**: an application must finish within 30 minutes of starting.
 - **Invalid JSON or site URL**: Rin emails the visitor about the error and terminates the application.
 - Verification accepts any response other than 404 (200, 30x, etc.); network errors/timeouts count as not passed and can be retried within the window.
-- Email-completed friend links use `uid` = admin and `accepted` = `1`, with no backend review step.
+- Email-completed friend links have `accepted` = `1`, with no backend review step. Their owner `uid` is resolved as described below.
 
 ## Optional toggle
 
 - `friend_email_apply_enable` (database config, `server.config`): set `false` to disable; default `true`. Write it via the admin settings page or `serverConfig`.
+
+## Owner UID (which account owns self-service friend links)
+
+For friend links created via email, the owner `uid` is resolved as follows:
+
+1. **Applicant email is bound to an account**: if the applicant's email matches a `users.email` row, the friend link is owned by that account's `uid`.
+2. **No bound account**: otherwise it is owned by a dedicated self-service account, default `uid = 7`.
+
+### How to customize
+
+- **Option 1 (recommended, no code change)**: write `friend_email_owner_uid` in the admin settings or `serverConfig`, set to the desired account `uid` (e.g. `7`).
+- **Option 2 (change the code default)**: edit the `DEFAULT_EMAIL_OWNER_UID` constant in `server/src/services/friend-email.ts` (default `7`).
+
+> Note: in either case, make sure the target `uid` account exists, otherwise the insert fails on the foreign key constraint.
 
 ## Post-deploy verification
 
