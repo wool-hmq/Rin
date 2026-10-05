@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { cache, friends } from "../db/schema";
+import { cache, friends, users } from "../db/schema";
 import type { DB } from "../core/hono-types";
 import { extractTargetUrl } from "../utils/url";
 
@@ -10,13 +10,15 @@ export const EMAIL_OP_DELETE = "友链删除";
 export const EMAIL_OP_CANCEL = "结束本次友链申请";
 export const EMAIL_CONFIRM_TRIGGER = "请你进行下一步验证";
 
+// Default owner UID for self-service friend links when the applicant's email
+// is not bound to any account. Override via the `friend_email_owner_uid`
+// server config key, or change this constant.
+const DEFAULT_EMAIL_OWNER_UID = 7;
+
 // ---- Storage types in `cache` table ----
 const STATE_TYPE = "friend.email";
 const LOCK_TYPE = "friend.email.lock";
 const LOCK_KEY = "global";
-
-// Email-sourced friend links are owned by the admin account.
-const EMAIL_OWNER_UID = 1;
 
 // Domain verification must finish within 10 minutes of the last instruction.
 const VERIFY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -258,7 +260,26 @@ async function findFriendByUrl(db: DB, url: string) {
     return null;
 }
 
-async function applyDbChange(db: DB, op: "apply" | "modify" | "delete", payload: Record<string, unknown>): Promise<void> {
+// Resolve the owner UID for a self-service friend link:
+// - If the applicant's email is bound to an account, use that account's UID.
+// - Otherwise, use the configured default (a dedicated self-service account).
+async function resolveOwnerUid(db: DB, configGet: FriendEmailDeps["configGet"], sender: string): Promise<number> {
+    const bound = await db.select({ id: users.id }).from(users).where(eq(users.email, sender)).limit(1);
+    if (bound && bound.length > 0) {
+        return bound[0].id;
+    }
+    const configured = await configGet("friend_email_owner_uid", DEFAULT_EMAIL_OWNER_UID);
+    return typeof configured === "number" ? configured : DEFAULT_EMAIL_OWNER_UID;
+}
+
+async function applyDbChange(
+    db: DB,
+    configGet: FriendEmailDeps["configGet"],
+    op: "apply" | "modify" | "delete",
+    payload: Record<string, unknown>,
+    sender: string,
+): Promise<void> {
+    const uid = await resolveOwnerUid(db, configGet, sender);
     if (op === "apply") {
         const url = normalizeUrl(String(payload.url))!;
         const existing = await findFriendByUrl(db, url);
@@ -270,7 +291,7 @@ async function applyDbChange(db: DB, op: "apply" | "modify" | "delete", payload:
             desc: String(payload.desc),
             avatar: String(payload.avatar),
             url,
-            uid: EMAIL_OWNER_UID,
+            uid,
             accepted: 1,
             sort_order: 0,
         });
@@ -286,7 +307,7 @@ async function applyDbChange(db: DB, op: "apply" | "modify" | "delete", payload:
             desc: String(payload.desc),
             avatar: String(payload.avatar),
             url: newUrl,
-            uid: EMAIL_OWNER_UID,
+            uid,
             accepted: 1,
             sort_order: 0,
         });
@@ -510,7 +531,7 @@ export async function processFriendEmail(
 
         console.log("[friend-email] all targets verified, applying DB change");
         try {
-            await applyDbChange(deps.db, state.op, state.payload);
+            await applyDbChange(deps.db, deps.configGet, state.op, state.payload, sender);
         } catch (err: any) {
             await terminate(deps, sender, state, `无法完成数据库变更：${err.message}`);
             return;

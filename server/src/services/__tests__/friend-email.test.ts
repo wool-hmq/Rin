@@ -90,7 +90,7 @@ describe("processFriendEmail", () => {
             expect(rows.length).toBe(1);
             expect(rows[0].name).toBe("Friend");
             expect(rows[0].url).toBe("https://friend.com");
-            expect(rows[0].uid).toBe(1);
+            expect(rows[0].uid).toBe(7);
             expect(rows[0].accepted).toBe(1);
 
             expect(sent.at(-1)!.subject).toContain("成功");
@@ -299,6 +299,41 @@ describe("processFriendEmail", () => {
             expect(rows.length).toBe(1);
             expect(rows[0].name).toBe("New");
             expect(rows[0].url).toBe("https://new.example.com");
+        });
+    });
+
+    describe("owner uid", () => {
+        it("should use the bound account UID when the applicant email matches a user", async () => {
+            sqlite.exec(`
+                INSERT INTO users (id, username, openid, email, avatar, permission)
+                VALUES (42, 'bound', 'gh_bound', 'bound@example.com', 'a.png', 0)
+            `);
+
+            await process(EMAIL_OP_APPLY, "bound@example.com");
+            await process(JSON.stringify({ name: "B", url: "https://b.example.com", avatar: "i", desc: "d" }), "bound@example.com");
+
+            const targetMatch = sent[1].text.match(/https:\/\/b\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(targetMatch).not.toBeNull();
+            probeResults[`https://b.example.com/${targetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER, "bound@example.com");
+
+            const rows = await friendsTable();
+            expect(rows.length).toBe(1);
+            expect(rows[0].uid).toBe(42);
+        });
+
+        it("should fall back to the default UID when no account matches", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+
+            const targetMatch = sent[1].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(targetMatch).not.toBeNull();
+            probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            const rows = await friendsTable();
+            expect(rows.length).toBe(1);
+            expect(rows[0].uid).toBe(7);
         });
     });
 });
