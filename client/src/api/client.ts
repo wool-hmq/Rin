@@ -22,6 +22,7 @@ import type {
   CreateCommentRequest,
   Friend,
   FriendListResponse,
+  FriendGroupsResponse,
   CreateFriendRequest,
   UpdateFriendRequest,
   Moment,
@@ -153,6 +154,7 @@ export type {
   CreateCommentRequest,
   Friend,
   FriendListResponse,
+  FriendGroupsResponse,
   CreateFriendRequest,
   UpdateFriendRequest,
   Moment,
@@ -454,6 +456,10 @@ class FriendAPI {
     return this.http.get<FriendListResponse>("/api/friend");
   }
 
+  // GET /api/friend/groups
+  async groups(): Promise<ApiResponse<FriendGroupsResponse>> {
+    return this.http.get<FriendGroupsResponse>("/api/friend/groups");
+  }
   // POST /api/friend
   async create(body: CreateFriendRequest): Promise<ApiResponse<Friend>> {
     return this.http.post<Friend>("/api/friend", body);

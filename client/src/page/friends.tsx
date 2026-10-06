@@ -1,5 +1,5 @@
 import i18next from "i18next";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from 'react-helmet';
 import { useTranslation } from "react-i18next";
 import { FlatActionButton, FlatPanel, Modal, SearchableSelect } from "@rin/ui";
@@ -27,6 +27,7 @@ type FriendItem = {
     accepted: number;
     health: string;
     sort_order?: number;
+    group: string;
 };
 
 async function publish({ name, avatar, desc, url, showAlert }: { name: string, avatar: string, desc: string, url: string, showAlert: ShowAlertType }) {
@@ -63,6 +64,10 @@ export function FriendsPage() {
     const [status, setStatus] = useState<'idle' | 'loading'>('loading')
     const ref = useRef(false)
     const { showAlert, AlertUI } = useAlert()
+    const rawGroups = config.get("friend_groups")
+    const groups: string[] = useMemo(() => Array.isArray(rawGroups) ? (rawGroups as string[]) : [], [rawGroups])
+    const rawOrder = config.get("friend_group_order")
+    const groupOrder: string[] = useMemo(() => Array.isArray(rawOrder) ? (rawOrder as string[]) : [], [rawOrder])
     useEffect(() => {
         if (ref.current) return
         client.friend.list().then(({ data }) => {
@@ -81,6 +86,20 @@ export function FriendsPage() {
         })
         ref.current = true
     }, [])
+
+    const availableGroups = useMemo(() => {
+        const groupSet = new Set<string>()
+        for (const friend of friendsAvailable) {
+            const g = friend.group || ""
+            groupSet.add(groups.includes(g) ? g : "")
+        }
+        const ordered = [
+            ...groupOrder.filter((g) => groupSet.has(g)),
+            ...[...groupSet].filter((g) => !groupOrder.includes(g)).sort((a, b) => a.localeCompare(b)),
+        ]
+        return ordered
+    }, [friendsAvailable, groups, groupOrder])
+
     function publishButton() {
         publish({ name, desc, avatar, url, showAlert })
     }
@@ -95,7 +114,14 @@ export function FriendsPage() {
         </Helmet>
         <Waiting for={friendsAvailable.length !== 0 || friendsUnavailable.length !== 0 || status === "idle"}>
             <main className="w-full flex flex-col justify-center items-center mb-8 t-primary ani-show">
-                <FriendList title={t('friends.title')} show={friendsAvailable.length > 0} friends={friendsAvailable} />
+                {availableGroups.map((group) => (
+                    <FriendList
+                        key={group}
+                        title={group || t('friends.title')}
+                        show={friendsAvailable.some((friend) => (friend.group || "") === group)}
+                        friends={friendsAvailable.filter((friend) => (friend.group || "") === group)}
+                    />
+                ))}
                 <FriendList title={t('friends.left')} show={friendsUnavailable.length > 0} friends={friendsUnavailable} />
                 <FriendList title={t('friends.review.waiting')} show={waitList.length > 0} friends={waitList} />
                 <FriendList title={t('friends.review.rejected')} show={refusedList.length > 0} friends={refusedList} />
@@ -152,6 +178,11 @@ function Friend({ friend }: { friend: FriendItem }) {
     const [url, setUrl] = useState(friend.url)
     const [status, setStatus] = useState(friend.accepted)
     const [sortOrder, setSortOrder] = useState(friend.sort_order || 0)
+    const [group, setGroup] = useState(friend.group || "")
+    const config = useContext(ClientConfigContext)
+    const rawGroups = config.get("friend_groups")
+    const groups: string[] = Array.isArray(rawGroups) ? (rawGroups as string[]) : []
+    const groupOptions = [t('friends.title'), ...groups]
     const [modalIsOpen, setIsOpen] = useState(false);
     const { showConfirm, ConfirmUI } = useConfirm()
     const { showAlert, AlertUI } = useAlert()
@@ -180,7 +211,8 @@ function Friend({ friend }: { friend: FriendItem }) {
             desc,
             url,
             accepted: status,
-            sort_order: sortOrder
+            sort_order: sortOrder,
+            group
         }).then(({ error }) => {
             if (error) {
                 showAlert(error.value as string)
@@ -190,7 +222,7 @@ function Friend({ friend }: { friend: FriendItem }) {
                 })
             }
         })
-    }, [avatar, name, desc, url, status, sortOrder])
+    }, [avatar, name, desc, url, status, sortOrder, group])
 
     const statusOption = [
         { value: -1, label: t('friends.review.rejected') },
@@ -267,6 +299,27 @@ function Friend({ friend }: { friend: FriendItem }) {
                                         setValue={(val) => setSortOrder(parseInt(val) || 0)} 
                                         placeholder={t('sort_order')}
                                         variant="flat"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex flex-row justify-between w-full items-center mt-2">
+                                <div className="flex flex-col">
+                                    <p className="text-lg dark:text-white">
+                                        {t('friends.group')}
+                                    </p>
+                                </div>
+                                <div className="flex flex-row items-center justify-center space-x-4">
+                                    <SearchableSelect
+                                        value={groupOptions.includes(group) ? group : t('friends.title')}
+                                        onChange={(nextValue) => {
+                                            setGroup(nextValue === t('friends.title') ? "" : nextValue)
+                                        }}
+                                        options={groupOptions.map((option) => ({
+                                            label: option,
+                                            value: option,
+                                        }))}
+                                        placeholder={t('friends.group')}
+                                        searchPlaceholder={t('friends.group')}
                                     />
                                 </div>
                             </div>

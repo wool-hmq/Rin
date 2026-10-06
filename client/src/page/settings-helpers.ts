@@ -87,6 +87,18 @@ export function normalizeSettingsState(
     }
   }
 
+  for (const arrayKey of ["friend_groups", "friend_group_order"]) {
+    const rawValue = clientConfig[arrayKey];
+    if (rawValue !== undefined && !Array.isArray(rawValue)) {
+      try {
+        const parsed = JSON.parse(rawValue as string);
+        clientConfig[arrayKey] = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        clientConfig[arrayKey] = [];
+      }
+    }
+  }
+
   if (hasStoredAiApiKey) {
     serverConfig["ai_summary.api_key"] = "";
   }

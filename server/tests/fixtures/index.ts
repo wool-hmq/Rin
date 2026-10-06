@@ -114,6 +114,7 @@ export function createMockDB() {
             accepted INTEGER DEFAULT 0 NOT NULL,
             health TEXT DEFAULT '' NOT NULL,
             sort_order INTEGER DEFAULT 0 NOT NULL,
+            "group" TEXT DEFAULT '' NOT NULL,
             created_at INTEGER DEFAULT (unixepoch()),
             updated_at INTEGER DEFAULT (unixepoch()),
             FOREIGN KEY (uid) REFERENCES users(id) ON DELETE CASCADE

@@ -208,6 +208,7 @@
   "friends": {
     "apply": "Apply for Friend Link",
     "create": "Create Friend Link",
+    "group": "Group",
     "left": "Left temporarily",
     "my_apply": "My Applications",
     "review": {
@@ -439,6 +440,15 @@
         "desc": "Allow other users to apply for friend links (requires review)",
         "title": "Friend Link Application"
       },
+      "groups": {
+        "add": "Add",
+        "add.placeholder": "New group name",
+        "delete": "Delete group",
+        "desc": "Manage friend link groups. 'Friends' is the default group and cannot be removed or renamed",
+        "rename": "Rename group",
+        "rename.prompt": "Enter the new group name",
+        "title": "Friend Link Group Management"
+      },
       "health": {
         "desc": "Enable accessibility check for friends' links",
         "title": "Friend Link Health Monitoring",
@@ -446,6 +456,12 @@
           "desc": "Set the User-Agent used for friend link accessibility check, default 'Rin-Check/1.0'",
           "title": "Friend Link Health Monitoring User-Agent"
         }
+      },
+      "order": {
+        "desc": "Set the display order of groups on the friends page",
+        "move_down": "Move down",
+        "move_up": "Move up",
+        "title": "Friend Link Group Order"
       },
       "title": "Friend Link Settings"
     },

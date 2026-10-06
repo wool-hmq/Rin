@@ -294,6 +294,7 @@ async function applyDbChange(
             uid,
             accepted: 1,
             sort_order: 0,
+            group: "",
         });
     } else if (op === "modify") {
         const oldUrl = normalizeUrl(String(payload.oldUrl))!;
@@ -310,6 +311,7 @@ async function applyDbChange(
             uid,
             accepted: 1,
             sort_order: 0,
+            group: "",
         });
     } else {
         const url = normalizeUrl(String(payload.url))!;

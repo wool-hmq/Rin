@@ -240,6 +240,7 @@ export interface Friend {
   uid: number;
   updatedAt: string;
   health: string;
+  group: string;
 }
 
 export interface FriendListResponse {
@@ -247,11 +248,17 @@ export interface FriendListResponse {
   apply_list: Friend | null;
 }
 
+export interface FriendGroupsResponse {
+  groups: string[];
+  order: string[];
+}
+
 export interface CreateFriendRequest {
   name: string;
   desc: string;
   avatar: string;
   url: string;
+  group?: string;
 }
 
 export interface UpdateFriendRequest {
@@ -261,6 +268,7 @@ export interface UpdateFriendRequest {
   url: string;
   accepted?: number;
   sort_order?: number;
+  group?: string;
 }
 
 // ============================================================================

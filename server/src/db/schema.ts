@@ -58,6 +58,7 @@ export const friends = sqliteTable("friends", {
     accepted: integer("accepted").default(0).notNull(),
     health: text("health").default("").notNull(),
     sort_order: integer("sort_order").default(0).notNull(),
+    group: text("group").default("").notNull(),
     createdAt: created_at,
     updatedAt: updated_at,
 });

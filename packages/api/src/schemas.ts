@@ -76,6 +76,7 @@ export const friendCreateSchema = t.Object({
   desc: t.String(),
   avatar: t.String(),
   url: t.String(),
+  group: t.String({ optional: true }),
 });
 
 export const friendUpdateSchema = t.Object({
@@ -85,6 +86,7 @@ export const friendUpdateSchema = t.Object({
   url: t.String(),
   accepted: t.Numeric({ optional: true }),
   sort_order: t.Numeric({ optional: true }),
+  group: t.String({ optional: true }),
 });
 
 // ============================================================================

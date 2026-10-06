@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { FriendService } from '../friends';
 import { Hono } from "hono";
 import type { Variables } from "../../core/hono-types";
-import { setupTestApp, cleanupTestDB } from '../../../tests/fixtures';
+import { setupTestApp, cleanupTestDB, TestCacheImpl } from '../../../tests/fixtures';
 import type { Database } from 'bun:sqlite';
 
 describe('FriendService', () => {
@@ -10,6 +10,7 @@ describe('FriendService', () => {
     let sqlite: Database;
     let env: Env;
     let app: Hono<{ Bindings: Env; Variables: Variables }>;
+    let clientConfig: TestCacheImpl;
 
     beforeEach(async () => {
         const ctx = await setupTestApp(FriendService);
@@ -17,6 +18,7 @@ describe('FriendService', () => {
         sqlite = ctx.sqlite;
         env = ctx.env;
         app = ctx.app;
+        clientConfig = ctx.clientConfig;
 
         // Create test users
         await createTestUsers();
@@ -77,6 +79,29 @@ describe('FriendService', () => {
             expect(res.status).toBe(200);
             const data = await res.json() as any;
             expect(data.friend_list).toEqual([]);
+        });
+    });
+
+    describe('GET /groups - Friend groups', () => {
+        it('should return empty arrays when no groups configured', async () => {
+            const res = await app.request('/groups', { method: 'GET' }, env);
+
+            expect(res.status).toBe(200);
+            const data = await res.json() as any;
+            expect(data.groups).toEqual([]);
+            expect(data.order).toEqual([]);
+        });
+
+        it('should return configured groups and order', async () => {
+            await clientConfig.set('friend_groups', ['Partners', 'Recommended']);
+            await clientConfig.set('friend_group_order', ['', 'Partners', 'Recommended']);
+
+            const res = await app.request('/groups', { method: 'GET' }, env);
+
+            expect(res.status).toBe(200);
+            const data = await res.json() as any;
+            expect(data.groups).toEqual(['Partners', 'Recommended']);
+            expect(data.order).toEqual(['', 'Partners', 'Recommended']);
         });
     });
 
@@ -149,6 +174,67 @@ describe('FriendService', () => {
 
             expect(res.status).toBe(400);
         });
+
+        it('should allow admin to set group', async () => {
+            const res = await app.request('/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer mock_token_1',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: 'Grouped Friend',
+                    desc: 'Description',
+                    avatar: 'avatar.png',
+                    url: 'https://example.com',
+                    group: 'Partners'
+                }),
+            }, env);
+
+            expect(res.status).toBe(200);
+            const friend = sqlite.prepare('SELECT * FROM friends WHERE name = "Grouped Friend"').get() as any;
+            expect(friend.group).toBe('Partners');
+        });
+
+        it('should reject group longer than 20 chars', async () => {
+            const res = await app.request('/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer mock_token_1',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: 'New Friend',
+                    desc: 'Description',
+                    avatar: 'avatar.png',
+                    url: 'https://example.com',
+                    group: 'a'.repeat(21)
+                }),
+            }, env);
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should force group to empty for non-admin', async () => {
+            const res = await app.request('/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer mock_token_2',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: 'Limited Friend',
+                    desc: 'Description',
+                    avatar: 'avatar.png',
+                    url: 'https://example.com',
+                    group: 'Partners'
+                }),
+            }, env);
+
+            expect(res.status).toBe(200);
+            const friend = sqlite.prepare('SELECT * FROM friends WHERE name = "Limited Friend"').get() as any;
+            expect(friend.group).toBe('');
+        });
     });
 
     describe('PUT /:id - Update friend', () => {
@@ -206,6 +292,46 @@ describe('FriendService', () => {
             }, env);
 
             expect(res.status).toBe(404);
+        });
+
+        it('should allow admin to update group', async () => {
+            const res = await app.request('/1', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer mock_token_1',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: 'Updated Name',
+                    desc: 'Updated Desc',
+                    url: 'https://example.com',
+                    group: 'Partners'
+                }),
+            }, env);
+
+            expect(res.status).toBe(200);
+            const friend = sqlite.prepare('SELECT * FROM friends WHERE id = 1').get() as any;
+            expect(friend.group).toBe('Partners');
+        });
+
+        it('should not change group for non-admin', async () => {
+            const res = await app.request('/1', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer mock_token_2',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: 'Updated Name',
+                    desc: 'Updated Desc',
+                    url: 'https://example.com',
+                    group: 'Partners'
+                }),
+            }, env);
+
+            expect(res.status).toBe(200);
+            const friend = sqlite.prepare('SELECT * FROM friends WHERE id = 1').get() as any;
+            expect(friend.group).toBe('');
         });
     });
 

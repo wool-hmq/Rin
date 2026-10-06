@@ -7,6 +7,8 @@ export const CLIENT_CONFIG_DEFAULTS = new Map(
     "cache.enabled": false,
     "counter.enabled": true,
     "friend_apply_enable": true,
+    "friend_groups": [],
+    "friend_group_order": [],
     "header.behavior": "fixed",
     "header.layout": "classic",
     "feed.layout": "list",

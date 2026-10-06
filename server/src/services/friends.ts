@@ -10,6 +10,14 @@ import { resolveWebhookConfig } from "./config-helpers";
 export function FriendService(): Hono {
     const app = new Hono();
 
+    // GET /friend/groups - configured friend groups from client config
+    app.get('/groups', async (c: AppContext) => {
+        const clientConfig = c.get('clientConfig');
+        const groups = await profileAsync(c, 'friend_groups_config', () => clientConfig.getOrDefault('friend_groups', [] as string[]));
+        const order = await profileAsync(c, 'friend_group_order_config', () => clientConfig.getOrDefault('friend_group_order', [] as string[]));
+        return c.json({ groups: Array.isArray(groups) ? groups as string[] : [], order: Array.isArray(order) ? order as string[] : [] });
+    });
+
     // GET /friend
     app.get('/', async (c: AppContext) => {
         const admin = c.get('admin');
@@ -45,7 +53,7 @@ export function FriendService(): Hono {
         const clientConfig = c.get('clientConfig');
         const serverConfig = c.get('serverConfig');
         const body = await profileAsync(c, 'friend_create_parse', () => c.req.json());
-        const { name, desc, avatar, url } = body;
+        const { name, desc, avatar, url, group } = body;
         
         const enable = await profileAsync(c, 'friend_create_config', () => clientConfig.getOrDefault('friend_apply_enable', true));
         if (!enable && !admin) {
@@ -57,6 +65,10 @@ export function FriendService(): Hono {
         }
         
         if (name.length === 0 || desc.length === 0 || avatar.length === 0 || url.length === 0) {
+            return c.text('Invalid input', 400);
+        }
+        
+        if (group !== undefined && (typeof group !== 'string' || group.length > 20)) {
             return c.text('Invalid input', 400);
         }
         
@@ -72,8 +84,9 @@ export function FriendService(): Hono {
         }
         
         const accepted = admin ? 1 : 0;
+        const finalGroup = admin && group ? String(group) : "";
         await profileAsync(c, 'friend_create_insert', () => db.insert(friends).values({
-            name, desc, avatar, url, uid: uid, accepted
+            name, desc, avatar, url, uid: uid, accepted, group: finalGroup
         }));
 
         if (!admin) {
@@ -119,11 +132,15 @@ export function FriendService(): Hono {
         const serverConfig = c.get('serverConfig');
         const id = c.req.param('id');
         const body = await profileAsync(c, 'friend_update_parse', () => c.req.json());
-        const { name, desc, avatar, url, accepted, sort_order } = body;
+        const { name, desc, avatar, url, accepted, sort_order, group } = body;
         
         const enable = await profileAsync(c, 'friend_update_config', () => clientConfig.getOrDefault('friend_apply_enable', true));
         if (!enable && !admin) {
             return c.text('Friend Link Apply Disabled', 403);
+        }
+        
+        if (group !== undefined && (typeof group !== 'string' || group.length > 20)) {
+            return c.text('Invalid input', 400);
         }
         
         if (!uid) {
@@ -141,10 +158,12 @@ export function FriendService(): Hono {
         
         let finalAccepted = accepted;
         let finalSortOrder = sort_order;
+        let finalGroup = group;
         
         if (!admin) {
             finalAccepted = 0;
             finalSortOrder = undefined;
+            finalGroup = undefined;
         }
         
         function wrap(s: string | undefined) {
@@ -158,6 +177,7 @@ export function FriendService(): Hono {
             url: wrap(url),
             accepted: finalAccepted === undefined ? undefined : finalAccepted,
             sort_order: finalSortOrder === undefined ? undefined : finalSortOrder,
+            group: finalGroup === undefined ? undefined : String(finalGroup),
         }).where(eq(friends.id, parseInt(id))));
         
         if (!admin) {

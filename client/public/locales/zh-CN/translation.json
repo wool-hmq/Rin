@@ -208,6 +208,7 @@
   "friends": {
     "apply": "申请友链",
     "create": "创建友链",
+    "group": "分组",
     "left": "暂时离开",
     "my_apply": "我的申请",
     "review": {
@@ -439,6 +440,15 @@
         "desc": "允许其他用户申请友链（需审核）",
         "title": "友链申请"
       },
+      "groups": {
+        "add": "添加",
+        "add.placeholder": "新分组名称",
+        "delete": "删除分组",
+        "desc": "管理友链分组，'朋友们' 为默认分组，不可删除或改名",
+        "rename": "重命名分组",
+        "rename.prompt": "请输入新的分组名称",
+        "title": "友链分组管理"
+      },
       "health": {
         "desc": "启用朋友们链接可访问性检查",
         "title": "友链健康监测",
@@ -446,6 +456,12 @@
           "desc": "设置友链可访问性检查时使用的 User-Agent, 默认 'Rin-Check/1.0'",
           "title": "友链健康监测 User-Agent"
         }
+      },
+      "order": {
+        "desc": "设置各分组在友链页面的显示顺序",
+        "move_down": "下移",
+        "move_up": "上移",
+        "title": "友链分组排序"
       },
       "title": "友链设置"
     },

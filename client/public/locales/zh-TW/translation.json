@@ -208,6 +208,7 @@
   "friends": {
     "apply": "申請友情連結",
     "create": "創建友情連結",
+    "group": "分組",
     "left": "暫時離開",
     "my_apply": "我的申請",
     "review": {
@@ -439,6 +440,15 @@
         "desc": "允許其他用戶申請友情連結（需審核）",
         "title": "友情連結申請"
       },
+      "groups": {
+        "add": "新增",
+        "add.placeholder": "新分組名稱",
+        "delete": "刪除分組",
+        "desc": "管理友情連結分組，「朋友們」為預設分組，不可刪除或改名",
+        "rename": "重新命名分組",
+        "rename.prompt": "請輸入新的分組名稱",
+        "title": "友情連結分組管理"
+      },
       "health": {
         "desc": "啟用朋友們連結可訪問性檢查",
         "title": "友情連結健康監測",
@@ -446,6 +456,12 @@
           "desc": "設定友情連結可訪問性檢查時使用的 User-Agent, 預設 'Rin-Check/1.0'",
           "title": "友情連結健康監測 User-Agent"
         }
+      },
+      "order": {
+        "desc": "設定各分組在友情連結頁面的顯示順序",
+        "move_down": "下移",
+        "move_up": "上移",
+        "title": "友情連結分組排序"
       },
       "title": "友情連結設定"
     },

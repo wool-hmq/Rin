@@ -165,6 +165,7 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 12 张表。
 | `accepted` | integer | DEFAULT 0 | 是否已接受，1=已接受，0=待审核 |
 | `health` | text | DEFAULT '' | 健康状态（用于链接检测） |
 | `sort_order` | integer | DEFAULT 0 | 排序顺序，数字越小越靠前 |
+| `group` | text | DEFAULT ''，NOT NULL | 友链分组，空字符串表示默认分组 |
 | `created_at` | integer | DEFAULT (unixepoch()) | 创建时间戳 |
 | `updated_at` | integer | DEFAULT (unixepoch()) | 更新时间戳 |
 
@@ -252,6 +253,10 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 12 张表。
 **邮件自动友链申请使用的 type 值：**
 - `friend.email`：以申请人邮箱为 `key`，存储其在途申请的状态（阶段、操作类型、JSON 载荷、验证码、截止时间等）。
 - `friend.email.lock`：固定 `key` 为 `global`，用于实现「同一时间仅允许一个申请」的并发锁。
+
+**友链分组使用的 `type='client.config'` 键：**
+- `friend_groups`：管理员自定义的分组名 JSON 数组（不含默认分组）。
+- `friend_group_order`：控制友链展示顺序的 JSON 数组，空字符串元素代表默认分组（「朋友们」），新建分组默认插入到它之后。
 
 ---
 

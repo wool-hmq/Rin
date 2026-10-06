@@ -165,6 +165,7 @@ Stores友情链接 (friend links).
 | `accepted` | integer | DEFAULT 0 | Is accepted, 1=accepted, 0=pending |
 | `health` | text | DEFAULT '' | Health status (for link checking) |
 | `sort_order` | integer | DEFAULT 0 | Sort order, lower numbers first |
+| `group` | text | DEFAULT '', NOT NULL | Friend link group, empty string means the default group |
 | `created_at` | integer | DEFAULT (unixepoch()) | Creation timestamp |
 | `updated_at` | integer | DEFAULT (unixepoch()) | Update timestamp |
 
@@ -252,6 +253,10 @@ Stores application cache data.
 **`type` values used by email friend-link applications:**
 - `friend.email`: keyed by the applicant's email; stores the in-flight application state (stage, operation, JSON payload, verification code, deadlines).
 - `friend.email.lock`: fixed `key` of `global`, implements the "only one application at a time" concurrency lock.
+
+**`type='client.config'` keys used by friend groups:**
+- `friend_groups`: JSON array of admin-defined group names (excluding the default group).
+- `friend_group_order`: JSON array controlling friend-link display order; an empty string element represents the default group ("Friends"), and new groups are appended after it by default.
 
 ---
 

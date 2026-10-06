@@ -64,6 +64,7 @@ export function Settings() {
   const [draft, setDraft] = useState<SettingsDraft>({ clientConfig: {}, serverConfig: {} });
   const [initialDraft, setInitialDraft] = useState<SettingsDraft>({ clientConfig: {}, serverConfig: {} });
   const [hasStoredAiApiKey, setHasStoredAiApiKey] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
   const ref = useRef(false);
   const initialDraftRef = useRef<SettingsDraft>({ clientConfig: {}, serverConfig: {} });
   const { showAlert, AlertUI } = useAlert();
@@ -1017,6 +1018,195 @@ export function Settings() {
               setConfigValue("server", "friend_ua", value);
             }}
           />
+
+          {/* Friend group management */}
+          {(() => {
+            const rawGroups = clientConfig.get("friend_groups");
+            const groups: string[] = Array.isArray(rawGroups) ? (rawGroups as string[]) : [];
+            const rawOrder = clientConfig.get("friend_group_order");
+            const orderConfig: string[] = Array.isArray(rawOrder) ? (rawOrder as string[]) : [];
+
+            const syncOrder = (nextGroups: string[]) => {
+              const next = orderConfig.filter((g) => nextGroups.includes(g));
+              for (const g of nextGroups) {
+                if (!next.includes(g)) next.push(g);
+              }
+              setConfigValue("client", "friend_group_order", next);
+            };
+
+            const addGroup = () => {
+              const name = newGroupName.trim();
+              if (!name || groups.includes(name) || name === t("friends.title")) return;
+              const next = [...groups, name];
+              setConfigValue("client", "friend_groups", next);
+              const nextOrder = [...orderConfig];
+              const defaultIndex = nextOrder.indexOf("");
+              if (defaultIndex >= 0) {
+                nextOrder.splice(defaultIndex + 1, 0, name);
+              } else {
+                nextOrder.splice(1, 0, name);
+              }
+              setConfigValue("client", "friend_group_order", nextOrder);
+              setNewGroupName("");
+            };
+
+            const renameGroup = (oldName: string, newNameRaw: string) => {
+              const newName = newNameRaw.trim();
+              if (!newName || newName === oldName || groups.includes(newName) || newName === t("friends.title")) return;
+              const next = groups.map((g) => (g === oldName ? newName : g));
+              setConfigValue("client", "friend_groups", next);
+              syncOrder(next);
+            };
+
+            const deleteGroup = (name: string) => {
+              if (name === "") return;
+              const next = groups.filter((g) => g !== name);
+              setConfigValue("client", "friend_groups", next);
+              syncOrder(next);
+            };
+
+            const allGroups = ["", ...groups];
+            const currentOrder = (() => {
+              const next = orderConfig.filter((g) => allGroups.includes(g));
+              for (const g of allGroups) {
+                if (!next.includes(g)) next.push(g);
+              }
+              return next;
+            })();
+
+            const moveGroup = (index: number, direction: "up" | "down") => {
+              const newIndex = direction === "up" ? index - 1 : index + 1;
+              if (newIndex < 0 || newIndex >= currentOrder.length) return;
+              const newOrder = [...currentOrder];
+              [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+              setConfigValue("client", "friend_group_order", newOrder);
+            };
+
+            return (
+              <>
+                <div className="w-full">
+                  <SettingsCard>
+                    <SettingsCardRow
+                      header={
+                        <SettingsCardHeader
+                          title={t("settings.friend.groups.title")}
+                          description={t("settings.friend.groups.desc")}
+                        />
+                      }
+                      action={<div />}
+                    />
+                    <SettingsCardBody>
+                      <div className="flex flex-col gap-2">
+                        {allGroups.map((group) => (
+                          <div
+                            key={group}
+                            className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-800/50"
+                          >
+                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                              {group || t("friends.title")}
+                            </span>
+                            {group !== "" && (
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    const newName = window.prompt(t("settings.friend.groups.rename.prompt"), group);
+                                    if (newName !== null) renameGroup(group, newName);
+                                  }}
+                                  className="rounded p-1 text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                  aria-label={t("settings.friend.groups.rename")}
+                                >
+                                  <i className="ri-edit-line"></i>
+                                </button>
+                                <button
+                                  onClick={() => deleteGroup(group)}
+                                  className="rounded p-1 text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                  aria-label={t("settings.friend.groups.delete")}
+                                >
+                                  <i className="ri-delete-bin-line"></i>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          type="text"
+                          value={newGroupName}
+                          onChange={(e) => setNewGroupName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") addGroup();
+                          }}
+                          placeholder={t("settings.friend.groups.add.placeholder")}
+                          className="flex-1 rounded-lg border border-neutral-200 bg-transparent px-3 py-2 text-sm t-primary outline-none focus:border-theme dark:border-neutral-700"
+                        />
+                        <button
+                          onClick={addGroup}
+                          className="rounded-lg bg-theme px-4 py-2 text-sm text-white"
+                        >
+                          {t("settings.friend.groups.add")}
+                        </button>
+                      </div>
+                    </SettingsCardBody>
+                  </SettingsCard>
+                </div>
+
+                {allGroups.length > 1 && (
+                  <SettingsCard>
+                    <SettingsCardRow
+                      header={
+                        <SettingsCardHeader
+                          title={t("settings.friend.order.title")}
+                          description={t("settings.friend.order.desc")}
+                        />
+                      }
+                      action={<div />}
+                    />
+                    <SettingsCardBody>
+                      <div className="flex flex-col gap-2">
+                        {currentOrder.map((group, index) => (
+                          <div
+                            key={group}
+                            className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-800/50"
+                          >
+                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                              {group || t("friends.title")}
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => moveGroup(index, "up")}
+                                disabled={index === 0}
+                                className={`rounded p-1 ${
+                                  index === 0
+                                    ? "cursor-not-allowed text-neutral-300 dark:text-neutral-600"
+                                    : "text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                }`}
+                                aria-label={t("settings.friend.order.move_up")}
+                              >
+                                <i className="ri-arrow-up-s-line"></i>
+                              </button>
+                              <button
+                                onClick={() => moveGroup(index, "down")}
+                                disabled={index === currentOrder.length - 1}
+                                className={`rounded p-1 ${
+                                  index === currentOrder.length - 1
+                                    ? "cursor-not-allowed text-neutral-300 dark:text-neutral-600"
+                                    : "text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                }`}
+                                aria-label={t("settings.friend.order.move_down")}
+                              >
+                                <i className="ri-arrow-down-s-line"></i>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </SettingsCardBody>
+                  </SettingsCard>
+                )}
+              </>
+            );
+          })()}
 
           <ItemTitle title={t("settings.maintenance.title")} />
           <ItemSwitch
