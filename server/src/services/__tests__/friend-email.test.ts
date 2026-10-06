@@ -225,15 +225,71 @@ describe("processFriendEmail", () => {
     });
 
     describe("cancel hint", () => {
-        it("should append the cancel hint to every outgoing email", async () => {
+        it("should append the cancel hint only while the application is in flight", async () => {
             await process(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
             await process(EMAIL_CONFIRM_TRIGGER);
 
+            // Every email sent so far belongs to an in-flight application.
             expect(sent.length).toBeGreaterThan(0);
             for (const m of sent) {
                 expect(m.text).toContain("结束本次友链申请");
             }
+        });
+
+        it("should not append the cancel hint once the application has ended", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(EMAIL_OP_CANCEL);
+
+            const last = sent.at(-1)!;
+            expect(last.text).toContain("已结束");
+            // The body says "已结束本次友链申请", so assert on the hint's own wording.
+            expect(last.text).not.toContain("如需结束本次申请");
+        });
+
+        it("should not append the cancel hint to the success email", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+
+            const targetMatch = sent[1].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(targetMatch).not.toBeNull();
+            probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            const success = sent.at(-1)!;
+            expect(success.subject).toContain("成功");
+            expect(success.text).not.toContain("如需结束本次申请");
+            expect(success.text).not.toContain("————————————");
+        });
+    });
+
+    describe("reply hint", () => {
+        it("should tell applicants to compose a new email to the receiving address", async () => {
+            await process(EMAIL_OP_APPLY);
+
+            expect(sent[0].text).toContain("请不要直接使用邮件客户端的回复功能");
+            expect(sent[0].text).toContain("friend-request@jiaoblog.dpdns.org");
+        });
+
+        it("should keep the reply hint on terminal emails that invite a retry", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(EMAIL_OP_CANCEL);
+
+            const last = sent.at(-1)!;
+            expect(last.text).toContain("请不要直接使用邮件客户端的回复功能");
+            expect(last.text).toContain("friend-request@jiaoblog.dpdns.org");
+        });
+
+        it("should omit the reply hint from the success email", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+
+            const targetMatch = sent[1].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(targetMatch).not.toBeNull();
+            probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            expect(sent.at(-1)!.text).not.toContain("请不要直接使用邮件客户端的回复功能");
         });
     });
 

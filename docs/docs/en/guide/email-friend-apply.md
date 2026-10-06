@@ -27,7 +27,8 @@ Notes:
 - The reply body must contain **only** that JSON.
 - Modifying requires two verifications, one code for the old site and one for the new site.
 - Replying `结束本次友链申请` at any stage terminates the current application and frees the slot for others.
-- Every system email ends with the cancel hint so applicants can abort at any time.
+- The cancel hint only appears in emails sent **while an application is in flight**. Once it ends (success, invalid data, forced cancel, or timeout) that email carries no cancel hint.
+- The receiving address differs from the outbound sending address, so hitting "Reply" in a mail client sends to the outbound address and the system never sees it. Every email that expects a reply ends with a reminder to compose a new email to the receiving address instead.
 - Site URLs support redirect links: if a URL looks like `https://link.your-domain/?...&to=https://real-site&...`, the system extracts the real address from the `to` param for matching, so modify/delete works whether you provide the redirect link or the real URL.
 - Outbound emails are sent by the Rin-Email service on Vercel, sharing the existing `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`.
 
