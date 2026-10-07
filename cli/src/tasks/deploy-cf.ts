@@ -24,9 +24,16 @@ const WORKER_SECRET_KEYS = [
   "RIN_GITEE_CLIENT_SECRET",
   "RIN_QQ_TOKEN",
   "EMAIL_RESEND_PASS",
+  "EMAIL_SEND_KEYS",
   "S3_ACCESS_KEY_ID",
   "S3_SECRET_ACCESS_KEY",
 ] as const;
+
+// Escape a value for a TOML basic string, needed for JSON values such as
+// EMAIL_SEND_URLS = '["https://.../api/pid/send"]'
+function tomlEscape(value: string | undefined): string {
+  return (value ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
 
 function isQueueAlreadyPresentError(stderr: string) {
   return stderr.includes("already exists") || stderr.includes("already taken") || stderr.includes("[code: 11009]");
@@ -192,6 +199,7 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
   const rssDescription = env("RSS_DESCRIPTION", "");
   const cacheStorageMode = env("CACHE_STORAGE_MODE", "s3");
   const emailResendUrl = env("EMAIL_RESEND_URL", "");
+  const emailSendUrls = env("EMAIL_SEND_URLS", "");
   const name = env("NAME", "Rin");
   const description = env("DESCRIPTION", "A lightweight personal blogging system");
   const avatar = env("AVATAR", "");
@@ -245,6 +253,7 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
       RSS_DESCRIPTION = "${rssDescription}"
       CACHE_STORAGE_MODE = "${cacheStorageMode}"
       EMAIL_RESEND_URL = "${emailResendUrl}"
+      EMAIL_SEND_URLS = "${tomlEscape(emailSendUrls)}"
       NAME = "${name}"
       DESCRIPTION = "${description}"
       AVATAR = "${avatar}"

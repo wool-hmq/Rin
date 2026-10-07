@@ -30,13 +30,13 @@ Notes:
 - The cancel hint only appears in emails sent **while an application is in flight**. Once it ends (success, invalid data, forced cancel, or timeout) that email carries no cancel hint.
 - The receiving address differs from the outbound sending address, so hitting "Reply" in a mail client sends to the outbound address and the system never sees it. Every email that expects a reply ends with a reminder to compose a new email to the receiving address instead.
 - Site URLs support redirect links: if a URL looks like `https://link.your-domain/?...&to=https://real-site&...`, the system extracts the real address from the `to` param for matching, so modify/delete works whether you provide the redirect link or the real URL.
-- Outbound emails are sent by the Rin-Email service on Vercel, sharing the existing `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`.
+- Outbound emails are sent by the MailPort sending service, sharing the existing `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`.
 
 ## Prerequisites
 
-1. Deploy Rin-Email to Vercel and set `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS` (see `env.md`).
+1. Deploy [MailPort](https://github.com/wool-hmq/mailport) and set `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS` (see `env.md`).
 2. Enable Cloudflare Email Routing and set the routing rule for your dedicated address (e.g. `friend-request@your-domain.com`) to **Send to a Worker**, selecting the worker running Rin.
-3. The sender domain used by Rin-Email should not be the same as your receiving domain, to avoid Rin processing its own outgoing mail.
+3. The sender domain used by MailPort should not be the same as your receiving domain, to avoid Rin processing its own outgoing mail.
 
 ## Rules and limits
 

@@ -74,17 +74,22 @@ These sensitive values must be configured as **Cloudflare Workers Secrets**, ent
 | `RIN_QQ_TOKEN` | Conditional | Xinyue QQ login token | Apply at https://qq.wch666.com/ |
 | `RIN_WECHAT_APPID` | Conditional | 聚合登录 WeChat App ID | Apply at https://login.mapay.cn/ |
 | `RIN_WECHAT_APPKEY` | Conditional | 聚合登录 WeChat App Secret | Apply at https://login.mapay.cn/ |
-| `EMAIL_RESEND_URL` | Conditional | Email relay service URL (Vercel-deployed Rin-Email project) | Deploy Rin-Email to Vercel to get the URL |
-| `EMAIL_RESEND_PASS` | Conditional | Email relay service auth password (same as EMAIL_PASS in Vercel project) | Set yourself |
+| `EMAIL_SEND_URLS` | Conditional | MailPort send service URLs (JSON array; multiple entries are polled in order and matched with `EMAIL_SEND_KEYS`) | Deploy [MailPort](https://github.com/wool-hmq/mailport) and read the sender page |
+| `EMAIL_SEND_KEYS` | Conditional | MailPort API keys (matched with `EMAIL_SEND_URLS` in order) | Generated on the MailPort sender page |
+| `EMAIL_RESEND_URL` | Conditional | Legacy email relay service URL (Vercel-deployed Rin-Email project); used as fallback when `EMAIL_SEND_URLS` is not set | Deploy Rin-Email to Vercel to get the URL |
+| `EMAIL_RESEND_PASS` | Conditional | Legacy email relay service auth password (same as EMAIL_PASS in Vercel project) | Set yourself |
 | `JWT_SECRET` | **Yes** | JWT signing key (any random string) | Generate yourself |
 
 :::warning Email Relay Architecture
-Cloudflare Workers does not support raw TCP SMTP. Email verification is handled by a Vercel-deployed Rin-Email project:
-1. Rin blog receives a verification code request and calls the Vercel project's `/api/send` endpoint
-2. The Vercel project uses `nodemailer` to send emails via SMTP
-3. Domain restrictions (`EMAIL_DOMAIN`) are configured in the Vercel project
+Cloudflare Workers does not support raw TCP SMTP. Email verification is handled by the [MailPort](https://github.com/wool-hmq/mailport) sending service:
 
-See [Rin-Email project documentation](https://github.com/wool-hmq/Rin-Email).
+1. Deploy MailPort, create a sender, and configure a delivery method (SMTP / HTTP API / Outlook or Gmail OAuth)
+2. Rin blog receives a verification code request and calls the endpoint from `EMAIL_SEND_URLS`, authenticating with `Authorization: Bearer <EMAIL_SEND_KEYS>`
+3. Allowed recipient domains are managed in the MailPort sender configuration
+
+`EMAIL_SEND_URLS` and `EMAIL_SEND_KEYS` are matched one-to-one in order and polled: if the first endpoint fails, the next one is tried; an error is raised only when all of them fail.
+
+When `EMAIL_SEND_URLS` is not set, Rin falls back to the legacy `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS` (Rin-Email project).
 :::
 
 :::warning Authentication Required
@@ -93,7 +98,7 @@ You must configure at least **one** of the following authentication methods:
 - Gitee OAuth (`RIN_GITEE_CLIENT_ID` + `RIN_GITEE_CLIENT_SECRET`)
 - QQ Login (`RIN_QQ_TOKEN`)
 - WeChat Login (`RIN_WECHAT_APPID` + `RIN_WECHAT_APPKEY`)
-- Email Verification Code Login (`EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`)
+- Email Verification Code Login (`EMAIL_SEND_URLS` + `EMAIL_SEND_KEYS`, or the legacy `EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`)
 - Username/Password (`ADMIN_USERNAME` + `ADMIN_PASSWORD`)
 
 Otherwise you cannot access the admin panel.
@@ -150,6 +155,7 @@ When using GitHub Actions for automated deployment, configure these in your Repo
 | `REPO_WORKER_NAME` | No | Worker name | rin-server |
 | `REPO_DB_NAME` | No | D1 database name | rin |
 | `R2_BUCKET_NAME` | No | R2 bucket name | - |
+| `EMAIL_SEND_URLS` | Conditional | MailPort send URLs (JSON array) | - |
 
 ### Repository Secrets (Settings → Secrets and variables → Secrets)
 
@@ -170,10 +176,7 @@ When using GitHub Actions for automated deployment, configure these in your Repo
 | `RIN_QQ_TOKEN` | Conditional | Xinyue QQ login token |
 | `ADMIN_USERNAME` | Conditional | Admin username |
 | `ADMIN_PASSWORD` | Conditional | Admin password |
-| `SMTP_MAIL` | Conditional | SMTP sender email |
-| `SMTP_USER` | Conditional | SMTP login username |
-| `SMTP_PASS` | Conditional | SMTP login password |
-| `SMTP_HOST` | Conditional | SMTP server address |
+| `EMAIL_SEND_KEYS` | Conditional | MailPort API keys (matched with `EMAIL_SEND_URLS` in order) |
 
 ---
 
@@ -226,9 +229,12 @@ RIN_WECHAT_APPID=xxx
 RIN_WECHAT_APPKEY=xxx
 
 # Option 5: Email Verification Code Login
-# After deploying Rin-Email to Vercel, configure these variables:
-# - Vercel project env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_MAIL, EMAIL_PASS
-# - Rin blog env vars:
+# After deploying MailPort (https://github.com/wool-hmq/mailport), configure these variables:
+# - MailPort project: create a sender, configure the delivery method and allowed domains, generate an API key
+# - Rin blog env vars (EMAIL_SEND_URLS is a JSON array; multiple entries are polled in order):
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/pid/send"]
+EMAIL_SEND_KEYS=your-mailport-api-key
+# Legacy fallback (used only when the two variables above are not set; requires deploying Rin-Email to Vercel):
 EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
 EMAIL_RESEND_PASS=your-email-pass
 
@@ -280,29 +286,28 @@ Yes. Configure credentials for multiple methods and the frontend will display co
 
 ### Q: How to set up email verification code login?
 
-Email verification is handled by a Vercel-deployed Rin-Email project:
+Email verification is handled by the [MailPort](https://github.com/wool-hmq/mailport) sending service:
 
-1. Deploy the `/tmp/opencode/Rin-Email` project to Vercel
-2. Configure SMTP environment variables in the Vercel project (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_MAIL`, `EMAIL_PASS`)
+1. Deploy MailPort, create a sender, and configure a delivery method (SMTP / HTTP API / Outlook or Gmail OAuth)
+2. Generate an API key on the MailPort sender page, and configure allowed recipient domains as needed
 3. In your Cloudflare Worker, configure:
-   - `EMAIL_RESEND_URL` = Vercel project's `/api/send` URL
-   - `EMAIL_RESEND_PASS` = same as `EMAIL_PASS` in the Vercel project
+   - `EMAIL_SEND_URLS` = the full send endpoint(s) of your MailPort sender (JSON array, multiple allowed)
+   - `EMAIL_SEND_KEYS` = the matching API key(s), paired with the endpoints in order
 
-### Q: How to restrict allowed email domains in the Vercel project?
+`EMAIL_SEND_URLS` and `EMAIL_SEND_KEYS` are polled in order: if the first endpoint fails, the next one is tried; an error is raised only when all of them fail.
+When these two variables are not set, Rin falls back to the legacy `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS` (Rin-Email).
 
-Configure `EMAIL_DOMAIN` in the Vercel project's environment variables:
+### Q: How to restrict allowed email domains?
 
-```bash
-# Allow only qq.com and example.com
-EMAIL_DOMAIN=["qq.com","example.com"]
-```
+Add the allowed domains to the "allowed recipient domains" list in your MailPort sender configuration. Only recipients on those domains will be delivered to.
 
-Leave empty to allow all domains.
+Leave the list empty to allow all domains.
 
-### Q: Which SMTP providers does the Vercel project support?
+### Q: Which delivery methods does MailPort support?
 
-The Vercel project uses `nodemailer` and supports any SMTP provider, including:
-- 163 Mail: `smtp.163.com:465`
-- QQ Mail: `smtp.qq.com:465`
-- Gmail: `smtp.gmail.com:465`
-- Any other SMTP service provider
+MailPort supports the following delivery methods:
+- SMTP: any SMTP provider (163 Mail, QQ Mail, Gmail, etc.)
+- HTTP API: forward to a custom HTTP endpoint
+- Outlook OAuth2 / Gmail OAuth2: send without app passwords
+
+See the [MailPort project documentation](https://github.com/wool-hmq/mailport).

@@ -215,6 +215,8 @@ jobs:
           RIN_QQ_TOKEN: ${{ secrets.RIN_QQ_TOKEN || '' }}
           EMAIL_RESEND_URL: ${{ vars.EMAIL_RESEND_URL || '' }}
           EMAIL_RESEND_PASS: ${{ secrets.EMAIL_RESEND_PASS || '' }}
+          EMAIL_SEND_URLS: ${{ vars.EMAIL_SEND_URLS || '' }}
+          EMAIL_SEND_KEYS: ${{ secrets.EMAIL_SEND_KEYS || '' }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || '' }}

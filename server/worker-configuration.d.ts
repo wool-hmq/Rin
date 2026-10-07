@@ -38,6 +38,8 @@ declare namespace Cloudflare {
 		RIN_QQ_TOKEN: string;
 		EMAIL_RESEND_URL: string;
 		EMAIL_RESEND_PASS: string;
+		EMAIL_SEND_URLS: string;
+		EMAIL_SEND_KEYS: string;
 		ADMIN_USERNAME: string;
 		ADMIN_PASSWORD: string;
 		JWT_SECRET: string;

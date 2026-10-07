@@ -4,7 +4,7 @@ import type { AppContext, Variables } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { setJWTCookie, clearJWTCookie } from "../core/hono-middleware";
 import { setCookie } from "hono/cookie";
-import { sendEmail } from "../utils/email";
+import { isEmailConfigured, sendEmail } from "../utils/email";
 import { users, linkedAccounts } from "../db/schema";
 import { emailCodeStore, cleanExpiredCodes } from "./email-code-store";
 import {
@@ -154,7 +154,7 @@ export function PasswordAuthService(): Hono<{
             gitee: !!(env.RIN_GITEE_CLIENT_ID && env.RIN_GITEE_CLIENT_SECRET),
             qq: !!env.RIN_QQ_TOKEN,
             wechat: !!(env.RIN_WECHAT_APPID && env.RIN_WECHAT_APPKEY),
-            email: !!(env.EMAIL_RESEND_URL && env.EMAIL_RESEND_PASS),
+            email: isEmailConfigured(env),
             password: !!(env.ADMIN_USERNAME && env.ADMIN_PASSWORD),
         });
     });
@@ -175,7 +175,7 @@ export function PasswordAuthService(): Hono<{
             throw new BadRequestError('Invalid email address');
         }
 
-        if (!env.EMAIL_RESEND_URL || !env.EMAIL_RESEND_PASS) {
+        if (!isEmailConfigured(env)) {
             throw new BadRequestError('Email service is not configured');
         }
 

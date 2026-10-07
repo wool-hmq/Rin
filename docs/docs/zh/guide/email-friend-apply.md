@@ -30,13 +30,13 @@ Rin 支持通过邮件自动完成友链的申请、修改与删除，全程无�
 - 结束提示只出现在**进行中**的邮件里。申请一旦结束（成功、信息有误被终止、强制结束、超时自动结束），对应邮件就不再带该提示。
 - 由于系统收件地址与发件地址不同，直接使用邮件客户端的「回复」会发到发件地址而无法被处理。每封需要回信的邮件末尾都会提示用户新建邮件并发送到收件地址。
 - 站点 URL 支持跳转链接：若 URL 形如 `https://link.你的域名/?...&to=https://真实站点&...`，系统会自动从 `to` 参数提取真实地址进行匹配，因此修改/删除时提供跳转链接或真实地址均可。
-- 邮件发送由 Vercel 上的 Rin-Email 服务完成，与邮箱验证码登录共用同一套 `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`。
+- 邮件发送由 MailPort 发件服务完成，与邮箱验证码登录共用同一套 `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`。
 
 ## 前提条件
 
-1. 已部署 Rin-Email 到 Vercel 并配置 `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`（见 `env.md`）。
+1. 已部署 [MailPort](https://github.com/wool-hmq/mailport) 并配置 `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`（见 `env.md`）。
 2. 已开通 Cloudflare Email Routing，并把专用地址（如 `friend-request@你的域名.com`）的**路由规则动作**设为 **Send to a Worker**，目标 Worker 选择部署 Rin 的 Worker。
-3. 出站邮件（Rin-Email）所用的发件域名不要与你用于接收的域名完全相同，避免 Rin 处理到自己发出的邮件导致循环。
+3. 出站邮件（MailPort）所用的发件域名不要与你用于接收的域名完全相同，避免 Rin 处理到自己发出的邮件导致循环。
 
 ## 规则与限制
 

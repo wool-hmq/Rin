@@ -74,8 +74,10 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 | `RIN_QQ_TOKEN` | 条件 | 心月互联 QQ 登录 Token | 心月互联 https://qq.wch666.com/ 申请 |
 | `RIN_WECHAT_APPID` | 条件 | 聚合登录 WeChat 应用 ID | 聚合登录 https://login.mapay.cn/ 申请 |
 | `RIN_WECHAT_APPKEY` | 条件 | 聚合登录 WeChat 应用密钥 | 聚合登录 https://login.mapay.cn/ 申请 |
-| `EMAIL_RESEND_URL` | 条件 | 邮件转发服务 URL（Vercel 部署的 Rin-Email 项目地址） | 自行部署 Rin-Email 到 Vercel 获取 |
-| `EMAIL_RESEND_PASS` | 条件 | 邮件转发服务认证密码（与 Vercel 项目中 EMAIL_PASS 相同） | 自行设定 |
+| `EMAIL_SEND_URLS` | 条件 | MailPort 发件服务地址（JSON 数组，可填多个，与 `EMAIL_SEND_KEYS` 按顺序一一匹配） | 部署 [MailPort](https://github.com/wool-hmq/mailport) 后在发件商页面获取 |
+| `EMAIL_SEND_KEYS` | 条件 | MailPort API 密钥（与 `EMAIL_SEND_URLS` 按顺序匹配） | MailPort 发件商页面生成 |
+| `EMAIL_RESEND_URL` | 条件 | 旧版邮件转发服务 URL（Vercel 部署的 Rin-Email 项目地址），未配置 `EMAIL_SEND_URLS` 时回退使用 | 自行部署 Rin-Email 到 Vercel 获取 |
+| `EMAIL_RESEND_PASS` | 条件 | 旧版邮件转发服务认证密码（与 Vercel 项目中 EMAIL_PASS 相同） | 自行设定 |
 | `JWT_SECRET` | **是** | JWT 签名密钥（任意随机字符串） | 自行生成 |
 
 :::warning 认证要求
@@ -84,19 +86,22 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 - Gitee OAuth（`RIN_GITEE_CLIENT_ID` + `RIN_GITEE_CLIENT_SECRET`）
 - QQ 登录（`RIN_QQ_TOKEN`）
 - 微信登录（`RIN_WECHAT_APPID` + `RIN_WECHAT_APPKEY`）
-- 邮箱验证码登录（`EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`）
+- 邮箱验证码登录（`EMAIL_SEND_URLS` + `EMAIL_SEND_KEYS`，或旧的 `EMAIL_RESEND_URL` + `EMAIL_RESEND_PASS`）
 - 账号密码登录（`ADMIN_USERNAME` + `ADMIN_PASSWORD`）
 
 否则无法登录后台。
 :::
 
 :::note 邮箱验证码架构
-Rin 博客运行在 Cloudflare Workers 上，不支持原始 TCP SMTP。邮箱验证码功能通过部署到 Vercel 的 Rin-Email 项目实现 SMTP 发件：
-1. Rin 博客收到发送验证码请求后，调用 Vercel 项目的 `/api/send` 接口
-2. Vercel 项目使用 `nodemailer` 通过 SMTP 发送邮件
-3. 域名限制（`EMAIL_DOMAIN`）在 Vercel 项目中配置
+Rin 博客运行在 Cloudflare Workers 上，不支持原始 TCP SMTP。邮箱验证码功能通过 [MailPort](https://github.com/wool-hmq/mailport) 发件服务实现：
 
-详见 [Rin-Email 项目文档](https://github.com/wool-hmq/Rin-Email)。
+1. 部署 MailPort 项目，创建发件商并配置发件方式（SMTP / HTTP API / Outlook 或 Gmail OAuth）
+2. Rin 博客收到发送验证码请求后，调用 `EMAIL_SEND_URLS` 中的发件接口，以 `Authorization: Bearer <EMAIL_SEND_KEYS>` 鉴权
+3. 允许的收件域名在 MailPort 发件商配置中管理
+
+`EMAIL_SEND_URLS` 与 `EMAIL_SEND_KEYS` 按顺序一一匹配、轮询使用：第一个失败会自动尝试下一个，全部失败才报错。
+
+未配置 `EMAIL_SEND_URLS` 时，回退到旧的 `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`（Rin-Email 项目）。
 :::
 
 ### S3 存储凭证
@@ -146,6 +151,7 @@ Rin 博客运行在 Cloudflare Workers 上，不支持原始 TCP SMTP。邮箱�
 | `REPO_WORKER_NAME` | 否 | Worker 名称 | rin-server |
 | `REPO_DB_NAME` | 否 | D1 数据库名称 | rin |
 | `R2_BUCKET_NAME` | 否 | R2 存储桶名称 | - |
+| `EMAIL_SEND_URLS` | 条件 | MailPort 发件地址（JSON 数组） | - |
 
 ### Repository Secrets（Settings → Secrets and variables → Secrets）
 
@@ -166,10 +172,7 @@ Rin 博客运行在 Cloudflare Workers 上，不支持原始 TCP SMTP。邮箱�
 | `RIN_QQ_TOKEN` | 条件 | 心月互联 QQ 登录 Token |
 | `ADMIN_USERNAME` | 条件 | 管理员用户名 |
 | `ADMIN_PASSWORD` | 条件 | 管理员密码 |
-| `SMTP_MAIL` | 条件 | SMTP 发件邮箱 |
-| `SMTP_USER` | 条件 | SMTP 登录用户名 |
-| `SMTP_PASS` | 条件 | SMTP 登录密码 |
-| `SMTP_HOST` | 条件 | SMTP 服务器地址 |
+| `EMAIL_SEND_KEYS` | 条件 | MailPort API 密钥（与 `EMAIL_SEND_URLS` 按顺序匹配） |
 
 ---
 
@@ -222,9 +225,12 @@ RIN_WECHAT_APPID=xxx
 RIN_WECHAT_APPKEY=xxx
 
 # 方式五：邮箱验证码登录
-# 部署 Rin-Email 项目到 Vercel 后，配置以下环境变量：
-# - Vercel 项目环境变量：SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_MAIL, EMAIL_PASS
-# - Rin 博客环境变量：
+# 部署 MailPort（https://github.com/wool-hmq/mailport）后，配置以下环境变量：
+# - MailPort 项目：创建发件商，配置发件方式与收件域名白名单，生成 API 密钥
+# - Rin 博客环境变量（EMAIL_SEND_URLS 为 JSON 数组，可填多个地址轮询）：
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/pid/send"]
+EMAIL_SEND_KEYS=your-mailport-api-key
+# 旧方案（未配置上面两个变量时回退使用，需部署 Rin-Email 到 Vercel）：
 EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
 EMAIL_RESEND_PASS=your-email-pass
 
@@ -276,29 +282,28 @@ S3_SECRET_ACCESS_KEY=xxx
 
 ### Q: 如何配置邮箱验证码登录？
 
-邮箱验证码功能通过 Vercel 部署的 Rin-Email 项目实现：
+邮箱验证码功能通过 [MailPort](https://github.com/wool-hmq/mailport) 发件服务实现：
 
-1. 将 `/tmp/opencode/Rin-Email` 项目部署到 Vercel
-2. 在 Vercel 项目中配置 SMTP 环境变量（`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_MAIL`, `EMAIL_PASS`）
+1. 部署 MailPort 项目，创建发件商并配置发件方式（SMTP / HTTP API / Outlook 或 Gmail OAuth）
+2. 在 MailPort 发件商页面生成 API 密钥，并按需配置收件域名白名单
 3. 在 Cloudflare Worker 中配置：
-   - `EMAIL_RESEND_URL` = Vercel 项目的 `/api/send` URL
-   - `EMAIL_RESEND_PASS` = 与 Vercel 项目的 `EMAIL_PASS` 相同
+   - `EMAIL_SEND_URLS` = MailPort 发件商的完整发件地址（JSON 数组，可填多个）
+   - `EMAIL_SEND_KEYS` = 对应的 API 密钥（与地址按顺序一一匹配）
 
-### Q: 如何在 Vercel 项目中限制允许的邮箱域名？
+`EMAIL_SEND_URLS` 与 `EMAIL_SEND_KEYS` 按顺序轮询：第一个失败会自动尝试下一个，全部失败才报错。
+未配置这两个变量时，回退到旧的 `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`（Rin-Email）。
 
-在 Vercel 项目的环境变量中配置 `EMAIL_DOMAIN`：
+### Q: 如何限制允许的邮箱域名？
 
-```bash
-# 只允许 qq.com 和 example.com 的邮箱登录
-EMAIL_DOMAIN=["qq.com","example.com"]
-```
+在 MailPort 发件商配置的「收件域名白名单」中添加允许的域名（例如 `qq.com`、`example.com`），只有白名单内的收件地址才会发送。
 
-留空则不限制域名。
+白名单留空则不限制域名。
 
-### Q: Vercel 项目支持哪些 SMTP 服务商？
+### Q: MailPort 支持哪些发件方式？
 
-Vercel 项目使用 `nodemailer`，支持任何 SMTP 服务商，包括：
-- 163 邮箱：`smtp.163.com:465`
-- QQ 邮箱：`smtp.qq.com:465`
-- Gmail：`smtp.gmail.com:465`
-- 其他任何提供 SMTP 服务的邮件服务商
+MailPort 支持以下发件方式：
+- SMTP：任意 SMTP 服务商（163 邮箱、QQ 邮箱、Gmail 等）
+- HTTP API：转发到自定义的 HTTP 接口
+- Outlook OAuth2 / Gmail OAuth2：免应用密码，授权后直接发件
+
+详见 [MailPort 项目文档](https://github.com/wool-hmq/mailport)。
