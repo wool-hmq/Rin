@@ -74,8 +74,8 @@ These sensitive values must be configured as **Cloudflare Workers Secrets**, ent
 | `RIN_QQ_TOKEN` | Conditional | Xinyue QQ login token | Apply at https://qq.wch666.com/ |
 | `RIN_WECHAT_APPID` | Conditional | 聚合登录 WeChat App ID | Apply at https://login.mapay.cn/ |
 | `RIN_WECHAT_APPKEY` | Conditional | 聚合登录 WeChat App Secret | Apply at https://login.mapay.cn/ |
-| `EMAIL_SEND_URLS` | Conditional | MailPort send service URLs (JSON array; multiple entries are polled in order and matched with `EMAIL_SEND_KEYS`) | Deploy [MailPort](https://github.com/wool-hmq/mailport) and read the sender page |
-| `EMAIL_SEND_KEYS` | Conditional | MailPort API keys (matched with `EMAIL_SEND_URLS` in order) | Generated on the MailPort sender page |
+| `EMAIL_SEND_URLS` | Conditional | MailPort send URLs (JSON array; a single sender may omit the array brackets — see the format notes below) | Deploy [MailPort](https://github.com/wool-hmq/mailport) and read the sender page |
+| `EMAIL_SEND_KEYS` | Conditional | MailPort API keys (JSON array or a single string, matched with `EMAIL_SEND_URLS` in order) | Generated on the MailPort sender page |
 | `EMAIL_RESEND_URL` | Conditional | Legacy email relay service URL (Vercel-deployed Rin-Email project); used as fallback when `EMAIL_SEND_URLS` is not set | Deploy Rin-Email to Vercel to get the URL |
 | `EMAIL_RESEND_PASS` | Conditional | Legacy email relay service auth password (same as EMAIL_PASS in Vercel project) | Set yourself |
 | `JWT_SECRET` | **Yes** | JWT signing key (any random string) | Generate yourself |
@@ -90,6 +90,33 @@ Cloudflare Workers does not support raw TCP SMTP. Email verification is handled 
 `EMAIL_SEND_URLS` and `EMAIL_SEND_KEYS` are matched one-to-one in order and polled: if the first endpoint fails, the next one is tried; an error is raised only when all of them fail.
 
 When `EMAIL_SEND_URLS` is not set, Rin falls back to the legacy `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS` (Rin-Email project).
+
+**Format**
+
+`EMAIL_SEND_URLS` is a JSON array of send URLs; each element is a MailPort sender's full send endpoint, shaped like `https://<your-domain>/api/<sender-id>/send`. `EMAIL_SEND_KEYS` holds the matching API keys and can also be a JSON array.
+
+With a single sender, `EMAIL_SEND_KEYS` may be a plain string, no array brackets needed:
+
+```bash
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/xxxxxx/send"]
+EMAIL_SEND_KEYS=your-api-key
+```
+
+With multiple senders that each have their own key, the two arrays are matched by index:
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=["key-for-a","key-for-b"]
+```
+
+With multiple senders sharing one key, write a single key that is applied to every endpoint:
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=shared-api-key
+```
+
+When `EMAIL_SEND_KEYS` provides multiple values, the count must match `EMAIL_SEND_URLS` (or provide a single shared key); a mismatch fails at send time.
 :::
 
 :::warning Authentication Required
@@ -231,9 +258,13 @@ RIN_WECHAT_APPKEY=xxx
 # Option 5: Email Verification Code Login
 # After deploying MailPort (https://github.com/wool-hmq/mailport), configure these variables:
 # - MailPort project: create a sender, configure the delivery method and allowed domains, generate an API key
-# - Rin blog env vars (EMAIL_SEND_URLS is a JSON array; multiple entries are polled in order):
-EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/pid/send"]
+# - Rin blog env vars: EMAIL_SEND_URLS is a JSON array of send URLs, EMAIL_SEND_KEYS holds the matching keys
+#   Single sender (the key may be a plain string):
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/xxxxxx/send"]
 EMAIL_SEND_KEYS=your-mailport-api-key
+#   Multiple senders (keys matched by index, or one shared key):
+# EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+# EMAIL_SEND_KEYS=["key-for-a","key-for-b"]
 # Legacy fallback (used only when the two variables above are not set; requires deploying Rin-Email to Vercel):
 EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
 EMAIL_RESEND_PASS=your-email-pass
@@ -296,6 +327,33 @@ Email verification is handled by the [MailPort](https://github.com/wool-hmq/mail
 
 `EMAIL_SEND_URLS` and `EMAIL_SEND_KEYS` are polled in order: if the first endpoint fails, the next one is tried; an error is raised only when all of them fail.
 When these two variables are not set, Rin falls back to the legacy `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS` (Rin-Email).
+
+### Q: What JSON format do `EMAIL_SEND_URLS` and `EMAIL_SEND_KEYS` use?
+
+`EMAIL_SEND_URLS` is a JSON array of send URLs, each shaped like `https://<your-domain>/api/<sender-id>/send`. `EMAIL_SEND_KEYS` holds the keys matched with them in order.
+
+With a single sender, the key may be a plain string:
+
+```bash
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/xxxxxx/send"]
+EMAIL_SEND_KEYS=your-api-key
+```
+
+With multiple senders that each have their own key, the arrays are matched by index:
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=["key-for-a","key-for-b"]
+```
+
+With multiple senders sharing one key, write a single key:
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=shared-api-key
+```
+
+The number of keys must match the number of URLs, or provide a single shared key; a mismatch fails at send time.
 
 ### Q: How to restrict allowed email domains?
 

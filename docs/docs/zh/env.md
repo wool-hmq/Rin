@@ -74,8 +74,8 @@ Rin 部署需要配置两类环境变量：**Variables（明文变量）** 和 *
 | `RIN_QQ_TOKEN` | 条件 | 心月互联 QQ 登录 Token | 心月互联 https://qq.wch666.com/ 申请 |
 | `RIN_WECHAT_APPID` | 条件 | 聚合登录 WeChat 应用 ID | 聚合登录 https://login.mapay.cn/ 申请 |
 | `RIN_WECHAT_APPKEY` | 条件 | 聚合登录 WeChat 应用密钥 | 聚合登录 https://login.mapay.cn/ 申请 |
-| `EMAIL_SEND_URLS` | 条件 | MailPort 发件服务地址（JSON 数组，可填多个，与 `EMAIL_SEND_KEYS` 按顺序一一匹配） | 部署 [MailPort](https://github.com/wool-hmq/mailport) 后在发件商页面获取 |
-| `EMAIL_SEND_KEYS` | 条件 | MailPort API 密钥（与 `EMAIL_SEND_URLS` 按顺序匹配） | MailPort 发件商页面生成 |
+| `EMAIL_SEND_URLS` | 条件 | MailPort 发件地址（JSON 数组，可填多个；仅一个发件商时可省略数组括号，详见下方「填写格式」） | 部署 [MailPort](https://github.com/wool-hmq/mailport) 后在发件商页面获取 |
+| `EMAIL_SEND_KEYS` | 条件 | MailPort API 密钥（JSON 数组或单个字符串，与 `EMAIL_SEND_URLS` 按顺序一一匹配） | MailPort 发件商页面生成 |
 | `EMAIL_RESEND_URL` | 条件 | 旧版邮件转发服务 URL（Vercel 部署的 Rin-Email 项目地址），未配置 `EMAIL_SEND_URLS` 时回退使用 | 自行部署 Rin-Email 到 Vercel 获取 |
 | `EMAIL_RESEND_PASS` | 条件 | 旧版邮件转发服务认证密码（与 Vercel 项目中 EMAIL_PASS 相同） | 自行设定 |
 | `JWT_SECRET` | **是** | JWT 签名密钥（任意随机字符串） | 自行生成 |
@@ -102,6 +102,33 @@ Rin 博客运行在 Cloudflare Workers 上，不支持原始 TCP SMTP。邮箱�
 `EMAIL_SEND_URLS` 与 `EMAIL_SEND_KEYS` 按顺序一一匹配、轮询使用：第一个失败会自动尝试下一个，全部失败才报错。
 
 未配置 `EMAIL_SEND_URLS` 时，回退到旧的 `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`（Rin-Email 项目）。
+
+**填写格式**
+
+`EMAIL_SEND_URLS` 是发件地址的 JSON 数组，每个元素是 MailPort 发件商的完整发件地址，形如 `https://<你的域名>/api/<发件商ID>/send`；`EMAIL_SEND_KEYS` 是与之对应的 API 密钥，同样可以是 JSON 数组。
+
+只用一个发件商时，`EMAIL_SEND_KEYS` 可以直接写成一个普通字符串，无需数组括号：
+
+```bash
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/xxxxxx/send"]
+EMAIL_SEND_KEYS=your-api-key
+```
+
+用多个发件商、且每个发件商密钥各不相同时，两个数组按下标一一对应：
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=["key-for-a","key-for-b"]
+```
+
+用多个发件商、但共用一个密钥时，`EMAIL_SEND_KEYS` 只写一个即可，会自动套用到所有地址：
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=shared-api-key
+```
+
+当 `EMAIL_SEND_KEYS` 提供多个值时，其数量必须与 `EMAIL_SEND_URLS` 一致（或只提供一个密钥供所有地址共用），数量不匹配会在发送时直接报错。
 :::
 
 ### S3 存储凭证
@@ -227,9 +254,13 @@ RIN_WECHAT_APPKEY=xxx
 # 方式五：邮箱验证码登录
 # 部署 MailPort（https://github.com/wool-hmq/mailport）后，配置以下环境变量：
 # - MailPort 项目：创建发件商，配置发件方式与收件域名白名单，生成 API 密钥
-# - Rin 博客环境变量（EMAIL_SEND_URLS 为 JSON 数组，可填多个地址轮询）：
-EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/pid/send"]
+# - Rin 博客环境变量：EMAIL_SEND_URLS 是发件地址的 JSON 数组，EMAIL_SEND_KEYS 是对应密钥
+#   单个发件商（密钥可直接写普通字符串）：
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/xxxxxx/send"]
 EMAIL_SEND_KEYS=your-mailport-api-key
+#   多个发件商（密钥与地址按下标一一对应，或共用一个密钥）：
+# EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+# EMAIL_SEND_KEYS=["key-for-a","key-for-b"]
 # 旧方案（未配置上面两个变量时回退使用，需部署 Rin-Email 到 Vercel）：
 EMAIL_RESEND_URL=https://your-rin-email.vercel.app/api/send
 EMAIL_RESEND_PASS=your-email-pass
@@ -292,6 +323,33 @@ S3_SECRET_ACCESS_KEY=xxx
 
 `EMAIL_SEND_URLS` 与 `EMAIL_SEND_KEYS` 按顺序轮询：第一个失败会自动尝试下一个，全部失败才报错。
 未配置这两个变量时，回退到旧的 `EMAIL_RESEND_URL` / `EMAIL_RESEND_PASS`（Rin-Email）。
+
+### Q: `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS` 的 JSON 格式怎么填？
+
+`EMAIL_SEND_URLS` 是发件地址的 JSON 数组，每个元素形如 `https://<你的域名>/api/<发件商ID>/send`；`EMAIL_SEND_KEYS` 是与之一一对应的密钥数组。
+
+只用一个发件商时，密钥可直接写成普通字符串：
+
+```bash
+EMAIL_SEND_URLS=["https://your-mailport.vercel.app/api/xxxxxx/send"]
+EMAIL_SEND_KEYS=your-api-key
+```
+
+用多个发件商、密钥各不相同时，两个数组按下标对应：
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=["key-for-a","key-for-b"]
+```
+
+多个发件商共用一个密钥时，密钥只写一个：
+
+```bash
+EMAIL_SEND_URLS=["https://mail-a.vercel.app/api/aaaaaa/send","https://mail-b.vercel.app/api/bbbbbb/send"]
+EMAIL_SEND_KEYS=shared-api-key
+```
+
+多个密钥的数量必须与地址数量一致，或只提供一个密钥共用；数量不匹配会在发送时报错。
 
 ### Q: 如何限制允许的邮箱域名？
 
