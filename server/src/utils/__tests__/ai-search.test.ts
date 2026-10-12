@@ -207,11 +207,28 @@ describe("runAISearchOnCandidates", () => {
     expect(result.fallbackReason).toBe("ai_search.disabled");
   });
 
-  it("falls back to keyword mode when AI summary is not enabled", async () => {
+  it("runs AI search with the summary switch off when a model is configured", async () => {
+    globalThis.fetch = mock(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: '["1"]' } }],
+    }), { status: 200, headers: { "Content-Type": "application/json" } })) as typeof fetch;
+
     const { runAISearchOnCandidates } = await import("../ai-search");
     const result = await runAISearchOnCandidates(
       {} as Env,
       createConfigReader({ ...enabledConfig, enabled: false }),
+      "keyword",
+      [{ id: 1, title: "A", summary: "", ai_summary: "" }],
+    );
+
+    expect(result.mode).toBe("ai");
+    expect(result.ids).toEqual(["1"]);
+  });
+
+  it("falls back to keyword mode when no AI model is configured", async () => {
+    const { runAISearchOnCandidates } = await import("../ai-search");
+    const result = await runAISearchOnCandidates(
+      {} as Env,
+      createConfigReader({ ...enabledConfig, provider: "", model: "", api_key: "" }),
       "keyword",
       [{ id: 1, title: "A", summary: "", ai_summary: "" }],
     );

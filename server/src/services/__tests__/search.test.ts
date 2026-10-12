@@ -117,6 +117,36 @@ describe("SearchService", () => {
         expect(data.data.map((feed: any) => feed.id)).toEqual([secondId, firstId]);
     });
 
+    it("runs AI search with the AI summary switch off", async () => {
+        const firstId = await createFeed("Alpha Post");
+        const secondId = await createFeed("Alpha Beta");
+        enableAISearch();
+        serverConfig.set("ai_summary.enabled", false);
+
+        globalThis.fetch = mock(async () => new Response(JSON.stringify({
+            choices: [{ message: { content: `["${secondId}","${firstId}"]` } }],
+        }), { status: 200, headers: { "Content-Type": "application/json" } })) as typeof fetch;
+
+        const res = await app.request("/Alpha?mode=ai", { method: "GET" }, env);
+
+        expect(res.status).toBe(200);
+        const data = (await res.json()) as any;
+        expect(data.mode).toBe("ai");
+        expect(data.data.map((feed: any) => feed.id)).toEqual([secondId, firstId]);
+    });
+
+    it("falls back to keyword mode with ai_unconfigured when no model is configured", async () => {
+        await createFeed("Alpha Post");
+        serverConfig.set("ai_search.enabled", true);
+
+        const res = await app.request("/Alpha?mode=ai", { method: "GET" }, env);
+
+        expect(res.status).toBe(200);
+        const data = (await res.json()) as any;
+        expect(data.mode).toBe("keyword");
+        expect(data.fallbackReason).toBe("ai_unconfigured");
+    });
+
     it("falls back to keyword mode with ai_search.disabled when the switch is off", async () => {
         await createFeed("Alpha Post");
         serverConfig.set("ai_search.enabled", false);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
     buildExternalAIChatCompletionsUrl,
+    isAIModelConfigured,
     normalizeExternalAIBaseUrl,
 } from "../ai";
 
@@ -35,5 +36,55 @@ describe("buildExternalAIChatCompletionsUrl", () => {
         expect(buildExternalAIChatCompletionsUrl("openai", "")).toBe(
             "https://api.openai.com/v1/chat/completions",
         );
+    });
+});
+
+describe("isAIModelConfigured", () => {
+    it("is configured when provider, model and api key are set", () => {
+        expect(isAIModelConfigured({
+            enabled: false,
+            provider: "openai",
+            model: "gpt-4o-mini",
+            api_key: "secret",
+            api_url: "",
+            retries: 0,
+            failover: [],
+        })).toBe(true);
+    });
+
+    it("is unconfigured without a provider or model", () => {
+        expect(isAIModelConfigured({
+            enabled: true,
+            provider: "",
+            model: "",
+            api_key: "secret",
+            api_url: "",
+            retries: 0,
+            failover: [],
+        })).toBe(false);
+    });
+
+    it("is unconfigured for a keyed provider without an api key", () => {
+        expect(isAIModelConfigured({
+            enabled: true,
+            provider: "openai",
+            model: "gpt-4o-mini",
+            api_key: "",
+            api_url: "",
+            retries: 0,
+            failover: [],
+        })).toBe(false);
+    });
+
+    it("is configured for worker-ai without an api key", () => {
+        expect(isAIModelConfigured({
+            enabled: false,
+            provider: "worker-ai",
+            model: "glm-4.7-flash",
+            api_key: "",
+            api_url: "",
+            retries: 0,
+            failover: [],
+        })).toBe(true);
     });
 });

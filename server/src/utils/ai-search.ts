@@ -1,7 +1,7 @@
 import { and, desc, eq, like, or, type SQL } from "drizzle-orm";
 import { feeds } from "../db/schema";
 import { getAIConfig, getAISearchEnabled } from "./db-config";
-import { executeAICompletion } from "./ai";
+import { executeAICompletion, isAIModelConfigured } from "./ai";
 
 type ConfigReader = {
     get(key: string): Promise<unknown>;
@@ -294,7 +294,7 @@ export async function runAISearchOnCandidates(
     }
 
     const aiConfig = await getAIConfig(serverConfig);
-    if (!aiConfig.enabled) {
+    if (!isAIModelConfigured(aiConfig)) {
         return { mode: "keyword", fallbackReason: AI_SEARCH_FALLBACK_REASONS.UNCONFIGURED };
     }
 
@@ -306,14 +306,13 @@ export async function runAISearchOnCandidates(
     const completion = await executeAICompletion(env, serverConfig, messages, {
         maxTokens: 1024,
         temperature: 0,
+        requireEnabled: false,
     });
 
     if (!completion.content) {
         return {
             mode: "keyword",
-            fallbackReason: completion.skipped
-                ? AI_SEARCH_FALLBACK_REASONS.UNCONFIGURED
-                : AI_SEARCH_FALLBACK_REASONS.LLM_FAILED,
+            fallbackReason: AI_SEARCH_FALLBACK_REASONS.LLM_FAILED,
         };
     }
 

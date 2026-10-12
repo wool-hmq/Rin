@@ -225,6 +225,23 @@ export type AICompletionResult = {
     model?: string;
 };
 
+/**
+ * Whether enough of a model is configured to actually make a request.
+ *
+ * AI search shares the model credentials stored under the `ai_summary.*` keys,
+ * but has its own enable toggle, so it must not be gated on the AI summary
+ * feature switch — only on whether a usable model exists.
+ */
+export function isAIModelConfigured(config: AIConfig): boolean {
+    if (!config.provider || !config.model) {
+        return false;
+    }
+    if (config.provider === "worker-ai") {
+        return true;
+    }
+    return API_KEY_OPTIONAL_PROVIDERS.has(config.provider) || Boolean(config.api_key);
+}
+
 function buildAIAttempts(
     config: AIConfig,
 ): Array<{ provider: string; model: string; apiUrl: string; apiKey: string; retries: number }> {
@@ -258,11 +275,11 @@ export async function executeAICompletion(
     env: Env,
     serverConfig: ConfigReader,
     messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
-    options: { maxTokens?: number; temperature?: number } = {},
+    options: { maxTokens?: number; temperature?: number; requireEnabled?: boolean } = {},
 ): Promise<AICompletionResult> {
     const config = await getAIConfig(serverConfig);
 
-    if (!config.enabled) {
+    if (options.requireEnabled !== false && !config.enabled) {
         return { content: null, skipped: true };
     }
 
