@@ -2,6 +2,7 @@ import PostalMimeModule from "postal-mime";
 import { drizzle } from "drizzle-orm/d1";
 import { CacheImpl } from "../utils/cache";
 import { sendEmail } from "../utils/email";
+import { generateCaptchaImage, pngToBase64 } from "../utils/captcha";
 import { notify } from "../utils/webhook";
 import { resolveWebhookConfig } from "../services/config-helpers";
 import { processFriendEmail } from "../services/friend-email";
@@ -165,8 +166,12 @@ export async function handleEmail(
             {
                 db,
                 configGet: (key, defaultValue) => serverConfig.getOrDefault(key, defaultValue),
-                send: (to, subject, text) => sendEmail(env, to, subject, text),
+                send: (to, subject, text, inlineImage) => sendEmail(env, to, subject, text, inlineImage),
                 httpGet: probeUrl,
+                generateCaptcha: async () => {
+                    const image = await generateCaptchaImage(4);
+                    return { imageBase64: pngToBase64(image.png), text: image.text, cid: image.cid };
+                },
                 notifyOwner: async (op, payload, sender) => {
                     const {
                         webhookUrl,

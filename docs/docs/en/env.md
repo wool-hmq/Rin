@@ -119,6 +119,17 @@ EMAIL_SEND_KEYS=shared-api-key
 When `EMAIL_SEND_KEYS` provides multiple values, the count must match `EMAIL_SEND_URLS` (or provide a single shared key); a mismatch fails at send time.
 :::
 
+:::note Captcha Image (Human Verification)
+The self-service friend-link flow (apply / modify / delete via email) requires a captcha check on the applicant's first email to prevent automated abuse:
+
+1. The applicant sends "友链申请 / 友链修改 / 友链删除" (apply / modify / delete) to the receiving address
+2. Rin generates a captcha image (4 characters with noise lines and dots) and sends it as an **inline image** to the applicant
+3. The applicant replies in a new email containing only those 4 characters
+4. After the captcha passes, the normal JSON template flow continues
+
+This relies on MailPort's inline-image support and **requires no new environment variables** — it reuses `EMAIL_SEND_URLS` + `EMAIL_SEND_KEYS`. The legacy Rin-Email relay has no inline-image support; if it is still in use, the captcha step is skipped automatically.
+:::
+
 :::warning Authentication Required
 You must configure at least **one** of the following authentication methods:
 - GitHub OAuth (`RIN_GITHUB_CLIENT_ID` + `RIN_GITHUB_CLIENT_SECRET`)

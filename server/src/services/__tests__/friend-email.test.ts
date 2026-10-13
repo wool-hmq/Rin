@@ -10,6 +10,7 @@ interface SentMail {
     to: string;
     subject: string;
     text: string;
+    inlineImage?: { imageBase64: string; cid: string };
 }
 
 describe("processFriendEmail", () => {
@@ -18,6 +19,10 @@ describe("processFriendEmail", () => {
     let currentTime: number;
     let sent: SentMail[];
     let probeResults: Record<string, number>;
+    let captchaQueue: Array<{ imageBase64: string; text: string; cid: string }>;
+
+    // 默认验证码答案,与 process() 里 generateCaptcha 的返回保持一致
+    const CAPTCHA_ANSWER = "AB24";
 
     beforeEach(() => {
         const mockDB = createMockDB();
@@ -26,6 +31,7 @@ describe("processFriendEmail", () => {
         currentTime = Date.parse("2026-10-04T00:00:00Z");
         sent = [];
         probeResults = {};
+        captchaQueue = [];
 
         // Admin user required by the friends FK (email-sourced rows use uid=1)
         sqlite.exec(`
@@ -43,20 +49,43 @@ describe("processFriendEmail", () => {
         return Promise.resolve(404);
     }
 
-    async function process(text: string, from = "applicant@example.com") {
+    async function process(text: string, from = "applicant@example.com", opts?: { withCaptcha?: boolean }) {
+        const useCaptcha = opts?.withCaptcha ?? true;
         await processFriendEmail(
             {
                 db,
                 configGet: async <T>(key: string, defaultValue: T) =>
                     key === "friend_email_apply_enable" ? (true as T) : defaultValue,
-                send: async (to: string, subject: string, text: string) => {
-                    sent.push({ to, subject, text });
+                send: async (
+                    to: string,
+                    subject: string,
+                    text: string,
+                    inlineImage?: { imageBase64: string; cid: string },
+                ) => {
+                    sent.push({ to, subject, text, inlineImage });
                 },
                 httpGet,
+                generateCaptcha: useCaptcha
+                    ? async () => {
+                          const next = captchaQueue.shift();
+                          if (next) return next;
+                          return { imageBase64: "FAKE_BASE64", text: CAPTCHA_ANSWER, cid: "cid-test-1" };
+                      }
+                    : undefined,
                 now: () => currentTime,
             },
             { from, to: "friend-request@jiaoblog.dpdns.org", text },
         );
+    }
+
+    // 发起申请并自动通过验证码环节,让测试聚焦于后续流程。
+    async function startApplication(command: string, from = "applicant@example.com") {
+        await process(command, from);
+        await process(CAPTCHA_ANSWER, from);
+    }
+
+    async function captchaRows() {
+        return db.select().from(cache).where(eq(cache.type, "friend.email.captcha"));
     }
 
     async function friendsTable() {
@@ -73,14 +102,16 @@ describe("processFriendEmail", () => {
 
     describe("apply flow", () => {
         it("should complete an application end-to-end", async () => {
-            await process(EMAIL_OP_APPLY);
-            expect(sent.length).toBe(1);
-            expect(sent[0].text).toContain("JSON");
+            await startApplication(EMAIL_OP_APPLY);
+            expect(sent.length).toBe(2);
+            expect(sent[0].subject).toContain("人机验证");
+            expect(sent[0].inlineImage).toBeDefined();
+            expect(sent[1].text).toContain("JSON");
 
             await process(JSON.stringify({ name: "Friend", url: "https://friend.com", avatar: "https://friend.com/icon.png", desc: "hello" }));
-            expect(sent.length).toBe(2);
-            expect(sent[1].subject).toContain("站点验证");
-            const urlMatch = sent[1].text.match(/https:\/\/friend\.com\/([A-Za-z0-9]+)\.html/);
+            expect(sent.length).toBe(3);
+            expect(sent[2].subject).toContain("站点验证");
+            const urlMatch = sent[2].text.match(/https:\/\/friend\.com\/([A-Za-z0-9]+)\.html/);
             expect(urlMatch).not.toBeNull();
 
             probeResults[`https://friend.com/${urlMatch![1]}.html`] = 200;
@@ -96,6 +127,8 @@ describe("processFriendEmail", () => {
             expect(sent.at(-1)!.subject).toContain("成功");
             expect((await stateRows()).length).toBe(0);
             expect((await lockRows()).length).toBe(0);
+            // 验证通过后验证码记录应被清除
+            expect((await captchaRows()).length).toBe(0);
         });
     });
 
@@ -106,11 +139,11 @@ describe("processFriendEmail", () => {
                 VALUES ('Old', 'd', 'icon', 'https://old.example.com', 1, 1, 0)
             `);
 
-            await process(EMAIL_OP_MODIFY);
+            await startApplication(EMAIL_OP_MODIFY);
             await process(JSON.stringify({ oldUrl: "https://old.example.com", newUrl: "https://new.example.com", avatar: "https://new.example.com/i.png", name: "New", desc: "hi" }));
 
-            expect(sent.length).toBe(2);
-            const firstTargetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(sent.length).toBe(3);
+            const firstTargetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(firstTargetMatch).not.toBeNull();
             const firstCode = firstTargetMatch![1];
 
@@ -118,8 +151,8 @@ describe("processFriendEmail", () => {
             await process(EMAIL_CONFIRM_TRIGGER);
 
             // Round 2 prompt for the new URL with a different code
-            expect(sent.length).toBe(3);
-            const secondTargetMatch = sent[2].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(sent.length).toBe(4);
+            const secondTargetMatch = sent[3].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(secondTargetMatch).not.toBeNull();
             const secondCode = secondTargetMatch![1];
             expect(secondCode).not.toBe(firstCode);
@@ -142,10 +175,10 @@ describe("processFriendEmail", () => {
                 VALUES ('Old', 'd', 'icon', 'https://old.example.com', 1, 1, 0)
             `);
 
-            await process(EMAIL_OP_DELETE);
+            await startApplication(EMAIL_OP_DELETE);
             await process(JSON.stringify({ url: "https://old.example.com" }));
 
-            const targetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
 
             probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
@@ -158,7 +191,7 @@ describe("processFriendEmail", () => {
 
     describe("invalid inputs", () => {
         it("should terminate on invalid JSON", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process("这不是 JSON 也不是模板");
 
             expect((await friendsTable()).length).toBe(0);
@@ -167,11 +200,107 @@ describe("processFriendEmail", () => {
         });
 
         it("should terminate when the JSON misses required fields", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "OnlyName" }));
 
             expect(sent.at(-1)!.text).toContain("已终止");
             expect((await stateRows()).length).toBe(0);
+        });
+    });
+
+    describe("captcha", () => {
+        it("should send a captcha image before the JSON template", async () => {
+            await process(EMAIL_OP_APPLY);
+
+            expect(sent.length).toBe(1);
+            expect(sent[0].subject).toContain("人机验证");
+            expect(sent[0].inlineImage).toBeDefined();
+            expect(sent[0].inlineImage!.imageBase64).toBe("FAKE_BASE64");
+            // 答案不能出现在正文里
+            expect(sent[0].text).not.toContain(CAPTCHA_ANSWER);
+            // 应处于 awaiting_captcha 阶段,尚未进入 JSON 环节
+            expect((await captchaRows()).length).toBe(1);
+            expect(sent[0].text).not.toContain("请在回复邮件正文中完整填写");
+        });
+
+        it("should advance to the JSON template after the captcha is solved", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(CAPTCHA_ANSWER);
+
+            expect(sent.length).toBe(2);
+            expect(sent[1].subject).toContain("JSON 模板");
+            expect(sent[1].text).toContain("人机验证通过");
+            expect((await captchaRows()).length).toBe(0);
+        });
+
+        it("should accept the answer regardless of case and surrounding whitespace", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(`  ab2-4  `);
+
+            expect(sent.length).toBe(2);
+            expect(sent[1].subject).toContain("JSON 模板");
+        });
+
+        it("should let the applicant retry after a wrong answer", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process("WRONG");
+            expect(sent.at(-1)!.subject).toContain("验证码错误");
+            expect((await captchaRows()).length).toBe(1);
+
+            await process(CAPTCHA_ANSWER);
+            expect(sent.at(-1)!.subject).toContain("JSON 模板");
+        });
+
+        it("should terminate after too many wrong answers", async () => {
+            await process(EMAIL_OP_APPLY);
+            for (let i = 0; i < 5; i++) {
+                await process("WRONG");
+            }
+
+            expect(sent.at(-1)!.text).toContain("已终止");
+            expect((await stateRows()).length).toBe(0);
+            expect((await lockRows()).length).toBe(0);
+        });
+
+        it("should terminate when the captcha expires", async () => {
+            await process(EMAIL_OP_APPLY);
+            currentTime += 11 * 60 * 1000; // past the 10-minute captcha window
+            await process(CAPTCHA_ANSWER);
+
+            expect(sent.at(-1)!.text).toContain("已终止");
+            expect((await stateRows()).length).toBe(0);
+        });
+
+        it("should keep only the latest captcha for a concurrent sender", async () => {
+            await process(EMAIL_OP_APPLY);
+            // 结束当前申请后重新发起,模拟同一邮箱再次申请的场景
+            await process(EMAIL_OP_CANCEL);
+            captchaQueue.push({ imageBase64: "SECOND", text: "ZZ99", cid: "cid-2" });
+            await process(EMAIL_OP_APPLY);
+
+            const rows = await captchaRows();
+            expect(rows.length).toBe(1);
+            expect(JSON.parse(rows[0].value).answer).toBe("ZZ99");
+        });
+
+        it("should skip the captcha when no generator is wired up", async () => {
+            await process(EMAIL_OP_APPLY, "applicant@example.com", { withCaptcha: false });
+
+            expect(sent.length).toBe(1);
+            expect(sent[0].text).toContain("JSON");
+            expect(sent[0].inlineImage).toBeUndefined();
+        });
+
+        it("should drop old captcha records when a new application starts", async () => {
+            await process(EMAIL_OP_APPLY);
+            await process(CAPTCHA_ANSWER);
+            expect((await captchaRows()).length).toBe(0);
+
+            // 开始新一轮申请时不应残留旧验证码
+            captchaQueue.push({ imageBase64: "NEW", text: "CD35", cid: "cid-3" });
+            await process(EMAIL_OP_CANCEL);
+            await process(EMAIL_OP_APPLY);
+            expect((await captchaRows()).length).toBe(1);
         });
     });
 
@@ -188,7 +317,7 @@ describe("processFriendEmail", () => {
 
     describe("timeout", () => {
         it("should end an expired application and free the lock", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
 
             currentTime += 11 * 60 * 1000; // past the 10-minute verify deadline
@@ -202,7 +331,7 @@ describe("processFriendEmail", () => {
 
     describe("cancel", () => {
         it("should terminate the application on cancel request", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
             expect((await stateRows()).length).toBe(1);
             expect((await lockRows()).length).toBe(1);
@@ -215,9 +344,9 @@ describe("processFriendEmail", () => {
         });
 
         it("should allow a new application after cancel", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(EMAIL_OP_CANCEL);
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
 
             expect((await stateRows()).length).toBe(1);
             expect((await lockRows()).length).toBe(1);
@@ -226,7 +355,7 @@ describe("processFriendEmail", () => {
 
     describe("cancel hint", () => {
         it("should append the cancel hint only while the application is in flight", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
             await process(EMAIL_CONFIRM_TRIGGER);
 
@@ -238,7 +367,7 @@ describe("processFriendEmail", () => {
         });
 
         it("should not append the cancel hint once the application has ended", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(EMAIL_OP_CANCEL);
 
             const last = sent.at(-1)!;
@@ -248,10 +377,10 @@ describe("processFriendEmail", () => {
         });
 
         it("should not append the cancel hint to the success email", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
 
-            const targetMatch = sent[1].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[2].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
@@ -272,7 +401,7 @@ describe("processFriendEmail", () => {
         });
 
         it("should keep the reply hint on terminal emails that invite a retry", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(EMAIL_OP_CANCEL);
 
             const last = sent.at(-1)!;
@@ -281,10 +410,10 @@ describe("processFriendEmail", () => {
         });
 
         it("should omit the reply hint from the success email", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
 
-            const targetMatch = sent[1].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[2].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
@@ -302,10 +431,10 @@ describe("processFriendEmail", () => {
                 VALUES ('Old', 'd', 'icon', '${REDIRECT_URL}', 1, 1, 0)
             `);
 
-            await process(EMAIL_OP_DELETE);
+            await startApplication(EMAIL_OP_DELETE);
             await process(JSON.stringify({ url: REDIRECT_URL }));
 
-            const targetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
 
             probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
@@ -320,10 +449,10 @@ describe("processFriendEmail", () => {
                 VALUES ('Old', 'd', 'icon', '${REDIRECT_URL}', 1, 1, 0)
             `);
 
-            await process(EMAIL_OP_DELETE);
+            await startApplication(EMAIL_OP_DELETE);
             await process(JSON.stringify({ url: "https://old.example.com" }));
 
-            const targetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
 
             probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
@@ -338,15 +467,15 @@ describe("processFriendEmail", () => {
                 VALUES ('Old', 'd', 'icon', '${REDIRECT_URL}', 1, 1, 0)
             `);
 
-            await process(EMAIL_OP_MODIFY);
+            await startApplication(EMAIL_OP_MODIFY);
             await process(JSON.stringify({ oldUrl: REDIRECT_URL, newUrl: "https://new.example.com", avatar: "i", name: "New", desc: "hi" }));
 
-            const firstTargetMatch = sent[1].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const firstTargetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(firstTargetMatch).not.toBeNull();
             probeResults[`https://old.example.com/${firstTargetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
 
-            const secondTargetMatch = sent[2].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const secondTargetMatch = sent[3].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(secondTargetMatch).not.toBeNull();
             probeResults[`https://new.example.com/${secondTargetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
@@ -365,10 +494,10 @@ describe("processFriendEmail", () => {
                 VALUES (42, 'bound', 'gh_bound', 'bound@example.com', 'a.png', 0)
             `);
 
-            await process(EMAIL_OP_APPLY, "bound@example.com");
+            await startApplication(EMAIL_OP_APPLY, "bound@example.com");
             await process(JSON.stringify({ name: "B", url: "https://b.example.com", avatar: "i", desc: "d" }), "bound@example.com");
 
-            const targetMatch = sent[1].text.match(/https:\/\/b\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[2].text.match(/https:\/\/b\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://b.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER, "bound@example.com");
@@ -379,10 +508,10 @@ describe("processFriendEmail", () => {
         });
 
         it("should fall back to the default UID when no account matches", async () => {
-            await process(EMAIL_OP_APPLY);
+            await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
 
-            const targetMatch = sent[1].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[2].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);

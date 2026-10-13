@@ -205,4 +205,45 @@ describe("sendEmail", () => {
             /EMAIL_SEND_URLS and EMAIL_SEND_KEYS/,
         );
     });
+
+    it("forwards the inline image to MailPort when one is provided", async () => {
+        const calls = mockFetchSequence([{ status: 200, body: '{"success":true}' }]);
+        await sendEmail(
+            env({ EMAIL_SEND_URLS: '["https://mailport.vercel.app/api/abc/send"]', EMAIL_SEND_KEYS: "secret-key" }),
+            "to@example.com",
+            "Subject",
+            "body",
+            { imageBase64: "PNG_BASE64", cid: "captcha-1" },
+        );
+        const body = JSON.parse(calls[0].init.body as string);
+        expect(body.imageBase64).toBe("PNG_BASE64");
+        expect(body.cid).toBe("captcha-1");
+    });
+
+    it("omits the image fields when no inline image is provided", async () => {
+        const calls = mockFetchSequence([{ status: 200, body: '{"success":true}' }]);
+        await sendEmail(
+            env({ EMAIL_SEND_URLS: '["https://mailport.vercel.app/api/abc/send"]', EMAIL_SEND_KEYS: "secret-key" }),
+            "to@example.com",
+            "Subject",
+            "body",
+        );
+        const body = JSON.parse(calls[0].init.body as string);
+        expect(body).not.toHaveProperty("imageBase64");
+        expect(body).not.toHaveProperty("cid");
+    });
+
+    it("drops the inline image on the legacy endpoint", async () => {
+        const calls = mockFetchSequence([{ status: 200, body: "" }]);
+        await sendEmail(
+            env({ EMAIL_RESEND_URL: "https://rin-email.vercel.app/api/send", EMAIL_RESEND_PASS: "legacy-pass" }),
+            "to@example.com",
+            "Subject",
+            "body",
+            { imageBase64: "PNG_BASE64", cid: "captcha-1" },
+        );
+        const body = JSON.parse(calls[0].init.body as string);
+        expect(body).not.toHaveProperty("imageBase64");
+        expect(body).not.toHaveProperty("cid");
+    });
 });

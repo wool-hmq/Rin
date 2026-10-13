@@ -23,6 +23,14 @@ type LegacyEndpoint = {
 
 type Endpoint = MailportEndpoint | LegacyEndpoint;
 
+/** 内嵌图片(用于邮件验证码等人机验证场景) */
+export interface EmailInlineImage {
+    /** PNG 的 base64,不含 data: 前缀 */
+    imageBase64: string;
+    /** 邮件正文 html 里 <img src="cid:..."> 引用的唯一标识 */
+    cid: string;
+}
+
 function parseStringList(raw: string, name: string): string[] {
     const trimmed = raw.trim();
     let parsed: unknown;
@@ -76,13 +84,24 @@ export function isEmailConfigured(env: Env): boolean {
     return !!(env.EMAIL_RESEND_URL ?? "").trim() && !!(env.EMAIL_RESEND_PASS ?? "").trim();
 }
 
-async function postToEndpoint(endpoint: Endpoint, to: string, subject: string, text: string): Promise<void> {
+async function postToEndpoint(
+    endpoint: Endpoint,
+    to: string,
+    subject: string,
+    text: string,
+    inlineImage?: EmailInlineImage,
+): Promise<void> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const body: Record<string, unknown> = { to, subject, text };
     if (endpoint.mode === "mailport") {
         headers["Authorization"] = `Bearer ${endpoint.key}`;
+        if (inlineImage) {
+            body.imageBase64 = inlineImage.imageBase64;
+            body.cid = inlineImage.cid;
+        }
     } else {
         body.pass = endpoint.pass;
+        // 旧中继不支持内嵌图片,验证码图片只能走新的 MailPort 发件服务。
     }
 
     const resp = await fetch(endpoint.url, {
@@ -97,7 +116,13 @@ async function postToEndpoint(endpoint: Endpoint, to: string, subject: string, t
     }
 }
 
-export async function sendEmail(env: Env, to: string, subject: string, text: string): Promise<void> {
+export async function sendEmail(
+    env: Env,
+    to: string,
+    subject: string,
+    text: string,
+    inlineImage?: EmailInlineImage,
+): Promise<void> {
     const endpoints = resolveEndpoints(env);
     if (endpoints.length === 0) {
         throw new Error(
@@ -109,7 +134,7 @@ export async function sendEmail(env: Env, to: string, subject: string, text: str
     let lastError: unknown = null;
     for (const endpoint of endpoints) {
         try {
-            await postToEndpoint(endpoint, to, subject, text);
+            await postToEndpoint(endpoint, to, subject, text, inlineImage);
             return;
         } catch (err) {
             lastError = err;

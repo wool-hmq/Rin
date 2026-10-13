@@ -19,6 +19,8 @@ const DEFAULT_EMAIL_OWNER_UID = 7;
 const STATE_TYPE = "friend.email";
 const LOCK_TYPE = "friend.email.lock";
 const LOCK_KEY = "global";
+// 人机验证码答案单独存放,与申请状态分开管理
+const CAPTCHA_TYPE = "friend.email.captcha";
 
 // Domain verification must finish within 10 minutes of the last instruction.
 const VERIFY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -26,11 +28,15 @@ const VERIFY_TIMEOUT_MS = 10 * 60 * 1000;
 const APPLICATION_TIMEOUT_MS = 30 * 60 * 1000;
 // Outbound fetch timeout for the verification probe.
 const PROBE_TIMEOUT_MS = 8 * 1000;
+// Captcha must be solved within 10 minutes.
+const CAPTCHA_TIMEOUT_MS = 10 * 60 * 1000;
+// Allow the applicant a few mistypes before the captcha resets.
+const CAPTCHA_MAX_ATTEMPTS = 5;
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnpqrstuvwxyz";
 
 interface FriendEmailState {
-    stage: "awaiting_json" | "verifying";
+    stage: "awaiting_captcha" | "awaiting_json" | "verifying";
     op: "apply" | "modify" | "delete";
     payload: Record<string, unknown>;
     // Remaining URLs to verify. Each entry carries its own 8-char code.
@@ -40,11 +46,22 @@ interface FriendEmailState {
     sender: string;
 }
 
+interface CaptchaRecord {
+    /** 用户应输入的答案(大写) */
+    answer: string;
+    /** 已尝试次数 */
+    attempts: number;
+    /** 过期时间戳 */
+    expiresAt: number;
+}
+
 interface FriendEmailDeps {
     db: DB;
     configGet: <T>(key: string, defaultValue: T) => Promise<T>;
-    send: (to: string, subject: string, text: string) => Promise<void>;
+    send: (to: string, subject: string, text: string, inlineImage?: { imageBase64: string; cid: string }) => Promise<void>;
     httpGet: (url: string) => Promise<number>;
+    /** 生成验证码图片;返回 PNG 的 base64、正确答案与内嵌 cid */
+    generateCaptcha?: () => Promise<{ imageBase64: string; text: string; cid: string }>;
     notifyOwner?: (op: "apply" | "modify" | "delete", payload: Record<string, unknown>, sender: string) => Promise<void>;
     now?: () => number;
 }
@@ -90,8 +107,11 @@ function notify(
     // "compose a new email" hint). Terminal/success mails expect nothing.
     expectReply = true,
     address = "",
+    inlineImage?: { imageBase64: string; cid: string },
 ): Promise<void> {
-    return deps.send(to, subject, text + buildFooter(active, expectReply, address)).catch(() => {});
+    return deps
+        .send(to, subject, text + buildFooter(active, expectReply, address), inlineImage)
+        .catch(() => {});
 }
 
 function normalizeUrl(raw: string): string | null {
@@ -210,6 +230,38 @@ async function deleteState(db: DB, sender: string): Promise<void> {
     await db
         .delete(cache)
         .where(and(eq(cache.key, sender), eq(cache.type, STATE_TYPE)));
+}
+
+async function loadCaptcha(db: DB, sender: string): Promise<CaptchaRecord | null> {
+    const rows = await db
+        .select({ value: cache.value })
+        .from(cache)
+        .where(and(eq(cache.key, sender), eq(cache.type, CAPTCHA_TYPE)));
+    if (!rows || rows.length === 0) return null;
+    try {
+        return JSON.parse(rows[0].value) as CaptchaRecord;
+    } catch {
+        return null;
+    }
+}
+
+// 同一邮箱并发请求时先删除旧记录,确保只有最新一条验证码有效。
+async function saveCaptcha(db: DB, sender: string, record: CaptchaRecord): Promise<void> {
+    await db
+        .delete(cache)
+        .where(and(eq(cache.key, sender), eq(cache.type, CAPTCHA_TYPE)));
+    await db.insert(cache).values({
+        key: sender,
+        value: JSON.stringify(record),
+        type: CAPTCHA_TYPE,
+        expiresAt: record.expiresAt,
+    });
+}
+
+async function deleteCaptcha(db: DB, sender: string): Promise<void> {
+    await db
+        .delete(cache)
+        .where(and(eq(cache.key, sender), eq(cache.type, CAPTCHA_TYPE)));
 }
 
 async function loadLock(db: DB): Promise<{ owner: string; expiresAt: number } | null> {
@@ -431,7 +483,7 @@ export async function processFriendEmail(
         }
 
         const newState: FriendEmailState = {
-            stage: "awaiting_json",
+            stage: "awaiting_captcha",
             op,
             payload: {},
             verifyTargets: [],
@@ -440,13 +492,117 @@ export async function processFriendEmail(
             sender,
         };
         await saveState(deps.db, sender, newState);
+
+        // 先做简单人机验证,防止自动化滥用;通过后才进入 JSON 模板环节。
+        if (!deps.generateCaptcha) {
+            // 未接入验证码生成能力时,直接进入 JSON 环节(保持向后兼容)。
+            newState.stage = "awaiting_json";
+            await saveState(deps.db, sender, newState);
+            await notify(
+                deps,
+                sender,
+                "友链申请 - 请回复 JSON 模板",
+                `收到你的${command === EMAIL_OP_APPLY ? "友链申请" : command === EMAIL_OP_MODIFY ? "友链修改" : "友链删除"}请求。\n\n` +
+                    `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
+                    jsonTemplateFor(op) +
+                    `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`,
+                true,
+                true,
+                applyAddress,
+            );
+            return;
+        }
+
+        const captcha = await deps.generateCaptcha();
+        await saveCaptcha(deps.db, sender, {
+            answer: captcha.text,
+            attempts: 0,
+            expiresAt: now + CAPTCHA_TIMEOUT_MS,
+        });
+        console.log(`[friend-email] captcha issued for ${sender}, awaiting answer`);
+
+        await notify(
+            deps,
+            sender,
+            "友链申请 - 请先完成人机验证",
+            `收到你的${command === EMAIL_OP_APPLY ? "友链申请" : command === EMAIL_OP_MODIFY ? "友链修改" : "友链删除"}请求。\n\n` +
+                `为防止滥用，请先识别下方验证码图片中的字符，并在新邮件正文中只发送这 4 位字符作为回复。验证通过后系统会发送 JSON 模板给你。\n\n` +
+                `[验证码图片已内嵌，请在邮件中查看]` +
+                `\n\n验证码 10 分钟内有效。`,
+            true,
+            true,
+            applyAddress,
+            captcha,
+        );
+        return;
+    }
+
+    // ---- Awaiting the captcha answer (human check before JSON) ----
+    if (state.stage === "awaiting_captcha") {
+        const captcha = await loadCaptcha(deps.db, sender);
+        if (!captcha) {
+            console.log("[friend-email] captcha record missing, terminating");
+            await terminate(deps, sender, state, "验证码已失效，本次申请已终止。请重新发起申请。", applyAddress);
+            return;
+        }
+        if (captcha.expiresAt <= now) {
+            console.log("[friend-email] captcha expired, terminating");
+            await terminate(deps, sender, state, "验证码已超时，本次申请已终止。请重新发起申请。", applyAddress);
+            return;
+        }
+
+        const answer = firstLine(body).toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (!answer) {
+            await notify(
+                deps,
+                sender,
+                "友链申请 - 验证提示",
+                `请识别验证码图片中的 4 位字符，并在新邮件正文中只发送这 4 位字符。`,
+                true,
+                true,
+                applyAddress,
+            );
+            return;
+        }
+
+        if (answer !== captcha.answer) {
+            captcha.attempts += 1;
+            if (captcha.attempts >= CAPTCHA_MAX_ATTEMPTS) {
+                console.log(`[friend-email] captcha failed ${captcha.attempts} times, terminating`);
+                await terminate(
+                    deps,
+                    sender,
+                    state,
+                    "验证码连续输入错误，本次申请已终止。请重新发起申请。",
+                    applyAddress,
+                );
+                return;
+            }
+            await saveCaptcha(deps.db, sender, captcha);
+            await notify(
+                deps,
+                sender,
+                "友链申请 - 验证码错误",
+                `验证码不正确（已尝试 ${captcha.attempts}/${CAPTCHA_MAX_ATTEMPTS} 次）。请重新识别验证码图片中的 4 位字符后再回复。`,
+                true,
+                true,
+                applyAddress,
+            );
+            return;
+        }
+
+        // 验证通过,进入 JSON 环节。
+        console.log("[friend-email] captcha passed, awaiting JSON");
+        await deleteCaptcha(deps.db, sender);
+        state.stage = "awaiting_json";
+        await saveState(deps.db, sender, state);
         await notify(
             deps,
             sender,
             "友链申请 - 请回复 JSON 模板",
-            `收到你的${command === EMAIL_OP_APPLY ? "友链申请" : command === EMAIL_OP_MODIFY ? "友链修改" : "友链删除"}请求。\n\n` +
+            `人机验证通过。\n\n` +
                 `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
-                jsonTemplateFor(op) +
+                jsonTemplateFor(state.op) +
                 `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`,
             true,
             true,
