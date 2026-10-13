@@ -8,24 +8,18 @@
  * 因此在 Workers 里无需加载系统字体,也能保证渲染结果一致。
  */
 
-// resvg 的 wasm 初始化在 workerd 下由打包器处理;在本地 bun/node 测试环境里
-// 需要手动指向 wasm 文件。惰性加载,避免 import 阶段就触发 fetch。
+// resvg 的 wasm 初始化由 @cf-wasm/resvg/workerd 入口在模块加载时完成,
+// Resvg.async() 内部会 initResvg.ensure() 等待就绪,这里绝不能再调 initResvg
+// (它只能调一次,重复调用会同步抛错)。
 import type { Resvg as ResvgType } from "@cf-wasm/resvg/workerd";
 
-let resvgReady: Promise<void> | null = null;
+let resvgCtor: Promise<typeof ResvgType> | null = null;
 
 async function ensureResvg(): Promise<typeof ResvgType> {
-    if (!resvgReady) {
-        resvgReady = (async () => {
-            const mod = await import("@cf-wasm/resvg/workerd");
-            await mod.initResvg(mod.resvgWasmModule).catch(() => {
-                // initResvg 只能调用一次,重复调用时忽略;Resvg.async 会自行 ensure。
-            });
-        })();
+    if (!resvgCtor) {
+        resvgCtor = import("@cf-wasm/resvg/workerd").then((mod) => mod.Resvg);
     }
-    await resvgReady;
-    const mod = await import("@cf-wasm/resvg/workerd");
-    return mod.Resvg;
+    return resvgCtor;
 }
 
 // 排除易混字符:0/O/1/I/l 等
