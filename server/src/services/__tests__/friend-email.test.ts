@@ -190,13 +190,25 @@ describe("processFriendEmail", () => {
     });
 
     describe("invalid inputs", () => {
-        it("should terminate on invalid JSON", async () => {
+        it("should terminate on malformed JSON", async () => {
             await startApplication(EMAIL_OP_APPLY);
-            await process("这不是 JSON 也不是模板");
+            await process('{"name": "站点名称", "url":}');
 
             expect((await friendsTable()).length).toBe(0);
             expect(sent.at(-1)!.text).toContain("已终止");
             expect((await lockRows()).length).toBe(0);
+        });
+
+        it("should remind instead of terminating when the body is not a JSON attempt", async () => {
+            await startApplication(EMAIL_OP_APPLY);
+            // 模拟验证码回复被邮件服务器重复投递:正文无花括号,不是 JSON 尝试
+            await process(CAPTCHA_ANSWER);
+
+            expect(sent.at(-1)!.subject).toContain("JSON 模板");
+            expect(sent.at(-1)!.text).not.toContain("已终止");
+            // 申请依然有效,没有被误终止
+            expect((await stateRows()).length).toBe(1);
+            expect((await lockRows()).length).toBe(1);
         });
 
         it("should terminate when the JSON misses required fields", async () => {

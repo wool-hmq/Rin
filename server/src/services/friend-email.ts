@@ -332,6 +332,14 @@ function jsonTemplateFor(op: "apply" | "modify" | "delete"): string {
     return JSON.stringify({ url: "站点URL" });
 }
 
+function jsonTemplateInstruction(op: "apply" | "modify" | "delete"): string {
+    return (
+        `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
+        jsonTemplateFor(op) +
+        `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`
+    );
+}
+
 // Match a friend by its normalized URL, so redirect links stored in the DB
 // (e.g. https://link.example.com/?...&to=https://real.com) still match the
 // real target extracted from the `to` param.
@@ -503,9 +511,7 @@ export async function processFriendEmail(
                 sender,
                 "友链申请 - 请回复 JSON 模板",
                 `收到你的${command === EMAIL_OP_APPLY ? "友链申请" : command === EMAIL_OP_MODIFY ? "友链修改" : "友链删除"}请求。\n\n` +
-                    `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
-                    jsonTemplateFor(op) +
-                    `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`,
+                    jsonTemplateInstruction(op),
                 true,
                 true,
                 applyAddress,
@@ -600,10 +606,7 @@ export async function processFriendEmail(
             deps,
             sender,
             "友链申请 - 请回复 JSON 模板",
-            `人机验证通过。\n\n` +
-                `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
-                jsonTemplateFor(state.op) +
-                `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`,
+            `人机验证通过。\n\n` + jsonTemplateInstruction(state.op),
             true,
             true,
             applyAddress,
@@ -615,6 +618,23 @@ export async function processFriendEmail(
     if (state.stage === "awaiting_json") {
         const payload = extractJson(body);
         if (!payload) {
+            // 正文中根本没有花括号,说明这不是一次 JSON 尝试(常见于验证码回复被
+            // 邮件服务器重复投递,或用户误发了别的内容)。此时只提醒模板,不终止
+            // 整个申请——否则一次重复投递就会毁掉已经通过人机验证的申请。
+            if (!body.includes("{") || !body.includes("}")) {
+                console.log("[friend-email] body is not a JSON attempt, reminding instead of terminating");
+                await notify(
+                    deps,
+                    sender,
+                    "友链申请 - 请回复 JSON 模板",
+                    `当前正在等待你填写 JSON 模板。\n\n` + jsonTemplateInstruction(state.op),
+                    true,
+                    true,
+                    applyAddress,
+                );
+                return;
+            }
+
             console.log("[friend-email] JSON extraction failed, terminating");
             await terminate(
                 deps,
