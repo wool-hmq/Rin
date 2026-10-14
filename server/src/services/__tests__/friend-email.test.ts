@@ -18,7 +18,7 @@ describe("processFriendEmail", () => {
     let sqlite: Database;
     let currentTime: number;
     let sent: SentMail[];
-    let probeResults: Record<string, number>;
+    let probeResults: Record<string, number | { status: number; body: string }>;
     let captchaQueue: Array<{ imageBase64: string; text: string; cid: string }>;
 
     // 默认验证码答案,与 process() 里 generateCaptcha 的返回保持一致
@@ -44,9 +44,21 @@ describe("processFriendEmail", () => {
         cleanupTestDB(sqlite);
     });
 
-    function httpGet(url: string): Promise<number> {
-        if (url in probeResults) return Promise.resolve(probeResults[url]);
-        return Promise.resolve(404);
+    function httpGet(url: string): Promise<{ status: number; body: string }> {
+        const codeFromUrl = url.match(/\/([A-Za-z0-9]+)\.html$/)?.[1] ?? "";
+        if (url in probeResults) {
+            const v = probeResults[url];
+            if (typeof v === "number") {
+                // 旧式写法:只指定状态码,body 沿用路径中的验证码
+                return Promise.resolve({ status: v, body: codeFromUrl });
+            }
+            return Promise.resolve(v);
+        }
+        // 默认:命中 code.html 时以该路径中的验证码作为 body,模拟用户原样放置的验证文件
+        if (codeFromUrl) {
+            return Promise.resolve({ status: 200, body: codeFromUrl });
+        }
+        return Promise.resolve({ status: 404, body: "" });
     }
 
     async function process(text: string, from = "applicant@example.com", opts?: { withCaptcha?: boolean }) {
@@ -129,6 +141,78 @@ describe("processFriendEmail", () => {
             expect((await lockRows()).length).toBe(0);
             // 验证通过后验证码记录应被清除
             expect((await captchaRows()).length).toBe(0);
+        });
+    });
+
+    describe("verification strictness", () => {
+        // 发起申请并走到站点验证步骤,返回验证码
+        async function reachVerify() {
+            await startApplication(EMAIL_OP_APPLY);
+            await process(JSON.stringify({ name: "F", url: "https://friend.com", avatar: "https://friend.com/icon.png", desc: "d" }));
+            const urlMatch = sent[2].text.match(/https:\/\/friend\.com\/([A-Za-z0-9]+)\.html/);
+            expect(urlMatch).not.toBeNull();
+            return urlMatch![1];
+        }
+
+        it("should fail when the URL returns 404", async () => {
+            const code = await reachVerify();
+            probeResults[`https://friend.com/${code}.html`] = { status: 404, body: code };
+            await process(EMAIL_CONFIRM_TRIGGER);
+            expect(sent.at(-1)!.subject).toContain("验证失败");
+            expect((await stateRows()).length).toBe(1);
+            expect((await friendsTable()).length).toBe(0);
+        });
+
+        it("should fail on non-200 status (403/500)", async () => {
+            const code = await reachVerify();
+            probeResults[`https://friend.com/${code}.html`] = { status: 403, body: code };
+            await process(EMAIL_CONFIRM_TRIGGER);
+            expect(sent.at(-1)!.subject).toContain("验证失败");
+            expect((await stateRows()).length).toBe(1);
+        });
+
+        it("should fail on a redirect-like 3xx", async () => {
+            const code = await reachVerify();
+            probeResults[`https://friend.com/${code}.html`] = { status: 302, body: "" };
+            await process(EMAIL_CONFIRM_TRIGGER);
+            expect(sent.at(-1)!.subject).toContain("验证失败");
+            expect((await stateRows()).length).toBe(1);
+        });
+
+        it("should fail when the body is 200 but content is wrong (SPA fallback)", async () => {
+            const code = await reachVerify();
+            // 模拟 SPA 回退:200 返回整页 HTML,不包含验证码
+            probeResults[`https://friend.com/${code}.html`] = { status: 200, body: `<html><body><div id="app">home</div></body></html>` };
+            await process(EMAIL_CONFIRM_TRIGGER);
+            expect(sent.at(-1)!.subject).toContain("验证失败");
+            expect((await stateRows()).length).toBe(1);
+        });
+
+        it("should succeed when the body contains exactly the verification code", async () => {
+            const code = await reachVerify();
+            probeResults[`https://friend.com/${code}.html`] = { status: 200, body: code };
+            await process(EMAIL_CONFIRM_TRIGGER);
+            expect(sent.at(-1)!.subject).toContain("成功");
+            expect((await stateRows()).length).toBe(0);
+            expect((await friendsTable()).length).toBe(1);
+        });
+
+        it("should reject a template body where the code appears inside other text", async () => {
+            const code = await reachVerify();
+            probeResults[`https://friend.com/${code}.html`] = { status: 200, body: `写入内容：${code} 完` };
+            await process(EMAIL_CONFIRM_TRIGGER);
+            expect(sent.at(-1)!.subject).toContain("验证失败");
+            expect((await stateRows()).length).toBe(1);
+        });
+
+        it("should remind with the full source when the confirm body is missing", async () => {
+            const code = await reachVerify();
+            await process("hello");
+            const remind = sent.at(-1)!;
+            expect(remind.subject).toContain("验证提示");
+            expect(remind.text).toContain(code);
+            expect(remind.text).toContain("原样复制");
+            expect(remind.text).toContain("不要增改任何内容");
         });
     });
 
@@ -369,9 +453,8 @@ describe("processFriendEmail", () => {
         it("should append the cancel hint only while the application is in flight", async () => {
             await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
-            await process(EMAIL_CONFIRM_TRIGGER);
 
-            // Every email sent so far belongs to an in-flight application.
+            // 此时申请仍处于进行中（等待用户回复确认），此前发出的每一封邮件都应带取消提示。
             expect(sent.length).toBeGreaterThan(0);
             for (const m of sent) {
                 expect(m.text).toContain("结束本次友链申请");

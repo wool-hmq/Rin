@@ -17,7 +17,12 @@ const PostalMime = (PostalMimeModule as any)?.default?.default
 
 const PROBE_TIMEOUT_MS = 8 * 1000;
 
-async function probeUrl(url: string): Promise<number> {
+interface ProbeResult {
+    status: number;
+    body: string;
+}
+
+async function probeUrl(url: string): Promise<ProbeResult> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
     try {
@@ -25,11 +30,16 @@ async function probeUrl(url: string): Promise<number> {
             method: "GET",
             headers: { "User-Agent": "Rin-Friend-Verify/1.0" },
             signal: controller.signal,
-            redirect: "follow",
+            redirect: "manual",
         });
-        return resp.status;
+        // 3xx is not a plain 200 response; do not follow it.
+        if (resp.status >= 300 && resp.status < 400) {
+            return { status: resp.status, body: "" };
+        }
+        const body = await resp.text();
+        return { status: resp.status, body };
     } catch {
-        return 0;
+        return { status: 0, body: "" };
     } finally {
         clearTimeout(timer);
     }

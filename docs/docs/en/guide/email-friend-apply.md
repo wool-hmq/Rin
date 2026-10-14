@@ -9,9 +9,9 @@ Visitors email your dedicated address (e.g. `friend-request@your-domain.com`). R
 1. Visitor emails with body **友链申请** (or 友链修改 to modify, 友链删除 to delete).
 2. Rin replies with a JSON template to fill in.
 3. Visitor fills in the JSON and replies.
-4. Rin generates an 8-character code (`a`) and asks the visitor to create an `a.html` file at the root of their site.
+4. Rin generates an 8-character code (`a`) and, in the reply email, includes the verification HTML source; the visitor must create an `a.html` file at the root of their site and copy the source in **verbatim** (no additions or changes).
 5. Visitor replies with body **请你进行下一步验证**.
-6. Rin fetches `https://site-url/a.html`; anything other than 404 proves domain ownership, and then Rin adds/updates/deletes the friend link directly in the database.
+6. Rin fetches `https://site-url/a.html`; the GET must return **200** and the page `<body>` must contain **exactly** the verification code (`a`) — only then does Rin treat domain ownership as verified and add/update/delete the friend link in the database.
 
 ### Operations and JSON templates
 
@@ -44,7 +44,7 @@ Notes:
 - **10-minute verification window**: a code is valid for 10 minutes from the moment it's issued; exceeding it auto-terminates the application.
 - **30-minute total window**: an application must finish within 30 minutes of starting.
 - **Invalid JSON or site URL**: Rin emails the visitor about the error and terminates the application.
-- Verification accepts any response other than 404 (200, 30x, etc.); network errors/timeouts count as not passed and can be retried within the window.
+- **Strict verification**: the GET must return 200 and the `<body>` must match the code exactly (whitespace differences allowed). SPA fallbacks, custom 404 pages (full-page HTML with 200), 403/500, and 30x redirects all fail and can be retried within the window.
 - Email-completed friend links have `accepted` = `1`, with no backend review step. Their owner `uid` is resolved as described below.
 
 ## Optional toggle

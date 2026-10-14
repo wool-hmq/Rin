@@ -59,7 +59,7 @@ interface FriendEmailDeps {
     db: DB;
     configGet: <T>(key: string, defaultValue: T) => Promise<T>;
     send: (to: string, subject: string, text: string, inlineImage?: { imageBase64: string; cid: string }) => Promise<void>;
-    httpGet: (url: string) => Promise<number>;
+    httpGet: (url: string) => Promise<ProbeResult>;
     /** 生成验证码图片;返回 PNG 的 base64、正确答案与内嵌 cid */
     generateCaptcha?: () => Promise<{ imageBase64: string; text: string; cid: string }>;
     notifyOwner?: (op: "apply" | "modify" | "delete", payload: Record<string, unknown>, sender: string) => Promise<void>;
@@ -73,6 +73,58 @@ function generateCode(length = 8): string {
         code += CODE_CHARS[random[i] % CODE_CHARS.length];
     }
     return code;
+}
+
+// Result of a domain-ownership probe: HTTP status plus the response body.
+// The probe now reads the body so the verifier can require an exact content
+// match (guarding against SPA fallbacks and custom 404 pages that return 200).
+interface ProbeResult {
+    status: number;
+    body: string;
+}
+
+// Extract the visible text inside <body>, stripping tags/scripts/styles and
+// collapsing all whitespace. Used to compare against the verification code so
+// a SPA or custom 404 page (which returns 200 + arbitrary HTML) fails.
+function extractBodyText(html: string): string {
+    const bodyMatch = /<body[^>]*>([\s\S]*?)<\/body>/i.exec(html);
+    const content = bodyMatch ? bodyMatch[1] : html;
+    return content
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<!--[\s\S]*?-->/g, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\s+/g, "");
+}
+
+// The minimal HTML snippet the applicant must save verbatim as `<code>.html`.
+// Its <body> contains only the verification code so an exact-match probe passes
+// only when the applicant truly placed the file (not a SPA fallback).
+function verifyHtmlSource(code: string): string {
+    return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+${code}
+</body>
+</html>`;
+}
+
+// Verification instruction email body: ask the applicant to place the exact
+// HTML source into `<code>.html` so the served <body> matches the code.
+function verifyInstruction(target: { url: string; code: string }): string {
+    return (
+        `请在站点 ${target.url} 的根目录创建文件 ${target.code}.html，并将下面的源码原样复制到该文件（不要增改任何内容）：\n\n` +
+        `————————————————————————\n` +
+        verifyHtmlSource(target.code) +
+        `\n————————————————————————\n\n` +
+        `创建完成后，请确保 ${target.url}/${target.code}.html 通过 GET 请求返回 200，且页面 <body> 内容仅包含验证码 ${target.code}。\n\n` +
+        `随后回复本邮件，正文必须为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
+        `验证码 ${target.code} 将在 10 分钟内有效。`
+    );
 }
 
 const CANCEL_HINT = `如需结束本次申请，请新建一封邮件，并将正文设为：${EMAIL_OP_CANCEL}`;
@@ -684,9 +736,7 @@ export async function processFriendEmail(
             deps,
             sender,
             "友链申请 - 站点验证",
-            `请在站点 ${first.url} 的根目录创建文件 ${first.code}.html（文件内容随意），使以下地址可访问：\n\n${first.url}/${first.code}.html\n\n` +
-                `创建完成后，回复本邮件，正文必须为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
-                `验证码 ${first.code} 将在 10 分钟内有效。`,
+            verifyInstruction(first),
             true,
             true,
             applyAddress,
@@ -696,13 +746,19 @@ export async function processFriendEmail(
 
     // ---- Verifying domain ownership ----
     if (state.stage === "verifying") {
+        const target = state.verifyTargets[0];
+        if (!target) {
+            await terminate(deps, sender, state, "验证信息缺失，本次申请已终止。", applyAddress);
+            return;
+        }
+
         if (firstLine(body) !== EMAIL_CONFIRM_TRIGGER) {
             console.log("[friend-email] verifying stage but body is not the confirm trigger");
             await notify(
                 deps,
                 sender,
                 "友链申请 - 验证提示",
-                `当前正在进行站点验证。请在站点根目录创建对应的 .html 验证文件后，回复正文为：\n\n${EMAIL_CONFIRM_TRIGGER}`,
+                `当前正在进行站点验证。\n\n` + verifyInstruction(target),
                 true,
                 true,
                 applyAddress,
@@ -710,30 +766,35 @@ export async function processFriendEmail(
             return;
         }
 
-        const target = state.verifyTargets[0];
-        if (!target) {
-            await terminate(deps, sender, state, "验证信息缺失，本次申请已终止。", applyAddress);
-            return;
-        }
-
         const probeUrl = `${target.url}/${target.code}.html`;
-        let status = 0;
+        let probe: ProbeResult | null = null;
         try {
-            status = await deps.httpGet(probeUrl);
+            probe = await deps.httpGet(probeUrl);
         } catch {
-            status = 0;
+            probe = null;
         }
-        console.log(`[friend-email] probing ${probeUrl} status=${status}`);
+        const status = probe?.status ?? 0;
+        const bodyText = extractBodyText(probe?.body ?? "");
+        const bodyMatches = bodyText === target.code;
+        console.log(`[friend-email] probing ${probeUrl} status=${status} bodyMatch=${bodyMatches}`);
 
-        // Anything other than 404 (including 200/30x) proves the applicant controls the domain.
-        if (status === 404 || status === 0) {
+        // Strict verification: the URL must return 200 AND the <body> must
+        // contain exactly the verification code. This defeats SPA fallbacks,
+        // custom 404 pages, 403/500 responses and followed redirects, all of
+        // which used to pass the old "anything but 404" check.
+        if (status !== 200 || !bodyMatches) {
             console.log("[friend-email] verification probe failed");
+            const reason = status === 0
+                ? "网络错误/超时"
+                : status !== 200
+                    ? `HTTP 状态码 ${status}（需要 200）`
+                    : "页面内容不匹配（<body> 必须仅包含验证码）";
             await notify(
                 deps,
                 sender,
                 "友链申请 - 验证失败",
-                `无法访问 ${probeUrl}（当前状态 ${status === 0 ? "网络错误/超时" : "404"}）。\n\n` +
-                    `请确认已创建 ${target.code}.html 文件后，重新回复：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
+                `验证失败：${probeUrl}\n\n原因：${reason}\n\n` +
+                    `请将验证源码原样复制到 ${target.code}.html 后，重新回复：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
                     `验证码将在 10 分钟内有效，超时后申请自动结束。`,
                 true,
                 true,
@@ -753,9 +814,7 @@ export async function processFriendEmail(
                 deps,
                 sender,
                 "友链申请 - 站点验证（下一步）",
-                `第一个站点验证通过。\n\n请在站点 ${next.url} 的根目录创建文件 ${next.code}.html（文件内容随意），使以下地址可访问：\n\n${next.url}/${next.code}.html\n\n` +
-                    `创建完成后，回复正文为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
-                    `验证码 ${next.code} 将在 10 分钟内有效。`,
+                `第一个站点验证通过。\n\n` + verifyInstruction(next),
                 true,
                 true,
                 applyAddress,
