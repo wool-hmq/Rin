@@ -55,6 +55,8 @@ export async function parseIncoming(message: ForwardableEmailMessage): Promise<{
     from: string;
     to: string;
     text: string;
+    subject: string;
+    headers: Record<string, string>;
 }> {
     console.log("[friend-email] parseIncoming: reading raw stream");
     let buffer: ArrayBuffer;
@@ -66,7 +68,7 @@ export async function parseIncoming(message: ForwardableEmailMessage): Promise<{
     }
     console.log(`[friend-email] parseIncoming: read ${buffer.byteLength} bytes`);
 
-    let parsed: { text?: string; html?: string; attachments?: unknown[] };
+    let parsed: { text?: string; html?: string; subject?: string; headers?: Array<{ key?: string; name?: string; value?: unknown }> };
     try {
         const parser = new PostalMime();
         parsed = await parser.parse(buffer);
@@ -77,7 +79,7 @@ export async function parseIncoming(message: ForwardableEmailMessage): Promise<{
         // Fallback: naive extraction so the flow can still proceed.
         const fallback = fallbackExtractText(buffer);
         console.log("[friend-email] using fallback extraction, length=", fallback.length);
-        return { from: message.from, to: message.to, text: fallback };
+        return { from: message.from, to: message.to, text: fallback, subject: "", headers: {} };
     }
 
     let text = parsed.text || parsed.html || "";
@@ -85,7 +87,26 @@ export async function parseIncoming(message: ForwardableEmailMessage): Promise<{
     if (/<[a-z][\s\S]*>/i.test(text)) {
         text = stripHtml(text);
     }
-    return { from: message.from, to: message.to, text };
+    // Extract subject + headers from the raw MIME for reply detection.
+    // postal-mime's header parsing is inconsistent, so we parse headers directly.
+    const { subject, headers } = parseHeaders(buffer);
+    return { from: message.from, to: message.to, text, subject, headers };
+}
+
+// Detect whether the inbound email is a reply or forward by subject prefix
+// (Re/答复/回复/转发/Fwd/Fw) or by In-Reply-To / References headers. Such
+// messages land in the outbound mailbox (e.g. personal QQ mail) and are
+// auto-forwarded here, so they can never reach the worker's receiving
+// address. Reply with a reminder and skip the state machine entirely.
+export function detectReplyOrForward(
+    subject: string,
+    headers: Record<string, string>,
+): boolean {
+    if (/^(re|答复|回复|转发|fwd|fw)\s*[:：]/i.test(subject.trim())) return true;
+    for (const key of ["In-Reply-To", "References"]) {
+        if (headers[key]) return true;
+    }
+    return false;
 }
 
 function stripHtml(html: string): string {
@@ -104,6 +125,25 @@ function stripHtml(html: string): string {
         .replace(/[ \t]+/g, " ")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
+}
+
+// Parse subject and headers from raw MIME buffer for reply detection.
+function parseHeaders(buffer: ArrayBuffer): { subject: string; headers: Record<string, string> } {
+    const raw = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+    const headerEnd = raw.search(/\r?\n\r?\n/);
+    const headerBlock = headerEnd === -1 ? raw : raw.slice(0, headerEnd);
+    const headers: Record<string, string> = {};
+    let subject = "";
+    for (const line of headerBlock.split(/\r?\n/)) {
+        const match = line.match(/^([A-Za-z-]+)\s*:\s*(.*)$/);
+        if (match) {
+            const key = match[1];
+            const value = match[2].trim();
+            headers[key] = value;
+            if (key.toLowerCase() === "subject") subject = value;
+        }
+    }
+    return { subject, headers };
 }
 
 // Naive MIME text extraction used only when postal-mime throws.
@@ -155,7 +195,7 @@ export async function handleEmail(
     ctx: ExecutionContext,
 ): Promise<void> {
     console.log(`[friend-email] email handler invoked from=${message.from} to=${message.to} rawSize=${message.rawSize}`);
-    let mail: { from: string; to: string; text: string };
+    let mail: { from: string; to: string; text: string; subject: string; headers: Record<string, string> };
     try {
         mail = await parseIncoming(message);
     } catch (err: any) {
@@ -165,6 +205,31 @@ export async function handleEmail(
 
     if (!mail.from) {
         console.log("[friend-email] no sender address, ignoring");
+        return;
+    }
+
+    // Reply / forward detection happens before any state-machine work: a user
+    // who hits "Reply" in their mail client sends to the outbound address
+    // (e.g. personal QQ mail), not the worker's receiving address. We detect
+    // it here and fire a single reminder, leaving any in-flight state untouched.
+    if (detectReplyOrForward(mail.subject, mail.headers)) {
+        console.log(`[friend-email] reply/forward detected from=${mail.from} subject=${JSON.stringify(mail.subject)}`);
+        try {
+            await sendEmail(
+                env,
+                mail.from,
+                "⚠️ 系统提醒：请勿直接回复或转发",
+                `您好，系统检测到您使用了「回复」或「转发」功能。\n\n` +
+                    `由于邮件网关限制，这种方式会导致申请中途受阻。\n\n` +
+                    `请务必：\n` +
+                    `1. 点击「新建邮件」或「写邮件」。\n` +
+                    `2. 收件人填写：${message.to}\n` +
+                    `3. 正文填写：${"请你进行下一步验证"}\n\n` +
+                    `您的申请状态目前仍在倒计时中，请尽快新建邮件发送。`,
+            );
+        } catch (err: any) {
+            console.error("[friend-email] failed to send reply-reminder", err);
+        }
         return;
     }
 

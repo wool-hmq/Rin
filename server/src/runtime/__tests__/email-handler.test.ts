@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { parseIncoming } from "../email-handler";
+import { parseIncoming, detectReplyOrForward } from "../email-handler";
 
 function makeMessage(raw: string, from = "test@example.com"): ForwardableEmailMessage {
     const bytes = new TextEncoder().encode(raw);
@@ -71,5 +71,60 @@ describe("parseIncoming", () => {
         ].join("\r\n");
         const mail = await parseIncoming(makeMessage(raw));
         expect(mail.text.trim()).toBe("友链申请");
+    });
+
+    it("extracts subject and headers for reply detection", async () => {
+        const raw = [
+            "Message-ID: <a@b.com>",
+            "From: test@example.com",
+            "To: friend-request@jiaoblog.dpdns.org",
+            "Subject: 友链申请",
+            "In-Reply-To: <original@b.com>",
+            "References: <original@b.com>",
+            "Content-Type: text/plain; charset=UTF-8",
+            "",
+            "友链申请",
+            "",
+        ].join("\r\n");
+        const mail = await parseIncoming(makeMessage(raw));
+        expect(mail.subject).toBe("友链申请");
+        expect(mail.headers["In-Reply-To"]).toBe("<original@b.com>");
+        expect(mail.headers["References"]).toBe("<original@b.com>");
+    });
+});
+
+describe("detectReplyOrForward", () => {
+    it("returns false for a normal new email", () => {
+        expect(detectReplyOrForward("友链申请", {})).toBe(false);
+        expect(detectReplyOrForward("", {})).toBe(false);
+    });
+
+    it.each([
+        "Re: 友链申请",
+        "RE: 友链申请",
+        "答复: 友链申请",
+        "回复: 友链申请",
+        "转发: 友链申请",
+        "Fwd: 友链申请",
+        "Fw: 友链申请",
+    ])("detects reply by subject prefix: %s", (subject) => {
+        expect(detectReplyOrForward(subject, {})).toBe(true);
+    });
+
+    it("detects reply by In-Reply-To header", () => {
+        expect(detectReplyOrForward("", { "In-Reply-To": "<original@b.com>" })).toBe(true);
+    });
+
+    it("detects reply by References header", () => {
+        expect(detectReplyOrForward("", { References: "<original@b.com>" })).toBe(true);
+    });
+
+    it("ignores unrelated headers", () => {
+        expect(
+            detectReplyOrForward("友链申请", {
+                "Message-ID": "<a@b.com>",
+                "Content-Type": "text/plain",
+            }),
+        ).toBe(false);
     });
 });

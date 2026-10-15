@@ -149,6 +149,18 @@ function buildFooter(active: boolean, expectReply: boolean, address: string): st
     return `\n\n————————————\n${parts.join("\n")}`;
 }
 
+const NO_REPLY_PREFIX = "[请勿直接回复]";
+
+function noReplyWarning(address: string): string {
+    if (!address) return "";
+    return (
+        `🛑 请勿直接点击"回复"按钮！\n\n` +
+        `> 该邮件仅作示例，请勿直接回复。\n` +
+        `> 由于系统网关限制，直接回复会被拦截。\n` +
+        `> 请点击「新建邮件」或「写邮件」，收件人填写：${address}\n\n`
+    );
+}
+
 function notify(
     deps: FriendEmailDeps,
     to: string,
@@ -162,8 +174,12 @@ function notify(
     address = "",
     inlineImage?: { imageBase64: string; cid: string },
 ): Promise<void> {
+    const finalSubject = expectReply ? `${NO_REPLY_PREFIX} ${subject}` : subject;
+    const finalText = expectReply
+        ? noReplyWarning(address) + text + buildFooter(active, expectReply, address)
+        : text + buildFooter(active, expectReply, address);
     return deps
-        .send(to, subject, text + buildFooter(active, expectReply, address), inlineImage)
+        .send(to, finalSubject, finalText, inlineImage)
         .catch(() => {});
 }
 
