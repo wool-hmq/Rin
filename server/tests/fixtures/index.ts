@@ -33,6 +33,7 @@ export function createMockDB() {
             email TEXT DEFAULT "",
             password TEXT,
             permission INTEGER DEFAULT 0,
+            totp_secret TEXT,
             created_at INTEGER DEFAULT (unixepoch()),
             updated_at INTEGER DEFAULT (unixepoch())
         );

@@ -240,14 +240,15 @@
       "empty": "Please enter username and password",
       "failed": "Login failed",
       "invalid": "Invalid username or password",
-      "network": "Network error, please try again"
+      "network": "Network error, please try again",
+      "totp_disabled": "Password login is disabled for this account, please enter the TOTP code"
     },
     "loading": "Logging in...",
     "no_methods": "No login methods available",
     "oauth_only": "Please log in to continue",
     "or": "or",
     "password": {
-      "placeholder": "Please enter your password"
+      "placeholder": "Password / TOTP code"
     },
     "required": "Please log in to continue",
     "title": "Login",
@@ -727,7 +728,31 @@
     "bind_email_send_failed": "Failed to send verification code",
     "get_code": "Get Code",
     "bind_code_prompt": "Enter bind code:",
-    "wechat_bind_hint": "WeChat does not require a bind code. Complete the authorization flow to bind."
+    "wechat_bind_hint": "WeChat does not require a bind code. Complete the authorization flow to bind.",
+    "totp": {
+      "title": "Two-Factor Authentication",
+      "label": "TOTP Authenticator",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "bind": "Bind TOTP",
+      "unbind": "Unbind",
+      "modal_title": "Bind TOTP Authenticator",
+      "modal_hint": "Manually add the following key to your authenticator app (e.g. Google Authenticator, Microsoft Authenticator), then enter the generated 6-digit code to finish binding.",
+      "secret_label": "Binding Key",
+      "secret_hint": "Keep this key safe and never share it with anyone.",
+      "code_label": "Verification Code",
+      "code_placeholder": "Enter the 6-digit code",
+      "confirm": "Confirm Binding",
+      "cancel": "Cancel",
+      "loading": "Generating binding key...",
+      "invalid_code": "Please enter a 6-digit code",
+      "setup_failed": "Failed to generate binding key",
+      "confirm_failed": "Invalid code, binding failed",
+      "bind_success": "TOTP bound successfully. Use the code to log in next time.",
+      "unbind_confirm": "Are you sure you want to unbind TOTP? Password login will be restored.",
+      "unbind_success": "TOTP unbound",
+      "unbind_failed": "Failed to unbind"
+    }
   },
   "health": {
     "generated_at": "Last checked: {{date}}",

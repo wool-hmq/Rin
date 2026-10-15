@@ -173,6 +173,40 @@ export interface LoginResponse {
 }
 
 // ============================================================================
+// TOTP (Two-Factor Authentication) Types
+// ============================================================================
+
+/**
+ * Fixed error message returned when a TOTP-enabled account attempts a
+ * password login. Shared by client and server so the client can reliably
+ * distinguish this case from generic invalid credentials.
+ */
+export const TOTP_LOGIN_DISABLED_MESSAGE = "Password login is disabled for this account";
+
+export interface TotpStatusResponse {
+  success: boolean;
+  enabled: boolean;
+}
+
+export interface TotpSetupResponse {
+  success: boolean;
+  /** Base32-encoded secret the user types into their authenticator app. */
+  secret: string;
+  /** Time-to-live of the pending setup in milliseconds. */
+  expiresIn: number;
+}
+
+export interface TotpConfirmRequest {
+  /** 6-digit TOTP code from the authenticator app. */
+  code: string;
+}
+
+export interface TotpConfirmResponse {
+  success: boolean;
+  enabled: boolean;
+}
+
+// ============================================================================
 // Tag Types
 // ============================================================================
 

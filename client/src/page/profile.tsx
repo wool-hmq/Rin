@@ -1,6 +1,7 @@
 import { t } from "i18next";
 import { useContext, useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { Modal } from "@rin/ui";
 import { ButtonWithLoading } from "../components/button";
 import { client } from "../app/runtime";
 import { ImageUploadInput } from "../components/image-upload-input";
@@ -20,6 +21,12 @@ export function ProfilePage() {
     const [success, setSuccess] = useState('');
     const [linkedAccounts, setLinkedAccounts] = useState<Array<{ provider: string; providerId: string; linkedAt: string }>>([]);
     const [loadingAccounts, setLoadingAccounts] = useState(false);
+    const [totpEnabled, setTotpEnabled] = useState(false);
+    const [totpModalOpen, setTotpModalOpen] = useState(false);
+    const [totpSecret, setTotpSecret] = useState('');
+    const [totpCode, setTotpCode] = useState('');
+    const [totpLoading, setTotpLoading] = useState(false);
+    const [totpError, setTotpError] = useState('');
 
     // Load current profile data and redirect to login if not authenticated
     useEffect(() => {
@@ -36,6 +43,7 @@ export function ProfilePage() {
         setUsername(profile.name || '');
         setAvatar(profile.avatar || '');
         loadLinkedAccounts();
+        loadTotpStatus();
     }, [profile, setLocation]);
 
     const loadLinkedAccounts = async () => {
@@ -49,6 +57,81 @@ export function ProfilePage() {
             // Silent fail for linked accounts loading
         } finally {
             setLoadingAccounts(false);
+        }
+    };
+
+    const loadTotpStatus = async () => {
+        try {
+            const response = await client.user.getTotpStatus();
+            if (response.data) {
+                setTotpEnabled(!!response.data.enabled);
+            }
+        } catch (err) {
+            // Silent fail for TOTP status loading
+        }
+    };
+
+    const handleOpenTotpModal = async () => {
+        setTotpError('');
+        setTotpCode('');
+        setTotpSecret('');
+        setTotpLoading(true);
+        setTotpModalOpen(true);
+        try {
+            const { data, error: apiError } = await client.user.setupTotp();
+            if (apiError || !data?.secret) {
+                setTotpError(t('profile.totp.setup_failed'));
+                return;
+            }
+            setTotpSecret(data.secret);
+        } catch (err) {
+            setTotpError(t('profile.totp.setup_failed'));
+        } finally {
+            setTotpLoading(false);
+        }
+    };
+
+    const handleConfirmTotp = async () => {
+        if (!/^\d{6}$/.test(totpCode.trim())) {
+            setTotpError(t('profile.totp.invalid_code'));
+            return;
+        }
+        setTotpLoading(true);
+        setTotpError('');
+        try {
+            const { error: apiError } = await client.user.confirmTotp(totpCode.trim());
+            if (apiError) {
+                setTotpError(t('profile.totp.confirm_failed'));
+                return;
+            }
+            setTotpEnabled(true);
+            setTotpModalOpen(false);
+            setSuccess(t('profile.totp.bind_success'));
+        } catch (err) {
+            setTotpError(t('profile.totp.confirm_failed'));
+        } finally {
+            setTotpLoading(false);
+        }
+    };
+
+    const handleUnbindTotp = async () => {
+        if (!confirm(t('profile.totp.unbind_confirm'))) {
+            return;
+        }
+        setTotpLoading(true);
+        setError('');
+        try {
+            const { error: apiError } = await client.user.unbindTotp();
+            if (apiError) {
+                setError(t('profile.totp.unbind_failed'));
+                return;
+            }
+            setTotpEnabled(false);
+            setSuccess(t('profile.totp.unbind_success'));
+        } catch (err) {
+            setError(t('profile.totp.unbind_failed'));
+        } finally {
+            setTotpLoading(false);
         }
     };
 
@@ -312,6 +395,41 @@ export function ProfilePage() {
                         )}
                     </div>
 
+                    {/* Multi-factor authentication (TOTP) section */}
+                    <div className="space-y-4">
+                        <label className="text-sm font-medium t-secondary">{t('profile.totp.title')}</label>
+                        <div className="flex items-center justify-between p-3 bg-w-secondary rounded-lg">
+                            <div className="flex items-center space-x-3">
+                                <Icon label="TOTP" name="ri-shield-keyhole-line" onClick={() => {}} />
+                                <div className="flex flex-col">
+                                    <span className="text-sm">{t('profile.totp.label')}</span>
+                                    {totpEnabled ? (
+                                        <span className="text-xs text-green-500">{t('profile.totp.enabled')}</span>
+                                    ) : (
+                                        <span className="text-xs t-secondary">{t('profile.totp.disabled')}</span>
+                                    )}
+                                </div>
+                            </div>
+                            {totpEnabled ? (
+                                <button
+                                    onClick={handleUnbindTotp}
+                                    disabled={totpLoading}
+                                    className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                                >
+                                    {t('profile.totp.unbind')}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleOpenTotpModal}
+                                    disabled={totpLoading}
+                                    className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80 disabled:opacity-50"
+                                >
+                                    {t('profile.totp.bind')}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Submit button */}
                     <div className="pt-4">
                         <ButtonWithLoading
@@ -322,6 +440,68 @@ export function ProfilePage() {
                     </div>
                 </div>
             </div>
+
+            <Modal
+                isOpen={totpModalOpen}
+                onRequestClose={() => {
+                    if (!totpLoading) {
+                        setTotpModalOpen(false);
+                    }
+                }}
+                contentLabel={t('profile.totp.title')}
+                panelClassName="p-6"
+            >
+                <div className="flex flex-col space-y-4 w-full">
+                    <h2 className="text-lg font-bold t-primary">{t('profile.totp.modal_title')}</h2>
+                    <p className="text-sm t-secondary">{t('profile.totp.modal_hint')}</p>
+
+                    {totpLoading && !totpSecret ? (
+                        <p className="text-sm t-secondary">{t('profile.totp.loading')}</p>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium t-secondary">{t('profile.totp.secret_label')}</label>
+                                <code className="block w-full break-all rounded-lg bg-w-secondary px-3 py-2 text-sm font-mono t-primary">
+                                    {totpSecret || '—'}
+                                </code>
+                                <p className="text-xs t-secondary">{t('profile.totp.secret_hint')}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium t-secondary">{t('profile.totp.code_label')}</label>
+                                <Input
+                                    value={totpCode}
+                                    setValue={(value) => {
+                                        setTotpCode(value.replace(/\D/g, '').slice(0, 6));
+                                        setTotpError('');
+                                    }}
+                                    placeholder={t('profile.totp.code_placeholder')}
+                                    disabled={totpLoading}
+                                />
+                            </div>
+
+                            {totpError && <p className="text-sm text-red-500">{totpError}</p>}
+
+                            <div className="flex justify-end space-x-2 pt-2">
+                                <button
+                                    onClick={() => setTotpModalOpen(false)}
+                                    disabled={totpLoading}
+                                    className="text-xs px-3 py-2 rounded bg-w-secondary t-primary hover:bg-w-secondary/80 disabled:opacity-50"
+                                >
+                                    {t('profile.totp.cancel')}
+                                </button>
+                                <button
+                                    onClick={handleConfirmTotp}
+                                    disabled={totpLoading || totpCode.length !== 6}
+                                    className="text-xs px-3 py-2 rounded bg-theme text-white hover:bg-theme/80 disabled:opacity-50"
+                                >
+                                    {t('profile.totp.confirm')}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

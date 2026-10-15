@@ -5,6 +5,8 @@ import { profileAsync } from "../core/server-timing";
 import { setJWTCookie, clearJWTCookie } from "../core/hono-middleware";
 import { setCookie } from "hono/cookie";
 import { isEmailConfigured, sendEmail } from "../utils/email";
+import { verifyTOTP } from "../utils/totp";
+import { TOTP_LOGIN_DISABLED_MESSAGE } from "@rin/api";
 import { users, linkedAccounts } from "../db/schema";
 import { emailCodeStore, cleanExpiredCodes } from "./email-code-store";
 import {
@@ -20,6 +22,42 @@ async function hashPassword(password: string): Promise<string> {
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Error message returned when an account has TOTP enabled: password login is
+// forbidden, the supplied value must be a valid TOTP code instead.
+// (Re-exported for callers that import it from this module.)
+export { TOTP_LOGIN_DISABLED_MESSAGE };
+
+// Whether the submitted password field looks like a 6-digit TOTP code.
+function isTotpCode(value: string): boolean {
+    return /^\d{6}$/.test((value || "").trim());
+}
+
+// Authorize login for a user. When the user has TOTP enabled, only a valid
+// TOTP code is accepted and any password attempt is rejected with a fixed
+// message. Otherwise the plain password hash must match the stored one.
+// Returns true when login is allowed; the caller maps false to the generic
+// "Invalid credentials" error.
+async function authorizeLogin(
+    c: AppContext,
+    user: { password: string | null; totpSecret: string | null },
+    input: string,
+    hashedInput: string,
+): Promise<boolean> {
+    if (user.totpSecret) {
+        if (!isTotpCode(input)) {
+            throw new ForbiddenError(TOTP_LOGIN_DISABLED_MESSAGE);
+        }
+        const ok = await profileAsync(c, 'auth_totp_verify', () =>
+            verifyTOTP(user.totpSecret as string, input),
+        );
+        if (!ok) {
+            throw new ForbiddenError(TOTP_LOGIN_DISABLED_MESSAGE);
+        }
+        return true;
+    }
+    return !!(user.password && user.password === hashedInput);
 }
 
 export function PasswordAuthService(): Hono<{
@@ -56,48 +94,59 @@ export function PasswordAuthService(): Hono<{
         // Check if this is the admin login
         if (username === adminUsername) {
             const expectedHash = await profileAsync(c, 'auth_admin_hash', () => hashPassword(adminPassword));
-            
-            if (hashedPassword !== expectedHash) {
-                throw new ForbiddenError('Invalid credentials');
-            }
 
-            // Find or create admin user
+            // Find admin user first: a TOTP-enabled admin account must login
+            // with a TOTP code, not the env-configured password.
             let user = await profileAsync(c, 'auth_admin_lookup', () => db.query.users.findFirst({ 
                 where: eq(users.openid, "admin") 
             }));
 
-            if (!user) {
-                // Create admin user if not exists
-                const result = await profileAsync(c, 'auth_admin_insert', () => db.insert(users).values({
-                    username: adminUsername,
-                    openid: "admin",
-                    avatar: "",
-                    permission: 1,
-                    password: expectedHash,
-                }).returning({ insertedId: users.id }));
-
-                if (!result || result.length === 0) {
-                    throw new InternalServerError('Failed to create admin user');
+            if (user?.totpSecret) {
+                await authorizeLogin(c, user, password, hashedPassword);
+            } else {
+                if (hashedPassword !== expectedHash) {
+                    throw new ForbiddenError('Invalid credentials');
                 }
 
-                user = await profileAsync(c, 'auth_admin_reload', () => db.query.users.findFirst({ 
-                    where: eq(users.id, result[0].insertedId) 
-                }));
+                if (!user) {
+                    // Create admin user if not exists
+                    const result = await profileAsync(c, 'auth_admin_insert', () => db.insert(users).values({
+                        username: adminUsername,
+                        openid: "admin",
+                        avatar: "",
+                        permission: 1,
+                        password: expectedHash,
+                    }).returning({ insertedId: users.id }));
+
+                    if (!result || result.length === 0) {
+                        throw new InternalServerError('Failed to create admin user');
+                    }
+
+                    user = await profileAsync(c, 'auth_admin_reload', () => db.query.users.findFirst({ 
+                        where: eq(users.id, result[0].insertedId) 
+                    }));
+                }
+
+                if (!user) {
+                    throw new InternalServerError('Failed to get admin user');
+                }
+
+                if (user.password !== expectedHash) {
+                    // Update admin password if changed
+                    const syncUser = user;
+                    await profileAsync(c, 'auth_admin_sync', () => db.update(users)
+                        .set({ password: expectedHash, username: adminUsername })
+                        .where(eq(users.id, syncUser.id)));
+                }
             }
 
             if (!user) {
                 throw new InternalServerError('Failed to get admin user');
             }
-
-            if (user.password !== expectedHash) {
-                // Update admin password if changed
-                await profileAsync(c, 'auth_admin_sync', () => db.update(users)
-                    .set({ password: expectedHash, username: adminUsername })
-                    .where(eq(users.id, user.id)));
-            }
+            const adminUser = user;
 
             // Generate JWT token
-            const token = await profileAsync(c, 'auth_admin_token', () => jwt.sign({ id: user.id }));
+            const token = await profileAsync(c, 'auth_admin_token', () => jwt.sign({ id: adminUser.id }));
 
             // Set JWT cookie using Hono helper
             setJWTCookie(c, token);
@@ -106,10 +155,10 @@ export function PasswordAuthService(): Hono<{
                 success: true,
                 token: token,
                 user: {
-                    id: user.id,
-                    username: user.username,
-                    avatar: user.avatar,
-                    permission: user.permission === 1,
+                    id: adminUser.id,
+                    username: adminUser.username,
+                    avatar: adminUser.avatar,
+                    permission: adminUser.permission === 1,
                 }
             });
         }
@@ -123,7 +172,8 @@ export function PasswordAuthService(): Hono<{
             throw new ForbiddenError('Invalid credentials');
         }
 
-        if (user.password !== hashedPassword) {
+        const allowed = await authorizeLogin(c, user, password, hashedPassword);
+        if (!allowed) {
             throw new ForbiddenError('Invalid credentials');
         }
 

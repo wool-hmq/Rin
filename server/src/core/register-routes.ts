@@ -11,6 +11,7 @@ import { RSSService } from "../services/rss";
 import { SitemapService } from "../services/sitemap";
 import { BlobService, StorageService } from "../services/storage";
 import { TagService } from "../services/tag";
+import { TotpService } from "../services/totp";
 import { UserService } from "../services/user";
 import { R2Service } from "../services/r2-service"; // ✅ 新增
 
@@ -26,6 +27,7 @@ export function registerRoutes(app: RinApp) {
   app.route("/blob", BlobService());
   app.route("/friend", FriendService());
   app.route("/moments", MomentsService());
+  app.route("/user/totp", TotpService());
   app.route("/user", UserService());
   app.route("/user", LinkedAccountsService());
   app.route("/auth", PasswordAuthService());

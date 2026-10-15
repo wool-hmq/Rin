@@ -41,6 +41,9 @@ import type {
   LinkedAccount,
   SearchResponse,
   SearchMode,
+  TotpStatusResponse,
+  TotpSetupResponse,
+  TotpConfirmResponse,
 } from "@rin/api";
 
 export interface SettingsConfigResponse {
@@ -442,6 +445,26 @@ class UserAPI {
   // GET /api/user/github
   githubAuth(): string {
     return `${endpoint}/api/user/github`;
+  }
+
+  // GET /api/user/totp/status
+  async getTotpStatus(): Promise<ApiResponse<TotpStatusResponse>> {
+    return this.http.get<TotpStatusResponse>("/api/user/totp/status");
+  }
+
+  // POST /api/user/totp/setup
+  async setupTotp(): Promise<ApiResponse<TotpSetupResponse>> {
+    return this.http.post<TotpSetupResponse>("/api/user/totp/setup");
+  }
+
+  // POST /api/user/totp/confirm
+  async confirmTotp(code: string): Promise<ApiResponse<TotpConfirmResponse>> {
+    return this.http.post<TotpConfirmResponse>("/api/user/totp/confirm", { code });
+  }
+
+  // DELETE /api/user/totp
+  async unbindTotp(): Promise<ApiResponse<TotpStatusResponse>> {
+    return this.http.delete<TotpStatusResponse>("/api/user/totp");
   }
 }
 

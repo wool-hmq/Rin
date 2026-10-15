@@ -244,14 +244,15 @@
       "empty": "ユーザー名とパスワードを入力してください",
       "failed": "ログインに失敗しました",
       "invalid": "ユーザー名またはパスワードが正しくありません",
-      "network": "ネットワークエラー、再試行してください"
+      "network": "ネットワークエラー、再試行してください",
+      "totp_disabled": "このアカウントはパスワードログインが禁止されています。TOTP 認証コードを入力してください"
     },
     "loading": "ログイン中...",
     "no_methods": "利用可能なログイン方法がありません",
     "oauth_only": "続行するにはログインしてください",
     "or": "または",
     "password": {
-      "placeholder": "パスワードを入力してください"
+      "placeholder": "パスワード / TOTP 認証コード"
     },
     "required": "続行するにはログインしてください",
     "title": "ログイン",
@@ -727,7 +728,31 @@
     "bind_email_send_failed": "認証コードの送信に失敗しました",
     "get_code": "コードを取得",
     "bind_code_prompt": "バインドコードを入力してください：",
-    "wechat_bind_hint": "WeChatはバインドコード不要です。認証フローを完了すると連携されます。"
+    "wechat_bind_hint": "WeChatはバインドコード不要です。認証フローを完了すると連携されます。",
+    "totp": {
+      "title": "多要素認証",
+      "label": "TOTP 認証アプリ",
+      "enabled": "有効",
+      "disabled": "無効",
+      "bind": "TOTP を連携",
+      "unbind": "連携解除",
+      "modal_title": "TOTP 認証アプリの連携",
+      "modal_hint": "認証アプリ（Google Authenticator、Microsoft Authenticator など）に以下のキーを手動で追加し、生成された 6 桁のコードを入力して連携を完了してください。",
+      "secret_label": "連携キー",
+      "secret_hint": "このキーは他人に公開せず、安全に保管してください。",
+      "code_label": "認証コード",
+      "code_placeholder": "6 桁のコードを入力",
+      "confirm": "連携を確認",
+      "cancel": "キャンセル",
+      "loading": "連携キーを生成中...",
+      "invalid_code": "6 桁の数字コードを入力してください",
+      "setup_failed": "連携キーの生成に失敗しました",
+      "confirm_failed": "コードが正しくないため連携に失敗しました",
+      "bind_success": "TOTP の連携に成功しました。次回のログインではコードを使用してください。",
+      "unbind_confirm": "TOTP の連携を解除しますか？解除するとパスワードログインに戻ります。",
+      "unbind_success": "TOTP の連携を解除しました",
+      "unbind_failed": "連携解除に失敗しました"
+    }
   },
   "health": {
     "generated_at": "最終確認: {{date}}",

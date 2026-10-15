@@ -240,7 +240,8 @@
       "empty": "請輸入用戶名和密碼",
       "failed": "登入失敗",
       "invalid": "用戶名或密碼錯誤",
-      "network": "網路錯誤，請重試"
+      "network": "網路錯誤，請重試",
+      "totp_disabled": "該帳號禁止使用密碼登入，請輸入 TOTP 驗證碼"
     },
     "loading": "登入中...",
     "no_methods": "沒有可用的登入方式",
@@ -251,7 +252,7 @@
     "qq": "QQ",
     "email": "電子郵件",
     "password": {
-      "placeholder": "請輸入密碼"
+      "placeholder": "請輸入密碼/TOTP驗證碼"
     },
     "required": "請登入後繼續",
     "title": "登入",
@@ -722,6 +723,30 @@
       "get_code": "獲取 Code",
       "bind_code_prompt": "請輸入綁定 Code：",
       "wechat_bind_hint": "微信無需綁定 Code，完成授權流程即可綁定。"
+    },
+    "totp": {
+      "title": "多因素驗證",
+      "label": "TOTP 驗證器",
+      "enabled": "已啟用",
+      "disabled": "未啟用",
+      "bind": "綁定 TOTP",
+      "unbind": "解綁",
+      "modal_title": "綁定 TOTP 驗證器",
+      "modal_hint": "在驗證器應用（如 Google Authenticator、Microsoft Authenticator）中手動新增以下密鑰，然後輸入生成的 6 位驗證碼完成綁定。",
+      "secret_label": "綁定密鑰",
+      "secret_hint": "請妥善保管此密鑰，不要洩露給他人。",
+      "code_label": "驗證碼",
+      "code_placeholder": "請輸入 6 位驗證碼",
+      "confirm": "確認綁定",
+      "cancel": "取消",
+      "loading": "正在生成綁定密鑰...",
+      "invalid_code": "請輸入 6 位數字驗證碼",
+      "setup_failed": "生成綁定密鑰失敗",
+      "confirm_failed": "驗證碼錯誤，綁定失敗",
+      "bind_success": "TOTP 已成功綁定，下次登入請使用驗證碼",
+      "unbind_confirm": "確定要解綁 TOTP 嗎？解綁後將恢復使用密碼登入。",
+      "unbind_success": "已解綁 TOTP",
+      "unbind_failed": "解綁失敗"
     },
     "error": {
       "file_too_large": "文件大小不能超過 2MB",

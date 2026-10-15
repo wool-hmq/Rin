@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Hono } from "hono";
 import { PasswordAuthService } from "../auth";
+import { generateTOTP } from "../../utils/totp";
+import { TOTP_LOGIN_DISABLED_MESSAGE } from "@rin/api";
 import {
   createMockDB,
   createMockEnv,
@@ -253,6 +255,108 @@ describe("PasswordAuthService", () => {
       expect(result.error?.status).toBe(403);
       const errorData = result.error?.value as any;
       expect(errorData.error.message).toBe("Invalid credentials");
+    });
+  });
+
+  describe("TOTP-enabled accounts", () => {
+    let totpSecret: string;
+
+    beforeEach(() => {
+      totpSecret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+      sqlite.exec(`
+        INSERT INTO users (id, username, avatar, openid, password, permission, totp_secret)
+        VALUES (5, 'totpuser', 'avatar.png', 'user_5', '${hashPasswordSync("userpass")}', 0, '${totpSecret}')
+      `);
+    });
+
+    function hashPasswordSync(password: string): string {
+      return Bun.SHA256.hash(password, "hex");
+    }
+
+    it("rejects a plain password attempt with the TOTP-disabled message", async () => {
+      const result = await api.auth.login({
+        username: "totpuser",
+        password: "userpass",
+      });
+
+      expect(result.error).toBeDefined();
+      expect(result.error?.status).toBe(403);
+      const errorData = result.error?.value as any;
+      expect(errorData.error.message).toBe(TOTP_LOGIN_DISABLED_MESSAGE);
+    });
+
+    it("rejects the correct password too, with the TOTP-disabled message", async () => {
+      const result = await api.auth.login({
+        username: "totpuser",
+        password: "wrong-or-right-does-not-matter",
+      });
+
+      expect(result.error).toBeDefined();
+      expect(result.error?.status).toBe(403);
+      const errorData = result.error?.value as any;
+      expect(errorData.error.message).toBe(TOTP_LOGIN_DISABLED_MESSAGE);
+    });
+
+    it("rejects a wrong 6-digit code with the TOTP-disabled message", async () => {
+      // Pick a code that differs from every code accepted in the +/-1 window.
+      const nowStep = Math.floor(Date.now() / 1000 / 30);
+      const accepted = new Set<string>();
+      for (let offset = -1; offset <= 1; offset++) {
+        accepted.add(await generateTOTP(totpSecret, (nowStep + offset) * 30));
+      }
+      let wrongCode = "000001";
+      while (accepted.has(wrongCode)) {
+        wrongCode = String((parseInt(wrongCode) + 1) % 1000000).padStart(6, "0");
+      }
+
+      const result = await api.auth.login({
+        username: "totpuser",
+        password: wrongCode,
+      });
+
+      expect(result.error).toBeDefined();
+      expect(result.error?.status).toBe(403);
+      const errorData = result.error?.value as any;
+      expect(errorData.error.message).toBe(TOTP_LOGIN_DISABLED_MESSAGE);
+    });
+
+    it("accepts a valid TOTP code", async () => {
+      const code = await generateTOTP(totpSecret, Math.floor(Date.now() / 1000));
+
+      const result = await api.auth.login({
+        username: "totpuser",
+        password: code,
+      });
+
+      expect(result.error).toBeUndefined();
+      expect(result.data?.success).toBe(true);
+      expect(result.data?.user.username).toBe("totpuser");
+    });
+
+    it("admin with TOTP enabled also requires a TOTP code", async () => {
+      // Give the (not yet created) admin a TOTP-enabled user row up-front
+      sqlite.exec(`
+        INSERT INTO users (id, username, avatar, openid, password, permission, totp_secret)
+        VALUES (6, 'admin', 'avatar.png', 'admin', '${hashPasswordSync("admin123")}', 1, '${totpSecret}')
+      `);
+
+      const passwordAttempt = await api.auth.login({
+        username: "admin",
+        password: "admin123",
+      });
+      expect(passwordAttempt.error).toBeDefined();
+      expect(passwordAttempt.error?.status).toBe(403);
+      const errData = passwordAttempt.error?.value as any;
+      expect(errData.error.message).toBe(TOTP_LOGIN_DISABLED_MESSAGE);
+
+      const code = await generateTOTP(totpSecret, Math.floor(Date.now() / 1000));
+      const totpLogin = await api.auth.login({
+        username: "admin",
+        password: code,
+      });
+      expect(totpLogin.error).toBeUndefined();
+      expect(totpLogin.data?.success).toBe(true);
+      expect(totpLogin.data?.user.permission).toBe(true);
     });
   });
 

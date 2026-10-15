@@ -1,6 +1,7 @@
 import { t } from "i18next";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { TOTP_LOGIN_DISABLED_MESSAGE } from "@rin/api";
 import { ButtonWithLoading } from "../components/button";
 import { GiteeIcon } from "../components/gitee-icon";
 import { Icon } from "../components/icon";
@@ -42,7 +43,11 @@ export function LoginPage() {
             const { data, error: apiError } = await client.auth.login({ username, password });
 
             if (apiError) {
-                setError(t('login.error.invalid'));
+                if (apiError.value?.includes(TOTP_LOGIN_DISABLED_MESSAGE)) {
+                    setError(t('login.error.totp_disabled'));
+                } else {
+                    setError(t('login.error.invalid'));
+                }
                 setIsLoading(false);
                 return;
             }

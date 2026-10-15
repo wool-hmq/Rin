@@ -71,6 +71,7 @@ export const users = sqliteTable("users", {
     avatar: text("avatar"),
     password: text("password"),
     permission: integer("permission").default(0),
+    totpSecret: text("totp_secret"),
     createdAt: created_at,
     updatedAt: updated_at,
 });
