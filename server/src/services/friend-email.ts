@@ -84,8 +84,9 @@ interface ProbeResult {
 }
 
 // Extract the visible text inside <body>, stripping tags/scripts/styles and
-// collapsing all whitespace. Used to compare against the verification code so
-// a SPA or custom 404 page (which returns 200 + arbitrary HTML) fails.
+// collapsing all whitespace. Used to search for the verification code so a SPA
+// or custom 404 page (which returns 200 + arbitrary HTML) fails, while tolerant
+// of analytics/Live2D/CDN code that frameworks inject into the page.
 function extractBodyText(html: string): string {
     const bodyMatch = /<body[^>]*>([\s\S]*?)<\/body>/i.exec(html);
     const content = bodyMatch ? bodyMatch[1] : html;
@@ -99,8 +100,8 @@ function extractBodyText(html: string): string {
 }
 
 // The minimal HTML snippet the applicant must save verbatim as `<code>.html`.
-// Its <body> contains only the verification code so an exact-match probe passes
-// only when the applicant truly placed the file (not a SPA fallback).
+// Its <body> contains the verification code so the probe finds it when the
+// applicant truly placed the file (not a SPA fallback).
 function verifyHtmlSource(code: string): string {
     return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -121,7 +122,7 @@ function verifyInstruction(target: { url: string; code: string }): string {
         `————————————————————————\n` +
         verifyHtmlSource(target.code) +
         `\n————————————————————————\n\n` +
-        `创建完成后，请确保 ${target.url}/${target.code}.html 通过 GET 请求返回 200，且页面 <body> 内容仅包含验证码 ${target.code}。\n\n` +
+        `创建完成后，请确保 ${target.url}/${target.code}.html 通过 GET 请求返回 200，且页面 <body> 中包含验证码 ${target.code}。\n\n` +
         `随后回复本邮件，正文必须为：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
         `验证码 ${target.code} 将在 10 分钟内有效。`
     );
@@ -775,20 +776,23 @@ export async function processFriendEmail(
         }
         const status = probe?.status ?? 0;
         const bodyText = extractBodyText(probe?.body ?? "");
-        const bodyMatches = bodyText === target.code;
+        const bodyMatches = bodyText.includes(target.code);
         console.log(`[friend-email] probing ${probeUrl} status=${status} bodyMatch=${bodyMatches}`);
 
-        // Strict verification: the URL must return 200 AND the <body> must
-        // contain exactly the verification code. This defeats SPA fallbacks,
-        // custom 404 pages, 403/500 responses and followed redirects, all of
-        // which used to pass the old "anything but 404" check.
+        // Strict verification: the URL must return 200 AND the <body> text must
+        // contain the verification code (after stripping tags/scripts/styles and
+        // collapsing whitespace). This defeats SPA fallbacks, custom 404 pages,
+        // 403/500 responses and followed redirects, all of which used to pass
+        // the old "anything but 404" check. A plain contains() (not exact
+        // equality) tolerates analytics/Live2D/CDN injection while still
+        // requiring the code to be actually present in the served page.
         if (status !== 200 || !bodyMatches) {
             console.log("[friend-email] verification probe failed");
             const reason = status === 0
                 ? "网络错误/超时"
                 : status !== 200
                     ? `HTTP 状态码 ${status}（需要 200）`
-                    : "页面内容不匹配（<body> 必须仅包含验证码）";
+                    : "页面 <body> 中未找到验证码";
             await notify(
                 deps,
                 sender,

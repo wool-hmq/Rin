@@ -197,12 +197,19 @@ describe("processFriendEmail", () => {
             expect((await friendsTable()).length).toBe(1);
         });
 
-        it("should reject a template body where the code appears inside other text", async () => {
+        it("should succeed when the code appears alongside framework-injected scripts/styles", async () => {
             const code = await reachVerify();
-            probeResults[`https://friend.com/${code}.html`] = { status: 200, body: `写入内容：${code} 完` };
+            // 模拟 Hugo/Hexo/VitePress 等博客框架自动注入的 analytics / 样式脚本
+            probeResults[`https://friend.com/${code}.html`] = {
+                status: 200,
+                body:
+                    `<html><head><link rel="stylesheet" href="https://cdn.example.com/app.css"></head>` +
+                    `<body><script src="https://cdn.example.com/analytics.js"></script><div class="layout">${code}</div></body></html>`,
+            };
             await process(EMAIL_CONFIRM_TRIGGER);
-            expect(sent.at(-1)!.subject).toContain("验证失败");
-            expect((await stateRows()).length).toBe(1);
+            expect(sent.at(-1)!.subject).toContain("成功");
+            expect((await stateRows()).length).toBe(0);
+            expect((await friendsTable()).length).toBe(1);
         });
 
         it("should remind with the full source when the confirm body is missing", async () => {

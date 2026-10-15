@@ -11,7 +11,7 @@ Visitors email your dedicated address (e.g. `friend-request@your-domain.com`). R
 3. Visitor fills in the JSON and replies.
 4. Rin generates an 8-character code (`a`) and, in the reply email, includes the verification HTML source; the visitor must create an `a.html` file at the root of their site and copy the source in **verbatim** (no additions or changes).
 5. Visitor replies with body **请你进行下一步验证**.
-6. Rin fetches `https://site-url/a.html`; the GET must return **200** and the page `<body>` must contain **exactly** the verification code (`a`) — only then does Rin treat domain ownership as verified and add/update/delete the friend link in the database.
+6. Rin fetches `https://site-url/a.html`; the GET must return **200** and the page `<body>` must **contain** the verification code (`a`) — only then does Rin treat domain ownership as verified and add/update/delete the friend link in the database.
 
 ### Operations and JSON templates
 
@@ -44,7 +44,7 @@ Notes:
 - **10-minute verification window**: a code is valid for 10 minutes from the moment it's issued; exceeding it auto-terminates the application.
 - **30-minute total window**: an application must finish within 30 minutes of starting.
 - **Invalid JSON or site URL**: Rin emails the visitor about the error and terminates the application.
-- **Strict verification**: the GET must return 200 and the `<body>` must match the code exactly (whitespace differences allowed). SPA fallbacks, custom 404 pages (full-page HTML with 200), 403/500, and 30x redirects all fail and can be retried within the window.
+- **Strict verification**: the GET must return 200 and the `<body>` text (after stripping tags/scripts/styles) must contain the code. SPA fallbacks, custom 404 pages (full-page HTML with 200), 403/500, and 30x redirects all fail and can be retried within the window. Analytics/style scripts injected by the framework do not affect the result.
 - Email-completed friend links have `accepted` = `1`, with no backend review step. Their owner `uid` is resolved as described below.
 
 ## Optional toggle

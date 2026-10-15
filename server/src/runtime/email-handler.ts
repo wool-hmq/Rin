@@ -28,7 +28,12 @@ async function probeUrl(url: string): Promise<ProbeResult> {
     try {
         const resp = await fetch(url, {
             method: "GET",
-            headers: { "User-Agent": "Rin-Friend-Verify/1.0" },
+            // 伪装成真实浏览器 UA,避免被 WAF / 云盾 / 宝塔防火墙拦截（如 403）。
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            },
             signal: controller.signal,
             redirect: "manual",
         });
