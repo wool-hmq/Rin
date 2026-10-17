@@ -168,7 +168,10 @@ export function PasswordAuthService(): Hono<{
             where: eq(users.username, username) 
         }));
 
-        if (!user || !user.password) {
+        // Users created through OAuth or email login have no password but may
+        // still enable TOTP. Such accounts must be allowed to login with a
+        // valid TOTP code, so only reject when neither factor exists.
+        if (!user || (!user.password && !user.totpSecret)) {
             throw new ForbiddenError('Invalid credentials');
         }
 

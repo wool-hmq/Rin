@@ -333,6 +333,25 @@ describe("PasswordAuthService", () => {
       expect(result.data?.user.username).toBe("totpuser");
     });
 
+    it("accepts a valid TOTP code for a passwordless account", async () => {
+      // OAuth/email accounts have no password but can still enable TOTP.
+      sqlite.exec(`
+        INSERT INTO users (id, username, avatar, openid, password, permission, totp_secret)
+        VALUES (7, 'totponly', 'avatar.png', 'user_7', NULL, 0, '${totpSecret}')
+      `);
+
+      const code = await generateTOTP(totpSecret, Math.floor(Date.now() / 1000));
+
+      const result = await api.auth.login({
+        username: "totponly",
+        password: code,
+      });
+
+      expect(result.error).toBeUndefined();
+      expect(result.data?.success).toBe(true);
+      expect(result.data?.user.username).toBe("totponly");
+    });
+
     it("admin with TOTP enabled also requires a TOTP code", async () => {
       // Give the (not yet created) admin a TOTP-enabled user row up-front
       sqlite.exec(`
