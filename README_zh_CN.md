@@ -160,25 +160,26 @@ bun run deploy:client
 ## License
 
 ```
-MIT License
+MIT 许可证
 
-Copyright (c) 2026 羊角快车
+版权所有 (c) 2026 羊角快车
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+【非官方中文译文声明】
+本文件是 MIT 许可证的非官方中文翻译，仅供方便理解，不具有法律效力。
+具有法律约束力的许可证文本以本项目根目录 LICENSE 文件中的英文原文为准。
+如本译文与英文原文之间存在任何歧义、遗漏或冲突，均以英文原文为准。
+本译文不构成法律意见。
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+特此授予任何人免费获得本软件及相关文档文件（“本软件”）副本的许可，
+包括不受限制地处理本软件的权利，包括但不限于使用、复制、修改、合并、
+发布、分发、再许可和/或销售本软件副本的权利，并允许获得本软件的人
+这样做，但须满足以下条件：
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+上述版权声明和本许可声明应包含在本软件的所有副本或实质性部分中。
+
+本软件按“原样”提供，不附带任何明示或暗示的保证，包括但不限于对
+适销性、特定用途适用性和非侵权性的保证。在任何情况下，作者或版权
+持有人均不对任何索赔、损害或其他责任承担责任，无论是在合同诉讼、
+侵权行为还是其他方面，由本软件或本软件的使用或其他交易引起、产生
+或与之相关。
 ```
