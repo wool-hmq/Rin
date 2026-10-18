@@ -37,7 +37,7 @@ https://jiaoblog.dpdns.org
 - **特色图片**：自动识别文章内首张图片，并将其作为列表页的封面图展示。
 - **标签解析**：输入如 `#博客 #Cloudflare` 的标签文本，自动解析并展示为标签。
 - **类型安全**：通过 `@rin/api` 包在客户端和服务器之间共享 TypeScript 类型，实现端到端类型安全。
-- ……更多功能请访问 https://xeu.life 探索。
+- ……更多功能请访问 https://xeu.life 或者 https://jiaoblog.dpdns.org 探索。
 
 ## 文档
 
@@ -46,6 +46,9 @@ https://jiaoblog.dpdns.org
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/openRin/Rin.git && cd Rin
+
+# 羊角快车二创版Rin
+# git clone http://github.com/wool-hmq/Rin.git && cd Rin
 
 # 2. 安装依赖
 bun install
@@ -131,6 +134,8 @@ bun run deploy:client
 - `R2_BUCKET_NAME` - 要使用的特定 R2 存储桶
 
 完整文档请访问 https://docs.openrin.org。
+
+羊角快车二创版Rin博客完整文档请访问 [./docs/docs/zh](https://github.com/wool-hmq/Rin/tree/main/docs/docs/zh)。
 
 ## 社区与支持
 
