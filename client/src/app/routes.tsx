@@ -25,6 +25,7 @@ import { EmailLoginPage } from "../page/email-login";
 import { RegisterPage } from "../page/register";
 import { MomentsPage } from "../page/moments";
 import { ProfilePage } from "../page/profile";
+import { ApiKeysPage } from "../page/api-keys";
 import { QueueStatusPage } from "../page/queue-status";
 import { SearchPage } from "../page/search";
 import { Settings } from "../page/settings";
@@ -130,6 +131,10 @@ export function AppRoutes() {
 
       <AppRoute path="/profile">
         <ProfilePage />
+      </AppRoute>
+
+      <AppRoute path="/api-keys">
+        <ApiKeysPage />
       </AppRoute>
 
       <TocRoute path="/feed/:id">

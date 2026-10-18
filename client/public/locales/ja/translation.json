@@ -222,7 +222,24 @@
   "gitee_login": "Gitee ログイン",
   "qq_login": "QQ ログイン",
   "wechat_login": "WeChat ログイン",
-  "email_login": "メールログイン",
+  "email_login": {
+    "title": "メールログイン",
+    "enter_email": "メールアドレスを入力してください",
+    "email_placeholder": "メールを入力",
+    "send_code": "認証コードを送信",
+    "enter_code": "認証コードを {{email}} に送信しました",
+    "code_placeholder": "認証コードを入力",
+    "submit": "ログイン",
+    "resend_in": "{{seconds}}秒後に再送信",
+    "error": {
+      "email_required": "メールアドレスを入力してください",
+      "code_required": "認証コードを入力してください",
+      "send_failed": "送信に失敗しました。再試行してください",
+      "invalid": "認証コードが無効または期限切れです",
+      "failed": "ログインに失敗しました。再試行してください",
+      "network": "ネットワークエラー、再試行してください"
+    }
+  },
   "hashtags": "ラベル",
   "home": "ホーム",
   "index": {
@@ -258,24 +275,6 @@
     "title": "ログイン",
     "username": {
       "placeholder": "ユーザー名を入力してください"
-    }
-  },
-  "email_login": {
-    "title": "メールログイン",
-    "enter_email": "メールアドレスを入力してください",
-    "email_placeholder": "メールを入力",
-    "send_code": "認証コードを送信",
-    "enter_code": "認証コードを {{email}} に送信しました",
-    "code_placeholder": "認証コードを入力",
-    "submit": "ログイン",
-    "resend_in": "{{seconds}}秒後に再送信",
-    "error": {
-      "email_required": "メールアドレスを入力してください",
-      "code_required": "認証コードを入力してください",
-      "send_failed": "送信に失敗しました。再試行してください",
-      "invalid": "認証コードが無効または期限切れです",
-      "failed": "ログインに失敗しました。再試行してください",
-      "network": "ネットワークエラー、再試行してください"
     }
   },
   "register": {
@@ -752,6 +751,12 @@
       "unbind_confirm": "TOTP の連携を解除しますか？解除するとパスワードログインに戻ります。",
       "unbind_success": "TOTP の連携を解除しました",
       "unbind_failed": "連携解除に失敗しました"
+    },
+    "api_keys": {
+      "title": "API キー",
+      "label": "API キー",
+      "description": "外部スクリプトや AI エージェントから本サイトを呼び出す",
+      "manage": "管理"
     }
   },
   "health": {
@@ -944,5 +949,33 @@
     "window_title_desc": "Supportly チャットウィンドウに表示されるタイトル",
     "widget_url_title": "Widget スクリプト URL",
     "widget_url_desc": "Supportly widget スクリプト URL（必須）。カスタムドメインにデプロイする場合は変更してください"
+  },
+  "api_keys": {
+    "title": "API キー",
+    "description": "API キーを使用すると、ログインセッションなしで外部スクリプトや AI エージェントから本サイトの API を呼び出せます。複数のキーを作成し、それぞれに権限範囲を設定できます。",
+    "create": "キーを作成",
+    "edit": "キーを編集",
+    "empty": "API キーはまだありません。",
+    "name": "名前",
+    "name_placeholder": "例：AI 執筆アシスタント",
+    "scopes": "権限範囲",
+    "visible": "平文表示",
+    "encrypted": "暗号化保存",
+    "visible_option": "キーの平文をいつでも表示できるようにする",
+    "visible_option_desc": "有効にするとキーは平文で保存され、後から設定画面で確認できます。無効の場合は作成時に一度だけ表示され、その後はローテーションのみ可能です。",
+    "reveal": "表示",
+    "rotate": "ローテーション",
+    "rotate_confirm": "キー「{{name}}」をローテーションしますか？古いキーは即座に無効になります。",
+    "delete_confirm": "キー「{{name}}」を削除しますか？そのキーを使った呼び出しは即座に失敗します。",
+    "created": "キーを作成しました",
+    "updated": "キーを更新しました",
+    "rotated": "キーをローテーションしました。呼び出し側のキーを更新してください。",
+    "deleted": "キーを削除しました",
+    "plaintext_hint": "このキーを今すぐコピーして安全に保管してください。閉じると再表示できない場合があります：",
+    "copied": "クリップボードにコピーしました",
+    "copy_failed": "コピーに失敗しました。手動でコピーしてください",
+    "error_name_required": "キー名を入力してください",
+    "error_scopes_required": "権限範囲を1つ以上選択してください",
+    "last_used": "最終使用"
   }
 }

@@ -222,7 +222,24 @@
   "gitee_login": "Gitee Login",
   "qq_login": "QQ Login",
   "wechat_login": "WeChat Login",
-  "email_login": "Email Login",
+  "email_login": {
+    "title": "Email Login",
+    "enter_email": "Please enter your email address",
+    "email_placeholder": "Enter email",
+    "send_code": "Send Code",
+    "enter_code": "Verification code sent to {{email}}",
+    "code_placeholder": "Enter verification code",
+    "submit": "Login",
+    "resend_in": "Resend in {{seconds}}s",
+    "error": {
+      "email_required": "Please enter your email",
+      "code_required": "Please enter the verification code",
+      "send_failed": "Failed to send code, please try again",
+      "invalid": "Invalid or expired verification code",
+      "failed": "Login failed, please try again",
+      "network": "Network error, please try again"
+    }
+  },
   "hashtags": "Hashtags",
   "home": "Home",
   "index": {
@@ -258,24 +275,6 @@
     "email": "Email",
     "username": {
       "placeholder": "Please enter your username"
-    }
-  },
-  "email_login": {
-    "title": "Email Login",
-    "enter_email": "Please enter your email address",
-    "email_placeholder": "Enter email",
-    "send_code": "Send Code",
-    "enter_code": "Verification code sent to {{email}}",
-    "code_placeholder": "Enter verification code",
-    "submit": "Login",
-    "resend_in": "Resend in {{seconds}}s",
-    "error": {
-      "email_required": "Please enter your email",
-      "code_required": "Please enter the verification code",
-      "send_failed": "Failed to send code, please try again",
-      "invalid": "Invalid or expired verification code",
-      "failed": "Login failed, please try again",
-      "network": "Network error, please try again"
     }
   },
   "register": {
@@ -752,6 +751,12 @@
       "unbind_confirm": "Are you sure you want to unbind TOTP? Password login will be restored.",
       "unbind_success": "TOTP unbound",
       "unbind_failed": "Failed to unbind"
+    },
+    "api_keys": {
+      "title": "API keys",
+      "label": "API keys",
+      "description": "Let external scripts or AI agents call this site",
+      "manage": "Manage"
     }
   },
   "health": {
@@ -944,5 +949,33 @@
     "window_title_desc": "Title displayed in the Supportly chat window",
     "widget_url_title": "Widget Script URL",
     "widget_url_desc": "Supportly widget script URL (required). Change this if you deploy Supportly on a custom domain"
+  },
+  "api_keys": {
+    "title": "API keys",
+    "description": "API keys let external scripts or AI agents call this site without a login session. You can create multiple keys and limit each one to specific scopes.",
+    "create": "Create key",
+    "edit": "Edit key",
+    "empty": "No API keys yet.",
+    "name": "Name",
+    "name_placeholder": "e.g. AI writing assistant",
+    "scopes": "Scopes",
+    "visible": "Revealable",
+    "encrypted": "Encrypted",
+    "visible_option": "Allow revealing the key at any time",
+    "visible_option_desc": "When enabled the key is stored in plaintext so it can be revealed later. When disabled it is shown once on creation and afterwards can only be rotated.",
+    "reveal": "Reveal",
+    "rotate": "Rotate",
+    "rotate_confirm": "Rotate the key \"{{name}}\"? The old key stops working immediately.",
+    "delete_confirm": "Delete the key \"{{name}}\"? Calls using it stop working immediately.",
+    "created": "Key created",
+    "updated": "Key updated",
+    "rotated": "Key rotated. Update the caller with the new key.",
+    "deleted": "Key deleted",
+    "plaintext_hint": "Copy this key now. It may not be shown again after you close this page:",
+    "copied": "Copied to clipboard",
+    "copy_failed": "Copy failed, please copy it manually",
+    "error_name_required": "Please enter a key name",
+    "error_scopes_required": "Select at least one scope",
+    "last_used": "Last used"
   }
 }

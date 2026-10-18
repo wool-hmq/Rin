@@ -222,7 +222,24 @@
   "gitee_login": "Gitee 登入",
   "qq_login": "QQ 登入",
   "wechat_login": "微信登入",
-  "email_login": "郵件登入",
+  "email_login": {
+    "title": "郵件登入",
+    "enter_email": "請輸入您的郵件地址",
+    "email_placeholder": "請輸入郵件",
+    "send_code": "發送驗證碼",
+    "enter_code": "驗證碼已發送至 {{email}}",
+    "code_placeholder": "請輸入驗證碼",
+    "submit": "登入",
+    "resend_in": "{{seconds}}秒後重發",
+    "error": {
+      "email_required": "請輸入郵件地址",
+      "code_required": "請輸入驗證碼",
+      "send_failed": "發送失敗，請重試",
+      "invalid": "驗證碼錯誤或已過期",
+      "failed": "登入失敗，請重試",
+      "network": "網路錯誤，請重試"
+    }
+  },
   "hashtags": "標籤",
   "home": "首頁",
   "index": {
@@ -258,24 +275,6 @@
     "title": "登入",
     "username": {
       "placeholder": "請輸入用戶名"
-    }
-  },
-  "email_login": {
-    "title": "郵件登入",
-    "enter_email": "請輸入您的郵件地址",
-    "email_placeholder": "請輸入郵件",
-    "send_code": "發送驗證碼",
-    "enter_code": "驗證碼已發送至 {{email}}",
-    "code_placeholder": "請輸入驗證碼",
-    "submit": "登入",
-    "resend_in": "{{seconds}}秒後重發",
-    "error": {
-      "email_required": "請輸入郵件地址",
-      "code_required": "請輸入驗證碼",
-      "send_failed": "發送失敗，請重試",
-      "invalid": "驗證碼錯誤或已過期",
-      "failed": "登入失敗，請重試",
-      "network": "網路錯誤，請重試"
     }
   },
   "register": {
@@ -754,6 +753,12 @@
       "empty_username": "暱稱不能為空",
       "update_failed": "更新失敗",
       "network": "網路錯誤，請重試"
+    },
+    "api_keys": {
+      "title": "API 金鑰",
+      "label": "API 金鑰",
+      "description": "用於外部腳本或 AI 智慧體呼叫本站介面",
+      "manage": "管理"
     }
   },
   "health": {
@@ -946,5 +951,33 @@
     "window_title_desc": "Supportly 聊天視窗顯示的標題",
     "widget_url_title": "Widget 腳本 URL",
     "widget_url_desc": "Supportly widget 腳本網址（必填）。如果你自訂了 Supportly 部署域名，請修改此項"
+  },
+  "api_keys": {
+    "title": "API 金鑰",
+    "description": "API 金鑰可用於從外部腳本或 AI 智慧體呼叫本站介面，無需登入工作階段。可建立多個金鑰，並分別限定權限範圍。",
+    "create": "建立金鑰",
+    "edit": "編輯金鑰",
+    "empty": "尚未建立任何 API 金鑰。",
+    "name": "名稱",
+    "name_placeholder": "例如：AI 寫作助理",
+    "scopes": "權限範圍",
+    "visible": "明文可見",
+    "encrypted": "加密儲存",
+    "visible_option": "允許隨時查看金鑰明文",
+    "visible_option_desc": "開啟後金鑰將以明文形式保存在資料庫中，可隨時在設定裡查看。關閉時僅建立時顯示一次，之後只能輪換。",
+    "reveal": "查看",
+    "rotate": "輪換",
+    "rotate_confirm": "確定要輪換金鑰「{{name}}」嗎？舊金鑰會立即失效。",
+    "delete_confirm": "確定要刪除金鑰「{{name}}」嗎？使用該金鑰的呼叫會立即失效。",
+    "created": "金鑰已建立",
+    "updated": "金鑰已更新",
+    "rotated": "金鑰已輪換，請更新呼叫方使用的金鑰",
+    "deleted": "金鑰已刪除",
+    "plaintext_hint": "請立即複製並妥善保存這個金鑰，關閉後可能無法再次查看：",
+    "copied": "已複製到剪貼簿",
+    "copy_failed": "複製失敗，請手動選取複製",
+    "error_name_required": "請填寫金鑰名稱",
+    "error_scopes_required": "請至少選擇一個權限範圍",
+    "last_used": "最近使用"
   }
 }

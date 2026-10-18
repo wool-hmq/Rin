@@ -466,6 +466,60 @@ class UserAPI {
   async unbindTotp(): Promise<ApiResponse<TotpStatusResponse>> {
     return this.http.delete<TotpStatusResponse>("/api/user/totp");
   }
+
+  // GET /api/key/manage - List API keys
+  async listApiKeys(): Promise<ApiResponse<{ success: boolean; keys: ApiKeyRecord[] }>> {
+    return this.http.get<{ success: boolean; keys: ApiKeyRecord[] }>("/api/key/manage");
+  }
+
+  // GET /api/key/manage/scopes - Available API key scopes
+  async listApiKeyScopes(): Promise<ApiResponse<{ success: boolean; scopes: ApiKeyScopeInfo[] }>> {
+    return this.http.get<{ success: boolean; scopes: ApiKeyScopeInfo[] }>("/api/key/manage/scopes");
+  }
+
+  // POST /api/key/manage - Create an API key
+  async createApiKey(body: {
+    name: string;
+    scopes: string[];
+    visible?: boolean;
+  }): Promise<ApiResponse<{ success: boolean; key: ApiKeyRecord; plaintext: string }>> {
+    return this.http.post<{ success: boolean; key: ApiKeyRecord; plaintext: string }>("/api/key/manage", body);
+  }
+
+  // POST /api/key/manage/:id - Update an API key
+  async updateApiKey(
+    id: number,
+    body: { name?: string; scopes?: string[]; visible?: boolean },
+  ): Promise<ApiResponse<{ success: boolean; key: ApiKeyRecord }>> {
+    return this.http.post<{ success: boolean; key: ApiKeyRecord }>(`/api/key/manage/${id}`, body);
+  }
+
+  // POST /api/key/manage/:id/rotate - Rotate an API key
+  async rotateApiKey(id: number): Promise<ApiResponse<{ success: boolean; key: ApiKeyRecord; plaintext: string }>> {
+    return this.http.post<{ success: boolean; key: ApiKeyRecord; plaintext: string }>(`/api/key/manage/${id}/rotate`);
+  }
+
+  // DELETE /api/key/manage/:id - Delete an API key
+  async deleteApiKey(id: number): Promise<ApiResponse<{ success: boolean }>> {
+    return this.http.delete<{ success: boolean }>(`/api/key/manage/${id}`);
+  }
+}
+
+export interface ApiKeyRecord {
+  id: number;
+  name: string;
+  visible: boolean;
+  scopes: string[];
+  last_used_at: number | null;
+  created_at: string;
+  updated_at: string;
+  key: string | null;
+}
+
+export interface ApiKeyScopeInfo {
+  scope: string;
+  title: string;
+  description: string;
 }
 
 /**

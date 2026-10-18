@@ -170,6 +170,23 @@ export function createMockDB() {
 
         CREATE INDEX IF NOT EXISTS idx_cache_type ON cache(type);
         CREATE INDEX IF NOT EXISTS idx_cache_key ON cache(key);
+
+        -- API keys table
+        CREATE TABLE IF NOT EXISTS api_keys (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uid INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            key_hash TEXT NOT NULL,
+            key_encrypted TEXT,
+            visible INTEGER DEFAULT 0 NOT NULL,
+            scopes TEXT DEFAULT '[]' NOT NULL,
+            last_used_at INTEGER,
+            created_at INTEGER DEFAULT (unixepoch()),
+            updated_at INTEGER DEFAULT (unixepoch()),
+            FOREIGN KEY (uid) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_unique ON api_keys(key_hash);
     `);
 
     return { db, sqlite };

@@ -111,6 +111,19 @@ export const feedHashtags = sqliteTable("feed_hashtags", {
     updatedAt: updated_at,
 });
 
+export const apiKeys = sqliteTable("api_keys", {
+    id: integer("id").primaryKey(),
+    uid: integer("uid").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    name: text("name").notNull(),
+    key_hash: text("key_hash").notNull().unique(),
+    key_encrypted: text("key_encrypted"),
+    visible: integer("visible").default(0).notNull(),
+    scopes: text("scopes").default("[]").notNull(),
+    last_used_at: integer("last_used_at"),
+    createdAt: created_at,
+    updatedAt: updated_at,
+});
+
 export const cache = sqliteTable("cache", {
     id: integer("id").primaryKey(),
     key: text("key").notNull(),

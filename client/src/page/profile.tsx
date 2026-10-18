@@ -430,6 +430,26 @@ export function ProfilePage() {
                         </div>
                     </div>
 
+                    {/* API keys entry */}
+                    <div className="space-y-4">
+                        <label className="text-sm font-medium t-secondary">{t('profile.api_keys.title')}</label>
+                        <div className="flex items-center justify-between p-3 bg-w-secondary rounded-lg">
+                            <div className="flex items-center space-x-3">
+                                <Icon label="API" name="ri-key-2-line" onClick={() => {}} />
+                                <div className="flex flex-col">
+                                    <span className="text-sm">{t('profile.api_keys.label')}</span>
+                                    <span className="text-xs t-secondary">{t('profile.api_keys.description')}</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setLocation('/api-keys')}
+                                className="text-xs px-3 py-1 bg-theme text-white rounded hover:bg-theme/80"
+                            >
+                                {t('profile.api_keys.manage')}
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Submit button */}
                     <div className="pt-4">
                         <ButtonWithLoading

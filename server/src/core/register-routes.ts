@@ -14,6 +14,8 @@ import { TagService } from "../services/tag";
 import { TotpService } from "../services/totp";
 import { UserService } from "../services/user";
 import { R2Service } from "../services/r2-service"; // ✅ 新增
+import { ApiKeyService } from "../services/api-key";
+import { ApiKeyApiService } from "../services/api-key-api";
 
 export function registerRoutes(app: RinApp) {
   app.get("/", (c) => c.text("Hi"));
@@ -37,4 +39,6 @@ export function registerRoutes(app: RinApp) {
   app.route("/favicon", FaviconService());
   app.route("/favicon.ico", FaviconService());
   app.route("/r2", R2Service()); // ✅ 新增
+  app.route("/api/key/manage", ApiKeyService());
+  app.route("/api/key", ApiKeyApiService());
 }

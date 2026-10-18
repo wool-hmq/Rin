@@ -38,6 +38,8 @@ export interface Variables {
     uid?: number;
     admin: boolean;
     username?: string;
+    apiKeyId?: number;
+    apiKeyScopes?: string[];
     env: Env;
 }
 
