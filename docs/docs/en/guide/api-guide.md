@@ -16,7 +16,7 @@ When creating a key you choose:
   - Encrypted (default): the key is shown once at creation, then only rotation is available.
   - Revealable: the key is stored encrypted and can be revealed and copied at any time.
 
-Revealable can be switched on or off later. Turning it off does not change the key itself, it only hides the plaintext.
+Storage mode is fixed at creation. An encrypted key can never become revealable; a revealable key can have that capability turned off at any time, and the key keeps working, it just stops showing the plaintext. Create a new key if you need one you can reveal later.
 
 ## Making requests
 

@@ -974,6 +974,10 @@
     "copy": "复制",
     "loading_text": "正在加载…",
     "delete": "删除",
-    "scopes_empty": "权限列表加载失败，请刷新页面重试。"
+    "scopes_empty": "权限列表加载失败，请刷新页面重试。",
+    "visible_option_desc_off": "取消勾选后密钥仍以密文保存，只是不再支持随时查看明文。",
+    "encrypted_option_title": "加密存储（不可切换为可查看）",
+    "encrypted_option_desc": "该密钥创建时选择了加密存储，明文只在创建和轮换时显示一次。如需可随时查看的密钥，请新建一个。",
+    "reveal_unavailable": "该密钥不可查看明文，请使用轮换获取新密钥。"
   }
 }

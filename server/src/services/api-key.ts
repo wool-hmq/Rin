@@ -217,14 +217,16 @@ export function ApiKeyService(): Hono {
         }
 
         const wantsVisible = body.visible === true || body.visible === "true";
-        // Visibility can be turned on, then off, then on again. The stored
-        // ciphertext is kept so an encrypted key can always be revealed later.
-        if (body.visible !== undefined) {
-            if (wantsVisible && existing.visible !== 1) {
-                updates.visible = 1;
-            } else if (!wantsVisible && existing.visible === 1) {
-                updates.visible = 0;
-            }
+        // Storage mode is fixed at creation. A revealable key may stop being
+        // revealable, but an encrypted key can never become revealable: the
+        // plaintext was only ever shown once and is not retained in that mode.
+        if (body.visible !== undefined && !wantsVisible && existing.visible === 1) {
+            updates.visible = 0;
+        }
+        if (wantsVisible && existing.visible !== 1) {
+            throw new BadRequestError(
+                "Encrypted keys cannot be made revealable; create a new key instead",
+            );
         }
 
         if (Object.keys(updates).length === 0) {

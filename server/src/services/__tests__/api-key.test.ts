@@ -122,6 +122,50 @@ describe("ApiKeyService", () => {
     expect(listed.keys[0].key).toBe(body.plaintext);
   });
 
+  it("does not let an encrypted key become revealable", async () => {
+    const { body } = await createKey(ctx, { visible: false });
+
+    const res = await ctx.app.fetch(
+      new Request(`http://localhost/key/manage/${body.key.id}`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ visible: true }),
+      }),
+      ctx.env,
+    );
+    expect(res.status).toBe(400);
+
+    const listed = await ctx.app.fetch(
+      new Request("http://localhost/key/manage", { headers: authHeaders() }),
+      ctx.env,
+    );
+    const listedBody = await listed.json() as any;
+    expect(listedBody.keys[0].visible).toBe(false);
+    expect(listedBody.keys[0].key).toBeNull();
+  });
+
+  it("allows a revealable key to stop being revealable", async () => {
+    const { body } = await createKey(ctx, { visible: true });
+
+    const res = await ctx.app.fetch(
+      new Request(`http://localhost/key/manage/${body.key.id}`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ visible: false }),
+      }),
+      ctx.env,
+    );
+    expect(res.ok).toBe(true);
+
+    const listed = await ctx.app.fetch(
+      new Request("http://localhost/key/manage", { headers: authHeaders() }),
+      ctx.env,
+    );
+    const listedBody = await listed.json() as any;
+    expect(listedBody.keys[0].visible).toBe(false);
+    expect(listedBody.keys[0].key).toBeNull();
+  });
+
   it("rotates the key and invalidates the old secret", async () => {
     const { body } = await createKey(ctx, { visible: true });
 

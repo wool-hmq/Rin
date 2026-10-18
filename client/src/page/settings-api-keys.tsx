@@ -174,24 +174,28 @@ export function ApiKeysSettings() {
 
   const revealKey = async (key: ApiKeyRecord) => {
     resetMessages();
-    if (!key.visible) {
-      const res = await client.user.updateApiKey(key.id, { visible: true });
-      if (res.error) {
-        setError(String(res.error.value));
-        return;
-      }
-      setRevealed((prev) => ({ ...prev, [key.id]: res.data?.key.key ?? "" }));
-      await loadAll();
+    if (revealed[key.id]) {
+      setRevealed((prev) => {
+        const next = { ...prev };
+        delete next[key.id];
+        return next;
+      });
       return;
     }
-    if (key.key) {
+    if (key.visible && key.key) {
       setRevealed((prev) => ({ ...prev, [key.id]: key.key as string }));
       return;
     }
     const res = await client.user.listApiKeys();
+    if (res.error) {
+      setError(String(res.error.value));
+      return;
+    }
     const fresh = res.data?.keys.find((item) => item.id === key.id);
     if (fresh?.key) {
       setRevealed((prev) => ({ ...prev, [key.id]: fresh.key as string }));
+    } else {
+      setError(t("api_keys.reveal_unavailable"));
     }
   };
 
@@ -335,18 +339,27 @@ export function ApiKeysSettings() {
             </div>
           </div>
 
-          <label className="flex items-start gap-2 rounded-lg border border-black/10 p-3 text-sm dark:border-white/10">
-            <input
-              type="checkbox"
-              checked={form.visible}
-              onChange={(event) => setForm((prev) => ({ ...prev, visible: event.target.checked }))}
-              className="mt-1"
-            />
-            <span className="flex flex-col">
-              <span className="t-primary">{t("api_keys.visible_option")}</span>
-              <span className="text-xs t-secondary">{t("api_keys.visible_option_desc")}</span>
-            </span>
-          </label>
+          {editingId === null || form.visible ? (
+            <label className="flex items-start gap-2 rounded-lg border border-black/10 p-3 text-sm dark:border-white/10">
+              <input
+                type="checkbox"
+                checked={form.visible}
+                onChange={(event) => setForm((prev) => ({ ...prev, visible: event.target.checked }))}
+                className="mt-1"
+              />
+              <span className="flex flex-col">
+                <span className="t-primary">{t("api_keys.visible_option")}</span>
+                <span className="text-xs t-secondary">
+                  {form.visible ? t("api_keys.visible_option_desc") : t("api_keys.visible_option_desc_off")}
+                </span>
+              </span>
+            </label>
+          ) : (
+            <div className="rounded-lg border border-black/10 p-3 text-sm dark:border-white/10">
+              <p className="t-primary">{t("api_keys.encrypted_option_title")}</p>
+              <p className="mt-1 text-xs t-secondary">{t("api_keys.encrypted_option_desc")}</p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-2">
             <button

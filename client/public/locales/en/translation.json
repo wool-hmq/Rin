@@ -974,6 +974,10 @@
     "copy": "Copy",
     "loading_text": "Loading…",
     "delete": "Delete",
-    "scopes_empty": "Failed to load scopes. Please refresh the page and try again."
+    "scopes_empty": "Failed to load scopes. Please refresh the page and try again.",
+    "visible_option_desc_off": "Unchecking keeps the key stored as ciphertext; only the reveal capability is removed.",
+    "encrypted_option_title": "Encrypted storage (cannot become revealable)",
+    "encrypted_option_desc": "This key was created with encrypted storage, so the plaintext was shown once at creation and rotation. Create a new key if you need one you can reveal later.",
+    "reveal_unavailable": "This key cannot be revealed. Rotate it to get a new secret."
   }
 }

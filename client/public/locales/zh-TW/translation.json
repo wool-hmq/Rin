@@ -976,6 +976,10 @@
     "copy": "複製",
     "loading_text": "正在載入…",
     "delete": "刪除",
-    "scopes_empty": "權限列表載入失敗，請重新整理頁面後重試。"
+    "scopes_empty": "權限列表載入失敗，請重新整理頁面後重試。",
+    "visible_option_desc_off": "取消勾選後金鑰仍以密文保存，只是不再支援隨時查看明文。",
+    "encrypted_option_title": "加密儲存（不可切換為可檢視）",
+    "encrypted_option_desc": "此金鑰建立時選擇了加密儲存，明文只在建立和輪換時顯示一次。如需可隨時檢視的金鑰，請新建一個。",
+    "reveal_unavailable": "此金鑰無法檢視明文，請使用輪換取得新金鑰。"
   }
 }
