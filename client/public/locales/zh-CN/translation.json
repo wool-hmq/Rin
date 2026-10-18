@@ -751,12 +751,6 @@
       "unbind_confirm": "确定要解绑 TOTP 吗？解绑后将恢复使用密码登录。",
       "unbind_success": "已解绑 TOTP",
       "unbind_failed": "解绑失败"
-    },
-    "api_keys": {
-      "title": "API 密钥",
-      "label": "API 密钥",
-      "description": "用于外部脚本或 AI 智能体调用本站接口",
-      "manage": "管理"
     }
   },
   "health": {
@@ -976,6 +970,9 @@
     "copy_failed": "复制失败，请手动选择复制",
     "error_name_required": "请填写密钥名称",
     "error_scopes_required": "请至少选择一个权限范围",
-    "last_used": "最近使用"
+    "last_used": "最近使用",
+    "copy": "复制",
+    "loading_text": "正在加载…",
+    "delete": "删除"
   }
 }

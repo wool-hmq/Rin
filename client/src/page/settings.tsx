@@ -20,6 +20,7 @@ import { FEED_LAYOUT_OPTIONS, normalizeFeedLayout } from "../components/feed-lay
 import { useSiteConfig } from "../hooks/useSiteConfig";
 import { applyThemeColor, normalizeThemeColor } from "../utils/theme-color";
 import { AISummarySettings } from "./settings-ai";
+import { ApiKeysSettings } from "./settings-api-keys";
 import { ItemButton, ItemImageInput, ItemInput, ItemSwitch, ItemTitle, ItemWithUpload } from "./settings-items";
 import {
   areSettingsDraftsEqual,
@@ -1207,6 +1208,8 @@ export function Settings() {
               </>
             );
           })()}
+
+          <ApiKeysSettings />
 
           <ItemTitle title={t("settings.maintenance.title")} />
           <ItemSwitch

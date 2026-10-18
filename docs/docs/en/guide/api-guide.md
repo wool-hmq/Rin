@@ -4,7 +4,9 @@ Rin exposes an API-key based interface that lets scripts or AI agents manage sit
 
 ## Creating an API key
 
-Sign in, open the profile page, and click Manage in the API keys section, or visit `/api-keys` directly.
+Only administrators can create API keys. Sign in as an administrator, open the admin Settings page, and scroll to the API keys section at the bottom to create, edit, rotate, and delete keys.
+
+Each key belongs to the administrator who created it, and other accounts never see those keys.
 
 When creating a key you choose:
 

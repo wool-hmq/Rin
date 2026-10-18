@@ -72,6 +72,29 @@ describe("ApiKeyService", () => {
     expect(res.status).toBe(403);
   });
 
+  it("rejects non-admin users from managing keys", async () => {
+    ctx.sqlite.exec(`
+      INSERT INTO users (id, username, avatar, openid, permission)
+      VALUES (2, 'normaluser', 'avatar.png', 'gh_normal', 0)
+    `);
+
+    const listRes = await ctx.app.fetch(
+      new Request("http://localhost/manage", { headers: authHeaders(2) }),
+      ctx.env,
+    );
+    expect(listRes.status).toBe(403);
+
+    const createRes = await ctx.app.fetch(
+      new Request("http://localhost/manage", {
+        method: "POST",
+        headers: { ...authHeaders(2), "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "nope", scopes: ["feed.write"] }),
+      }),
+      ctx.env,
+    );
+    expect(createRes.status).toBe(403);
+  });
+
   it("rejects unknown scopes", async () => {
     const { res } = await createKey(ctx, { scopes: ["not.a.scope"] });
     expect(res.status).toBe(400);

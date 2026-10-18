@@ -67,7 +67,7 @@ function serializeKey(row: {
 export function ApiKeyService(): Hono {
     const app = new Hono();
     // Mounted at /api/key/manage: these endpoints manage keys themselves and
-    // require a logged-in user, while /api/key/* is authenticated by the key.
+    // require an administrator, while /api/key/* is authenticated by the key.
 
     // GET /api/key/manage - List the current user's keys
     app.get("/", async (c: AppContext) => {
@@ -77,6 +77,9 @@ export function ApiKeyService(): Hono {
 
         if (!uid) {
             throw new ForbiddenError("Authentication required");
+        }
+        if (!c.get("admin")) {
+            throw new ForbiddenError("Administrator permission required");
         }
 
         const rows = await profileAsync(c, "api_key_list", () => db.query.apiKeys.findMany({
@@ -115,6 +118,9 @@ export function ApiKeyService(): Hono {
 
         if (!uid) {
             throw new ForbiddenError("Authentication required");
+        }
+        if (!c.get("admin")) {
+            throw new ForbiddenError("Administrator permission required");
         }
 
         const body = await c.req.json() as {
@@ -173,6 +179,9 @@ export function ApiKeyService(): Hono {
 
         if (!uid) {
             throw new ForbiddenError("Authentication required");
+        }
+        if (!c.get("admin")) {
+            throw new ForbiddenError("Administrator permission required");
         }
 
         const id = Number(c.req.param("id"));
@@ -251,6 +260,9 @@ export function ApiKeyService(): Hono {
         if (!uid) {
             throw new ForbiddenError("Authentication required");
         }
+        if (!c.get("admin")) {
+            throw new ForbiddenError("Administrator permission required");
+        }
 
         const id = Number(c.req.param("id"));
         if (!Number.isInteger(id)) {
@@ -297,6 +309,9 @@ export function ApiKeyService(): Hono {
 
         if (!uid) {
             throw new ForbiddenError("Authentication required");
+        }
+        if (!c.get("admin")) {
+            throw new ForbiddenError("Administrator permission required");
         }
 
         const id = Number(c.req.param("id"));

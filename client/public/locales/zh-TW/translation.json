@@ -753,12 +753,6 @@
       "empty_username": "暱稱不能為空",
       "update_failed": "更新失敗",
       "network": "網路錯誤，請重試"
-    },
-    "api_keys": {
-      "title": "API 金鑰",
-      "label": "API 金鑰",
-      "description": "用於外部腳本或 AI 智慧體呼叫本站介面",
-      "manage": "管理"
     }
   },
   "health": {
@@ -978,6 +972,9 @@
     "copy_failed": "複製失敗，請手動選取複製",
     "error_name_required": "請填寫金鑰名稱",
     "error_scopes_required": "請至少選擇一個權限範圍",
-    "last_used": "最近使用"
+    "last_used": "最近使用",
+    "copy": "複製",
+    "loading_text": "正在載入…",
+    "delete": "刪除"
   }
 }

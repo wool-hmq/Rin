@@ -1,10 +1,10 @@
-import { useContext, useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { SettingsCard, SettingsCardBody, SettingsCardHeader, SettingsCardRow, Modal } from "@rin/ui";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal } from "@rin/ui";
 import { client } from "../app/runtime";
+import { Button } from "../components/button";
 import type { ApiKeyRecord, ApiKeyScopeInfo } from "../api/client";
-import { ProfileContext } from "../state/profile";
+import { ItemTitle } from "./settings-items";
 
 interface KeyFormState {
   name: string;
@@ -14,10 +14,8 @@ interface KeyFormState {
 
 const EMPTY_FORM: KeyFormState = { name: "", scopes: [], visible: false };
 
-export function ApiKeysPage() {
+export function ApiKeysSettings() {
   const { t } = useTranslation();
-  const profile = useContext(ProfileContext);
-  const [, setLocation] = useLocation();
 
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [scopes, setScopes] = useState<ApiKeyScopeInfo[]>([]);
@@ -34,13 +32,8 @@ export function ApiKeysPage() {
   const [plaintext, setPlaintext] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile === undefined) return;
-    if (profile === null) {
-      setLocation("/login");
-      return;
-    }
     void loadAll();
-  }, [profile, setLocation]);
+  }, []);
 
   const loadAll = async () => {
     setLoading(true);
@@ -201,96 +194,89 @@ export function ApiKeysPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="my-32 flex items-center justify-center py-8 px-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-theme"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="my-8 py-8 px-4">
-      <div className="mx-auto max-w-3xl rounded-2xl bg-w p-8 shadow-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold t-primary">{t("api_keys.title")}</h1>
-          <button
-            onClick={openCreate}
-            className="rounded-xl bg-theme px-4 py-2 text-sm text-white hover:bg-theme/80"
-          >
-            {t("api_keys.create")}
-          </button>
-        </div>
+    <div className="w-full space-y-2">
+      <ItemTitle title={t("api_keys.title")} />
 
-        <p className="mb-6 text-sm t-secondary">{t("api_keys.description")}</p>
+      <SettingsCard>
+        <SettingsCardRow
+          header={<SettingsCardHeader title={t("api_keys.title")} description={t("api_keys.description")} />}
+          action={<Button title={t("api_keys.create")} onClick={openCreate} />}
+        />
+        <SettingsCardBody>
+          {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+          {success && <p className="mb-3 text-sm text-green-500">{success}</p>}
 
-        {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
-        {success && <p className="mb-4 text-sm text-green-500">{success}</p>}
-
-        {plaintext && (
-          <div className="mb-6 rounded-xl border border-theme/40 bg-w-secondary p-4">
-            <p className="mb-2 text-sm font-medium t-primary">{t("api_keys.plaintext_hint")}</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 break-all rounded-lg bg-black/5 px-3 py-2 font-mono text-sm dark:bg-white/10">
-                {plaintext}
-              </code>
-              <button
-                onClick={() => void copyToClipboard(plaintext)}
-                className="rounded-lg bg-theme px-3 py-2 text-xs text-white"
-              >
-                {t("copy")}
-              </button>
+          {plaintext && (
+            <div className="mb-3 rounded-xl border border-theme/40 bg-w-secondary p-3">
+              <p className="mb-2 text-sm font-medium t-primary">{t("api_keys.plaintext_hint")}</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 break-all rounded-lg bg-black/5 px-3 py-2 font-mono text-sm dark:bg-white/10">
+                  {plaintext}
+                </code>
+                <button
+                  onClick={() => void copyToClipboard(plaintext)}
+                  className="rounded-lg bg-theme px-3 py-2 text-xs text-white"
+                >
+                  {t("api_keys.copy")}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {keys.length === 0 ? (
-          <p className="py-8 text-center text-sm t-secondary">{t("api_keys.empty")}</p>
-        ) : (
-          <div className="space-y-3">
-            {keys.map((key) => (
-              <div key={key.id} className="rounded-xl border border-black/10 p-4 dark:border-white/10">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium t-primary">{key.name}</span>
-                      <span className="rounded-full bg-w-secondary px-2 py-0.5 text-xs t-secondary">
-                        {key.visible ? t("api_keys.visible") : t("api_keys.encrypted")}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {key.scopes.map((scope) => (
-                        <span key={scope} className="rounded bg-w-secondary px-2 py-0.5 font-mono text-xs t-secondary">
-                          {scope}
+          {loading ? (
+            <p className="py-4 text-sm t-secondary">{t("api_keys.loading_text")}</p>
+          ) : keys.length === 0 ? (
+            <p className="py-4 text-sm t-secondary">{t("api_keys.empty")}</p>
+          ) : (
+            <div className="space-y-2">
+              {keys.map((key) => (
+                <div key={key.id} className="rounded-xl border border-black/10 p-3 dark:border-white/10">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium t-primary">{key.name}</span>
+                        <span className="rounded-full bg-w-secondary px-2 py-0.5 text-xs t-secondary">
+                          {key.visible ? t("api_keys.visible") : t("api_keys.encrypted")}
                         </span>
-                      ))}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {key.scopes.map((scope) => (
+                          <span
+                            key={scope}
+                            className="rounded bg-w-secondary px-2 py-0.5 font-mono text-xs t-secondary"
+                          >
+                            {scope}
+                          </span>
+                        ))}
+                      </div>
+                      {revealed[key.id] && (
+                        <code className="mt-2 block break-all rounded-lg bg-black/5 px-3 py-2 font-mono text-xs dark:bg-white/10">
+                          {revealed[key.id]}
+                        </code>
+                      )}
                     </div>
-                    {revealed[key.id] && (
-                      <code className="mt-2 block break-all rounded-lg bg-black/5 px-3 py-2 font-mono text-xs dark:bg-white/10">
-                        {revealed[key.id]}
-                      </code>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-2">
-                    <button onClick={() => openEdit(key)} className="text-xs text-theme hover:underline">
-                      {t("edit")}
-                    </button>
-                    <button onClick={() => void revealKey(key)} className="text-xs text-theme hover:underline">
-                      {t("api_keys.reveal")}
-                    </button>
-                    <button onClick={() => void rotateKey(key)} className="text-xs text-theme hover:underline">
-                      {t("api_keys.rotate")}
-                    </button>
-                    <button onClick={() => void deleteKey(key)} className="text-xs text-red-500 hover:underline">
-                      {t("delete")}
-                    </button>
+                    <div className="flex shrink-0 flex-col gap-1.5">
+                      <button onClick={() => openEdit(key)} className="text-xs text-theme hover:underline">
+                        {t("edit")}
+                      </button>
+                      <button onClick={() => void revealKey(key)} className="text-xs text-theme hover:underline">
+                        {t("api_keys.reveal")}
+                      </button>
+                      <button onClick={() => void rotateKey(key)} className="text-xs text-theme hover:underline">
+                        {t("api_keys.rotate")}
+                      </button>
+                      <button onClick={() => void deleteKey(key)} className="text-xs text-red-500 hover:underline">
+                        {t("api_keys.delete")}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </SettingsCardBody>
+      </SettingsCard>
 
       <Modal
         isOpen={editorOpen}

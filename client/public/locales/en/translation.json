@@ -751,12 +751,6 @@
       "unbind_confirm": "Are you sure you want to unbind TOTP? Password login will be restored.",
       "unbind_success": "TOTP unbound",
       "unbind_failed": "Failed to unbind"
-    },
-    "api_keys": {
-      "title": "API keys",
-      "label": "API keys",
-      "description": "Let external scripts or AI agents call this site",
-      "manage": "Manage"
     }
   },
   "health": {
@@ -976,6 +970,9 @@
     "copy_failed": "Copy failed, please copy it manually",
     "error_name_required": "Please enter a key name",
     "error_scopes_required": "Select at least one scope",
-    "last_used": "Last used"
+    "last_used": "Last used",
+    "copy": "Copy",
+    "loading_text": "Loading…",
+    "delete": "Delete"
   }
 }
