@@ -164,7 +164,7 @@ We welcome contributions of all kinds—code, documentation, design, and ideas. 
 ```
 MIT License
 
-Copyright (c) 2024 Xeu
+Copyright (c) 2026 羊角快车
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
