@@ -973,6 +973,7 @@
     "last_used": "Last used",
     "copy": "Copy",
     "loading_text": "Loading…",
-    "delete": "Delete"
+    "delete": "Delete",
+    "scopes_empty": "Failed to load scopes. Please refresh the page and try again."
   }
 }

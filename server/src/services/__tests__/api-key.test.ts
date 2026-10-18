@@ -16,7 +16,7 @@ function keyHeaders(key: string) {
 
 async function createKey(ctx: TestContext, options: Record<string, unknown> = {}) {
   const res = await ctx.app.fetch(
-    new Request("http://localhost/manage", {
+    new Request("http://localhost/key/manage", {
       method: "POST",
       headers: { ...authHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -36,8 +36,8 @@ describe("ApiKeyService", () => {
   beforeEach(async () => {
     ctx = await setupTestApp(() => {
       const app = new Hono();
-      app.route("/manage", ApiKeyService());
-      app.route("/", ApiKeyApiService());
+      app.route("/key/manage", ApiKeyService());
+      app.route("/key", ApiKeyApiService());
       return app;
     });
 
@@ -68,7 +68,7 @@ describe("ApiKeyService", () => {
   });
 
   it("requires authentication to manage keys", async () => {
-    const res = await ctx.app.fetch(new Request("http://localhost/manage"), ctx.env);
+    const res = await ctx.app.fetch(new Request("http://localhost/key/manage"), ctx.env);
     expect(res.status).toBe(403);
   });
 
@@ -79,13 +79,13 @@ describe("ApiKeyService", () => {
     `);
 
     const listRes = await ctx.app.fetch(
-      new Request("http://localhost/manage", { headers: authHeaders(2) }),
+      new Request("http://localhost/key/manage", { headers: authHeaders(2) }),
       ctx.env,
     );
     expect(listRes.status).toBe(403);
 
     const createRes = await ctx.app.fetch(
-      new Request("http://localhost/manage", {
+      new Request("http://localhost/key/manage", {
         method: "POST",
         headers: { ...authHeaders(2), "Content-Type": "application/json" },
         body: JSON.stringify({ name: "nope", scopes: ["feed.write"] }),
@@ -103,7 +103,7 @@ describe("ApiKeyService", () => {
   it("lists keys without plaintext when encrypted", async () => {
     await createKey(ctx);
     const res = await ctx.app.fetch(
-      new Request("http://localhost/manage", { headers: authHeaders() }),
+      new Request("http://localhost/key/manage", { headers: authHeaders() }),
       ctx.env,
     );
     const body = await res.json() as any;
@@ -114,7 +114,7 @@ describe("ApiKeyService", () => {
   it("reveals the key when visible is enabled", async () => {
     const { body } = await createKey(ctx, { visible: true });
     const res = await ctx.app.fetch(
-      new Request("http://localhost/manage", { headers: authHeaders() }),
+      new Request("http://localhost/key/manage", { headers: authHeaders() }),
       ctx.env,
     );
     const listed = await res.json() as any;
@@ -126,7 +126,7 @@ describe("ApiKeyService", () => {
     const { body } = await createKey(ctx, { visible: true });
 
     const rotated = await ctx.app.fetch(
-      new Request(`http://localhost/manage/${body.key.id}/rotate`, {
+      new Request(`http://localhost/key/manage/${body.key.id}/rotate`, {
         method: "POST",
         headers: authHeaders(),
       }),
@@ -137,13 +137,13 @@ describe("ApiKeyService", () => {
     expect(rotatedBody.plaintext).toHaveLength(32);
 
     const oldAttempt = await ctx.app.fetch(
-      new Request("http://localhost/help", { headers: keyHeaders(body.plaintext) }),
+      new Request("http://localhost/key/help", { headers: keyHeaders(body.plaintext) }),
       ctx.env,
     );
     expect(oldAttempt.status).toBe(401);
 
     const newAttempt = await ctx.app.fetch(
-      new Request("http://localhost/help", { headers: keyHeaders(rotatedBody.plaintext) }),
+      new Request("http://localhost/key/help", { headers: keyHeaders(rotatedBody.plaintext) }),
       ctx.env,
     );
     expect(newAttempt.status).toBe(200);
@@ -152,7 +152,7 @@ describe("ApiKeyService", () => {
   it("deletes a key", async () => {
     const { body } = await createKey(ctx);
     const del = await ctx.app.fetch(
-      new Request(`http://localhost/manage/${body.key.id}`, {
+      new Request(`http://localhost/key/manage/${body.key.id}`, {
         method: "DELETE",
         headers: authHeaders(),
       }),
@@ -161,7 +161,7 @@ describe("ApiKeyService", () => {
     expect(del.ok).toBe(true);
 
     const list = await ctx.app.fetch(
-      new Request("http://localhost/manage", { headers: authHeaders() }),
+      new Request("http://localhost/key/manage", { headers: authHeaders() }),
       ctx.env,
     );
     const listed = await list.json() as any;
@@ -171,7 +171,7 @@ describe("ApiKeyService", () => {
   it("returns scopes and endpoints from /help", async () => {
     const { body } = await createKey(ctx, { scopes: ["feed.write"] });
     const res = await ctx.app.fetch(
-      new Request("http://localhost/help", { headers: keyHeaders(body.plaintext) }),
+      new Request("http://localhost/key/help", { headers: keyHeaders(body.plaintext) }),
       ctx.env,
     );
     expect(res.ok).toBe(true);
@@ -183,7 +183,7 @@ describe("ApiKeyService", () => {
 
   it("rejects a request with an invalid key", async () => {
     const res = await ctx.app.fetch(
-      new Request("http://localhost/help", { headers: keyHeaders("invalid-key-value") }),
+      new Request("http://localhost/key/help", { headers: keyHeaders("invalid-key-value") }),
       ctx.env,
     );
     expect(res.status).toBe(401);
@@ -192,7 +192,7 @@ describe("ApiKeyService", () => {
   it("enforces scopes on business endpoints", async () => {
     const { body } = await createKey(ctx, { scopes: ["feed.write"] });
     const res = await ctx.app.fetch(
-      new Request("http://localhost/moment", {
+      new Request("http://localhost/key/moment", {
         method: "POST",
         headers: { ...keyHeaders(body.plaintext), "Content-Type": "application/json" },
         body: JSON.stringify({ content: "hello" }),
@@ -207,7 +207,7 @@ describe("ApiKeyService", () => {
   it("creates a moment with a moment.write key", async () => {
     const { body } = await createKey(ctx, { scopes: ["moment.write"] });
     const res = await ctx.app.fetch(
-      new Request("http://localhost/moment", {
+      new Request("http://localhost/key/moment", {
         method: "POST",
         headers: { ...keyHeaders(body.plaintext), "Content-Type": "application/json" },
         body: JSON.stringify({ content: "api moment" }),
@@ -226,7 +226,7 @@ describe("ApiKeyService", () => {
   it("rejects config keys outside the granted section", async () => {
     const { body } = await createKey(ctx, { scopes: ["config.site"] });
     const res = await ctx.app.fetch(
-      new Request("http://localhost/config/site", {
+      new Request("http://localhost/key/config/site", {
         method: "POST",
         headers: { ...keyHeaders(body.plaintext), "Content-Type": "application/json" },
         body: JSON.stringify({ "site.name": "New Name", "theme.color": "#000000" }),
@@ -241,7 +241,7 @@ describe("ApiKeyService", () => {
   it("writes allowed config keys", async () => {
     const { body } = await createKey(ctx, { scopes: ["config.site"] });
     const res = await ctx.app.fetch(
-      new Request("http://localhost/config/site", {
+      new Request("http://localhost/key/config/site", {
         method: "POST",
         headers: { ...keyHeaders(body.plaintext), "Content-Type": "application/json" },
         body: JSON.stringify({ "site.name": "New Name" }),
@@ -251,7 +251,7 @@ describe("ApiKeyService", () => {
     expect(res.ok).toBe(true);
 
     const read = await ctx.app.fetch(
-      new Request("http://localhost/config/site", { headers: keyHeaders(body.plaintext) }),
+      new Request("http://localhost/key/config/site", { headers: keyHeaders(body.plaintext) }),
       ctx.env,
     );
     const payload = await read.json() as any;
@@ -261,7 +261,7 @@ describe("ApiKeyService", () => {
   it("denies reading a section without its scope", async () => {
     const { body } = await createKey(ctx, { scopes: ["config.site"] });
     const res = await ctx.app.fetch(
-      new Request("http://localhost/config/webhook", { headers: keyHeaders(body.plaintext) }),
+      new Request("http://localhost/key/config/webhook", { headers: keyHeaders(body.plaintext) }),
       ctx.env,
     );
     expect(res.status).toBe(403);

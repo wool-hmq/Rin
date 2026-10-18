@@ -973,6 +973,7 @@
     "last_used": "最近使用",
     "copy": "复制",
     "loading_text": "正在加载…",
-    "delete": "删除"
+    "delete": "删除",
+    "scopes_empty": "权限列表加载失败，请刷新页面重试。"
   }
 }

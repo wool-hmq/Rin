@@ -42,6 +42,12 @@ export function ApiKeysSettings() {
         client.user.listApiKeys(),
         client.user.listApiKeyScopes(),
       ]);
+      if (keysRes.error) {
+        setError(String(keysRes.error.value));
+      }
+      if (scopesRes.error) {
+        setError(String(scopesRes.error.value));
+      }
       setKeys(keysRes.data?.keys ?? []);
       setScopes(scopesRes.data?.scopes ?? []);
     } catch (err) {
@@ -57,10 +63,14 @@ export function ApiKeysSettings() {
   };
 
   const openCreate = () => {
-    resetMessages();
+    setError("");
+    setSuccess("");
     setEditingId(null);
     setForm(EMPTY_FORM);
     setEditorOpen(true);
+    if (scopes.length === 0) {
+      void loadAll();
+    }
   };
 
   const openEdit = (key: ApiKeyRecord) => {
@@ -301,6 +311,9 @@ export function ApiKeysSettings() {
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium t-secondary">{t("api_keys.scopes")}</label>
             <div className="grid max-h-64 grid-cols-1 gap-2 overflow-auto pr-1">
+              {scopes.length === 0 && (
+                <p className="text-xs t-secondary">{t("api_keys.scopes_empty")}</p>
+              )}
               {scopes.map((scope) => (
                 <label
                   key={scope.scope}

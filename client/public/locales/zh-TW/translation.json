@@ -975,6 +975,7 @@
     "last_used": "最近使用",
     "copy": "複製",
     "loading_text": "正在載入…",
-    "delete": "刪除"
+    "delete": "刪除",
+    "scopes_empty": "權限列表載入失敗，請重新整理頁面後重試。"
   }
 }

@@ -39,6 +39,6 @@ export function registerRoutes(app: RinApp) {
   app.route("/favicon", FaviconService());
   app.route("/favicon.ico", FaviconService());
   app.route("/r2", R2Service()); // ✅ 新增
-  app.route("/api/key/manage", ApiKeyService());
-  app.route("/api/key", ApiKeyApiService());
+  app.route("/key/manage", ApiKeyService());
+  app.route("/key", ApiKeyApiService());
 }
