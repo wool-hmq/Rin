@@ -39,7 +39,7 @@ https://jiaoblog.dpdns.org
 - **Featured Images**: Automatically detect the first image in an article and use it as the cover image in listings.
 - **Tag Parsing**: Input tags like `#Blog #Cloudflare` and have them automatically parsed and displayed.
 - **Type Safety**: End-to-end type safety with shared TypeScript types between client and server via `@rin/api` package.
-- ...and more! Explore all features at https://xeu.life.
+- ...and more! Explore all features at https://xeu.life or https://jiaoblog.dpdns.org.
 
 ## Documentation
 
@@ -48,6 +48,9 @@ https://jiaoblog.dpdns.org
 ```bash
 # 1. Clone the repository
 git clone https://github.com/openRin/Rin.git && cd Rin
+
+# Yangjiao Express Second Creation Edition Rin Blog
+# git clone http://github.com/wool-hmq/Rin.git && cd Rin
 
 # 2. Install dependencies
 bun install
@@ -133,6 +136,8 @@ The repository includes several automated workflows:
 - `R2_BUCKET_NAME` - Specific R2 bucket to use
 
 Full documentation is available at https://docs.openrin.org.
+
+Please visit the complete document of the Rin blog of Yangjiao Express Second Creation Edition [./docs/docs/en](https://github.com/wool-hmq/Rin/tree/main/docs/docs/en).
 
 ## Community & Support
 
