@@ -75,14 +75,14 @@ export function ApiKeyFriendService(): Hono {
 
         const id = parseApiKeyId(c.req.param("id"));
         if (id === null) {
-            throw new NotFoundError("Friend link not found");
+            throw new NotFoundError("Friend link");
         }
 
         const exist = await profileAsync(c, "api_friend_lookup", () => db.query.friends.findFirst({
             where: eq(friends.id, id),
         }));
         if (!exist) {
-            throw new NotFoundError("Friend link not found");
+            throw new NotFoundError("Friend link");
         }
 
         const body = await c.req.json() as {
@@ -150,14 +150,14 @@ export function ApiKeyFriendService(): Hono {
 
         const id = parseApiKeyId(c.req.param("id"));
         if (id === null) {
-            throw new NotFoundError("Friend link not found");
+            throw new NotFoundError("Friend link");
         }
 
         const exist = await profileAsync(c, "api_friend_lookup", () => db.query.friends.findFirst({
             where: eq(friends.id, id),
         }));
         if (!exist) {
-            throw new NotFoundError("Friend link not found");
+            throw new NotFoundError("Friend link");
         }
 
         await profileAsync(c, "api_friend_delete", () => db.delete(friends).where(eq(friends.id, id)));

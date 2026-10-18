@@ -193,7 +193,7 @@ export function ApiKeyService(): Hono {
             where: and(eq(apiKeys.id, id), eq(apiKeys.uid, uid)),
         }));
         if (!existing) {
-            throw new NotFoundError("API key not found");
+            throw new NotFoundError("API key");
         }
 
         const body = await c.req.json() as {
@@ -240,7 +240,7 @@ export function ApiKeyService(): Hono {
 
         const row = updated[0];
         if (!row) {
-            throw new NotFoundError("API key not found");
+            throw new NotFoundError("API key");
         }
 
         let plaintext: string | null = null;
@@ -273,7 +273,7 @@ export function ApiKeyService(): Hono {
             where: and(eq(apiKeys.id, id), eq(apiKeys.uid, uid)),
         }));
         if (!existing) {
-            throw new NotFoundError("API key not found");
+            throw new NotFoundError("API key");
         }
 
         const plaintext = generateApiKey();
@@ -292,7 +292,7 @@ export function ApiKeyService(): Hono {
 
         const row = updated[0];
         if (!row) {
-            throw new NotFoundError("API key not found");
+            throw new NotFoundError("API key");
         }
 
         return c.json({
@@ -324,7 +324,7 @@ export function ApiKeyService(): Hono {
             .returning({ id: apiKeys.id }));
 
         if (deleted.length === 0) {
-            throw new NotFoundError("API key not found");
+            throw new NotFoundError("API key");
         }
 
         return c.json({ success: true });

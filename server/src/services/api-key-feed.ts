@@ -123,12 +123,12 @@ export function ApiKeyFeedService(): Hono {
 
         const id = parseApiKeyId(c.req.param("id"));
         if (id === null) {
-            throw new NotFoundError("Feed not found");
+            throw new NotFoundError("Feed");
         }
 
         const feed = await profileAsync(c, "api_feed_update_lookup", () => findFeedById(db, id));
         if (!feed) {
-            throw new NotFoundError("Feed not found");
+            throw new NotFoundError("Feed");
         }
 
         const body = await c.req.json() as UpdateFeedApiBody;
@@ -177,12 +177,12 @@ export function ApiKeyFeedService(): Hono {
 
         const id = parseApiKeyId(c.req.param("id"));
         if (id === null) {
-            throw new NotFoundError("Feed not found");
+            throw new NotFoundError("Feed");
         }
 
         const feed = await profileAsync(c, "api_feed_delete_lookup", () => findFeedById(db, id));
         if (!feed) {
-            throw new NotFoundError("Feed not found");
+            throw new NotFoundError("Feed");
         }
 
         await profileAsync(c, "api_feed_delete", () => deleteFeedById(db, id));

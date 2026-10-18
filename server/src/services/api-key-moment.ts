@@ -43,14 +43,14 @@ export function ApiKeyMomentService(): Hono {
 
         const id = parseApiKeyId(c.req.param("id"));
         if (id === null) {
-            throw new NotFoundError("Moment not found");
+            throw new NotFoundError("Moment");
         }
 
         const moment = await profileAsync(c, "api_moment_lookup", () => db.query.moments.findFirst({
             where: eq(moments.id, id),
         }));
         if (!moment) {
-            throw new NotFoundError("Moment not found");
+            throw new NotFoundError("Moment");
         }
 
         const body = await c.req.json() as { content?: unknown };
@@ -76,14 +76,14 @@ export function ApiKeyMomentService(): Hono {
 
         const id = parseApiKeyId(c.req.param("id"));
         if (id === null) {
-            throw new NotFoundError("Moment not found");
+            throw new NotFoundError("Moment");
         }
 
         const moment = await profileAsync(c, "api_moment_lookup", () => db.query.moments.findFirst({
             where: eq(moments.id, id),
         }));
         if (!moment) {
-            throw new NotFoundError("Moment not found");
+            throw new NotFoundError("Moment");
         }
 
         await profileAsync(c, "api_moment_delete", () => db.delete(moments).where(eq(moments.id, id)));
