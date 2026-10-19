@@ -124,6 +124,16 @@ export const apiKeys = sqliteTable("api_keys", {
     updatedAt: updated_at,
 });
 
+export const recoveryCodes = sqliteTable("recovery_codes", {
+    id: integer("id").primaryKey(),
+    userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    codeHash: text("code_hash").notNull(),
+    createdAt: created_at,
+    updatedAt: updated_at,
+}, (table) => ({
+    userCodeHashUnique: unique().on(table.userId, table.codeHash),
+}));
+
 export const cache = sqliteTable("cache", {
     id: integer("id").primaryKey(),
     key: text("key").notNull(),

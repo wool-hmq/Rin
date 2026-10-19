@@ -275,6 +275,13 @@
     "email": "Email",
     "username": {
       "placeholder": "Please enter your username"
+    },
+    "lost_totp": "Lost your TOTP authenticator? Get help here",
+    "rate_limit": {
+      "ip_locked": "This IP has been locked for 15 minutes after too many failed attempts",
+      "account_locked": "This account has been locked for 15 minutes after too many failed attempts",
+      "ip_warn": "This IP has {{count}} attempt(s) left. Another wrong try will trigger a 15-minute cooldown, and logins will be blocked during it.",
+      "account_warn": "This account has {{count}} attempt(s) left. Another wrong try will trigger a 15-minute cooldown, and logins will be blocked during it."
     }
   },
   "register": {
@@ -750,7 +757,11 @@
       "bind_success": "TOTP bound successfully. Use the code to log in next time.",
       "unbind_confirm": "Are you sure you want to unbind TOTP? Password login will be restored.",
       "unbind_success": "TOTP unbound",
-      "unbind_failed": "Failed to unbind"
+      "unbind_failed": "Failed to unbind",
+      "recovery_title": "Save your recovery codes",
+      "recovery_warning": "Write these down now. Each can be used once and is only shown when TOTP is enabled — they will not be shown again.",
+      "recovery_hint": "If you ever lose your authenticator, choose \"Lost your TOTP authenticator?\" on the login page and use a recovery code to restore your account.",
+      "recovery_done": "I saved the recovery codes"
     }
   },
   "health": {
@@ -979,5 +990,25 @@
     "encrypted_option_title": "Encrypted storage (cannot become revealable)",
     "encrypted_option_desc": "This key was created with encrypted storage, so the plaintext was shown once at creation and rotation. Create a new key if you need one you can reveal later.",
     "reveal_unavailable": "This key cannot be revealed. Rotate it to get a new secret."
+  },
+  "totp_recovery": {
+    "title": "Recover your TOTP account",
+    "description": "Choose a way to restore access to your account.",
+    "option_recover_title": "1. Recover with a recovery code",
+    "option_recover_desc": "Enter your username and a TOTP recovery code. TOTP will be disabled after a successful recovery.",
+    "option_admin_title": "2. Ask your administrator for help",
+    "option_admin_desc": "Contact the site administrator to resolve it manually.",
+    "modal_title": "Recover with a recovery code",
+    "username_label": "Username",
+    "code_label": "Recovery code",
+    "code_placeholder": "XXXX-XXXX",
+    "code_hint": "Format: XXXX-XXXX (8 digits).",
+    "submit": "Recover account",
+    "success": "Recovery successful! TOTP has been disabled for this account. Sign in with your password.",
+    "error": {
+      "empty": "Username and recovery code are required",
+      "invalid": "Invalid username or recovery code",
+      "network": "Network error, please try again"
+    }
   }
 }

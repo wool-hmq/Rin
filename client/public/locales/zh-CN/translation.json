@@ -275,7 +275,14 @@
     "github": "GitHub",
     "gitee": "Gitee",
     "qq": "QQ",
-    "email": "邮箱"
+    "email": "邮箱",
+    "lost_totp": "丢失 TOTP 验证器？点此寻求解决方案",
+    "rate_limit": {
+      "ip_locked": "该 IP 因尝试次数过多已被锁定 15 分钟，期间无法进行账号+密码/TOTP 登录",
+      "account_locked": "该账号因尝试次数过多已被锁定 15 分钟，期间无法进行账号+密码/TOTP 登录",
+      "ip_warn": "该 IP 还有 {{count}} 次试错次数，如再输入错误，该 IP 会被冷却 15 分钟，中途不可以尝试登录",
+      "account_warn": "该账号还有 {{count}} 次试错次数，如再输入错误，该账号会被冷却 15 分钟，中途不可以尝试登录"
+    }
   },
   "register": {
     "title": "创建新用户",
@@ -750,7 +757,11 @@
       "bind_success": "TOTP 已成功绑定，下次登录请使用验证码",
       "unbind_confirm": "确定要解绑 TOTP 吗？解绑后将恢复使用密码登录。",
       "unbind_success": "已解绑 TOTP",
-      "unbind_failed": "解绑失败"
+      "unbind_failed": "解绑失败",
+      "recovery_title": "保存你的恢复码",
+      "recovery_warning": "请立即妥善保存以下恢复码，每个只能使用一次，且仅在本次开启时展示，之后不再显示。",
+      "recovery_hint": "当你的验证器丢失时，可在登录页选择「丢失 TOTP 验证器」并使用恢复码找回账号。",
+      "recovery_done": "我已保存恢复码"
     }
   },
   "health": {
@@ -979,5 +990,25 @@
     "encrypted_option_title": "加密存储（不可切换为可查看）",
     "encrypted_option_desc": "该密钥创建时选择了加密存储，明文只在创建和轮换时显示一次。如需可随时查看的密钥，请新建一个。",
     "reveal_unavailable": "该密钥不可查看明文，请使用轮换获取新密钥。"
+  },
+  "totp_recovery": {
+    "title": "恢复 TOTP 账号",
+    "description": "选择一种方式恢复你的账号访问。",
+    "option_recover_title": "1. 使用恢复码恢复账号",
+    "option_recover_desc": "输入你的用户名与 TOTP 恢复码，恢复后 TOTP 将被关闭。",
+    "option_admin_title": "2. 请向管理员寻求帮助",
+    "option_admin_desc": "联系站点管理员手动处理。",
+    "modal_title": "使用恢复码恢复账号",
+    "username_label": "用户名",
+    "code_label": "恢复码",
+    "code_placeholder": "XXXX-XXXX",
+    "code_hint": "格式为 XXXX-XXXX，共 8 位数字。",
+    "submit": "恢复账号",
+    "success": "恢复成功！该账号的 TOTP 已被关闭，请使用密码登录。",
+    "error": {
+      "empty": "请填写用户名和恢复码",
+      "invalid": "用户名或恢复码错误",
+      "network": "网络错误，请重试"
+    }
   }
 }

@@ -1,7 +1,7 @@
 import { t } from "i18next";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { TOTP_LOGIN_DISABLED_MESSAGE } from "@rin/api";
+import { TOTP_LOGIN_DISABLED_MESSAGE, LOGIN_RATE_LIMIT_PREFIX } from "@rin/api";
 import { ButtonWithLoading } from "../components/button";
 import { GiteeIcon } from "../components/gitee-icon";
 import { Icon } from "../components/icon";
@@ -12,6 +12,29 @@ import { getLoginRedirectPath } from "../utils/auth-redirect";
 
 const gitee_oauth_url = oauth_url.replace('/github', '/gitee');
 const qq_oauth_url = oauth_url.replace('/github', '/xinyueqq');
+
+function parseRateLimit(message: string): string | null {
+    if (!message?.includes(LOGIN_RATE_LIMIT_PREFIX)) return null;
+    // The server may join multiple segments with ";", one per scope.
+    const notices: string[] = [];
+    for (const segment of message.split(';')) {
+        const parts = segment.split(':');
+        if (parts.length < 3 || parts[0] !== LOGIN_RATE_LIMIT_PREFIX) continue;
+        const scope = parts[1];
+        const remainder = parts[2];
+        if (remainder === 'blocked') {
+            notices.push(scope === 'ip' ? t('login.rate_limit.ip_locked') : t('login.rate_limit.account_locked'));
+        } else if (remainder === '1' || remainder === '2') {
+            const count = Number(remainder);
+            notices.push(
+                scope === 'ip'
+                    ? t('login.rate_limit.ip_warn', { count })
+                    : t('login.rate_limit.account_warn', { count }),
+            );
+        }
+    }
+    return notices.length > 0 ? notices.join('\n') : null;
+}
 
 export function LoginPage() {
     const [username, setUsername] = useState('')
@@ -43,7 +66,11 @@ export function LoginPage() {
             const { data, error: apiError } = await client.auth.login({ username, password });
 
             if (apiError) {
-                if (apiError.value?.includes(TOTP_LOGIN_DISABLED_MESSAGE)) {
+                const raw = typeof apiError.value === 'string' ? apiError.value : '';
+                const rateMsg = parseRateLimit(raw);
+                if (rateMsg) {
+                    setError(rateMsg);
+                } else if (raw?.includes(TOTP_LOGIN_DISABLED_MESSAGE)) {
                     setError(t('login.error.totp_disabled'));
                 } else {
                     setError(t('login.error.invalid'));
@@ -104,6 +131,13 @@ export function LoginPage() {
                                 loading={isLoading}
                             />
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => setLocation('/totp-recovery')}
+                            className="text-xs text-theme hover:underline mt-1"
+                        >
+                            {t('login.lost_totp')}
+                        </button>
                     </>
                 )}
 

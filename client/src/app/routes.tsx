@@ -22,6 +22,7 @@ import { HashtagPage } from "../page/hashtag";
 import { HashtagsPage } from "../page/hashtags";
 import { LoginPage } from "../page/login";
 import { EmailLoginPage } from "../page/email-login";
+import { TotpRecoveryPage } from "../page/totp-recovery";
 import { RegisterPage } from "../page/register";
 import { MomentsPage } from "../page/moments";
 import { ProfilePage } from "../page/profile";
@@ -122,6 +123,10 @@ export function AppRoutes() {
 
       <AppRoute path="/email-login">
         <EmailLoginPage />
+      </AppRoute>
+
+      <AppRoute path="/totp-recovery">
+        <TotpRecoveryPage />
       </AppRoute>
 
       <AppRoute path="/register">

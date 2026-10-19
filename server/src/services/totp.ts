@@ -2,8 +2,9 @@ import { Hono } from "hono";
 import { eq, and } from "drizzle-orm";
 import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
-import { users, cache } from "../db/schema";
+import { users, cache, recoveryCodes } from "../db/schema";
 import { generateTOTPSecret, verifyTOTP } from "../utils/totp";
+import { generateRecoveryCodes, hashRecoveryCode } from "../utils/recovery-code";
 import {
     BadRequestError,
     ConflictError,
@@ -123,9 +124,25 @@ export function TotpService(): Hono {
             .set({ totpSecret: pending.value })
             .where(eq(users.id, uid)));
 
+        // Issue recovery codes exactly once at enable time. Only hashes are
+        // stored; the plaintext is returned in this response and never again.
+        const generated = generateRecoveryCodes();
+        const now = new Date();
+        const hashed = await Promise.all(
+            generated.plaintext.map(async (code) => hashRecoveryCode(code)),
+        );
+        await profileAsync(c, 'totp_confirm_recovery_codes', () => db.insert(recoveryCodes).values(
+            hashed.map((codeHash) => ({
+                userId: uid,
+                codeHash,
+                createdAt: now,
+                updatedAt: now,
+            })),
+        ));
+
         await profileAsync(c, 'totp_confirm_delete', () => db.delete(cache).where(eq(cache.id, pending.id)));
 
-        return c.json({ success: true, enabled: true });
+        return c.json({ success: true, enabled: true, recovery_codes: generated.display });
     });
 
     // DELETE /user/totp - Disable TOTP for the current user.
@@ -153,6 +170,9 @@ export function TotpService(): Hono {
         await profileAsync(c, 'totp_unbind_update', () => db.update(users)
             .set({ totpSecret: null })
             .where(eq(users.id, uid)));
+
+        await profileAsync(c, 'totp_unbind_recovery_codes', () => db.delete(recoveryCodes)
+            .where(eq(recoveryCodes.userId, uid)));
 
         return c.json({ success: true, enabled: false });
     });

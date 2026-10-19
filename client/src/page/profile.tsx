@@ -27,6 +27,7 @@ export function ProfilePage() {
     const [totpCode, setTotpCode] = useState('');
     const [totpLoading, setTotpLoading] = useState(false);
     const [totpError, setTotpError] = useState('');
+    const [totpRecoveryCodes, setTotpRecoveryCodes] = useState<string[]>([]);
 
     // Load current profile data and redirect to login if not authenticated
     useEffect(() => {
@@ -75,6 +76,7 @@ export function ProfilePage() {
         setTotpError('');
         setTotpCode('');
         setTotpSecret('');
+        setTotpRecoveryCodes([]);
         setTotpLoading(true);
         setTotpModalOpen(true);
         try {
@@ -99,14 +101,17 @@ export function ProfilePage() {
         setTotpLoading(true);
         setTotpError('');
         try {
-            const { error: apiError } = await client.user.confirmTotp(totpCode.trim());
+            const { data, error: apiError } = await client.user.confirmTotp(totpCode.trim());
             if (apiError) {
                 setTotpError(t('profile.totp.confirm_failed'));
                 return;
             }
             setTotpEnabled(true);
-            setTotpModalOpen(false);
+            setTotpRecoveryCodes(data?.recovery_codes ?? []);
             setSuccess(t('profile.totp.bind_success'));
+            if (!data?.recovery_codes || data.recovery_codes.length === 0) {
+                setTotpModalOpen(false);
+            }
         } catch (err) {
             setTotpError(t('profile.totp.confirm_failed'));
         } finally {
@@ -452,52 +457,83 @@ export function ProfilePage() {
                 panelClassName="p-6"
             >
                 <div className="flex flex-col space-y-4 w-full">
-                    <h2 className="text-lg font-bold t-primary">{t('profile.totp.modal_title')}</h2>
-                    <p className="text-sm t-secondary">{t('profile.totp.modal_hint')}</p>
-
-                    {totpLoading && !totpSecret ? (
-                        <p className="text-sm t-secondary">{t('profile.totp.loading')}</p>
-                    ) : (
+                    {totpRecoveryCodes.length > 0 ? (
                         <>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium t-secondary">{t('profile.totp.secret_label')}</label>
-                                <code className="block w-full break-all rounded-lg bg-w-secondary px-3 py-2 text-sm font-mono t-primary">
-                                    {totpSecret || '—'}
-                                </code>
-                                <p className="text-xs t-secondary">{t('profile.totp.secret_hint')}</p>
+                            <h2 className="text-lg font-bold t-primary">{t('profile.totp.recovery_title')}</h2>
+                            <p className="text-sm text-red-500">{t('profile.totp.recovery_warning')}</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {totpRecoveryCodes.map((code) => (
+                                    <code
+                                        key={code}
+                                        className="rounded-lg bg-w-secondary px-3 py-2 text-center font-mono text-sm t-primary"
+                                    >
+                                        {code}
+                                    </code>
+                                ))}
                             </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium t-secondary">{t('profile.totp.code_label')}</label>
-                                <Input
-                                    value={totpCode}
-                                    setValue={(value) => {
-                                        setTotpCode(value.replace(/\D/g, '').slice(0, 6));
-                                        setTotpError('');
-                                    }}
-                                    placeholder={t('profile.totp.code_placeholder')}
-                                    disabled={totpLoading}
-                                />
-                            </div>
-
-                            {totpError && <p className="text-sm text-red-500">{totpError}</p>}
-
+                            <p className="text-xs t-secondary">{t('profile.totp.recovery_hint')}</p>
                             <div className="flex justify-end space-x-2 pt-2">
                                 <button
-                                    onClick={() => setTotpModalOpen(false)}
-                                    disabled={totpLoading}
-                                    className="text-xs px-3 py-2 rounded bg-w-secondary t-primary hover:bg-w-secondary/80 disabled:opacity-50"
+                                    onClick={() => {
+                                        setTotpRecoveryCodes([]);
+                                        setTotpModalOpen(false);
+                                    }}
+                                    className="text-xs px-3 py-2 rounded bg-theme text-white hover:bg-theme/80"
                                 >
-                                    {t('profile.totp.cancel')}
-                                </button>
-                                <button
-                                    onClick={handleConfirmTotp}
-                                    disabled={totpLoading || totpCode.length !== 6}
-                                    className="text-xs px-3 py-2 rounded bg-theme text-white hover:bg-theme/80 disabled:opacity-50"
-                                >
-                                    {t('profile.totp.confirm')}
+                                    {t('profile.totp.recovery_done')}
                                 </button>
                             </div>
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="text-lg font-bold t-primary">{t('profile.totp.modal_title')}</h2>
+                            <p className="text-sm t-secondary">{t('profile.totp.modal_hint')}</p>
+
+                            {totpLoading && !totpSecret ? (
+                                <p className="text-sm t-secondary">{t('profile.totp.loading')}</p>
+                            ) : (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium t-secondary">{t('profile.totp.secret_label')}</label>
+                                        <code className="block w-full break-all rounded-lg bg-w-secondary px-3 py-2 text-sm font-mono t-primary">
+                                            {totpSecret || '—'}
+                                        </code>
+                                        <p className="text-xs t-secondary">{t('profile.totp.secret_hint')}</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium t-secondary">{t('profile.totp.code_label')}</label>
+                                        <Input
+                                            value={totpCode}
+                                            setValue={(value) => {
+                                                setTotpCode(value.replace(/\D/g, '').slice(0, 6));
+                                                setTotpError('');
+                                            }}
+                                            placeholder={t('profile.totp.code_placeholder')}
+                                            disabled={totpLoading}
+                                        />
+                                    </div>
+
+                                    {totpError && <p className="text-sm text-red-500">{totpError}</p>}
+
+                                    <div className="flex justify-end space-x-2 pt-2">
+                                        <button
+                                            onClick={() => setTotpModalOpen(false)}
+                                            disabled={totpLoading}
+                                            className="text-xs px-3 py-2 rounded bg-w-secondary t-primary hover:bg-w-secondary/80 disabled:opacity-50"
+                                        >
+                                            {t('profile.totp.cancel')}
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmTotp}
+                                            disabled={totpLoading || totpCode.length !== 6}
+                                            className="text-xs px-3 py-2 rounded bg-theme text-white hover:bg-theme/80 disabled:opacity-50"
+                                        >
+                                            {t('profile.totp.confirm')}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </>
                     )}
                 </div>

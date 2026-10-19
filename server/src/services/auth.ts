@@ -6,14 +6,27 @@ import { setJWTCookie, clearJWTCookie } from "../core/hono-middleware";
 import { setCookie } from "hono/cookie";
 import { isEmailConfigured, sendEmail } from "../utils/email";
 import { verifyTOTP } from "../utils/totp";
-import { TOTP_LOGIN_DISABLED_MESSAGE } from "@rin/api";
-import { users, linkedAccounts } from "../db/schema";
+import { TOTP_LOGIN_DISABLED_MESSAGE, LOGIN_RATE_LIMIT_PREFIX } from "@rin/api";
+import { users, linkedAccounts, recoveryCodes } from "../db/schema";
 import { emailCodeStore, cleanExpiredCodes } from "./email-code-store";
 import {
     BadRequestError,
     ForbiddenError,
     InternalServerError,
+    NotFoundError,
+    RateLimitError,
 } from "../errors";
+import {
+    IP_MAX_ATTEMPTS,
+    USER_MAX_ATTEMPTS,
+    checkLoginRateLimit,
+    clearLoginRateLimit,
+    recordLoginFailure,
+} from "./login-rate-limit";
+import {
+    hashRecoveryCode,
+    normalizeRecoveryCode,
+} from "../utils/recovery-code";
 
 // Hash password using SHA-256
 async function hashPassword(password: string): Promise<string> {
@@ -29,9 +42,51 @@ async function hashPassword(password: string): Promise<string> {
 // (Re-exported for callers that import it from this module.)
 export { TOTP_LOGIN_DISABLED_MESSAGE };
 
+// Allowed time steps (30s each) on either side of the current window.
+// A window of 1 accepts codes from the previous and next 30s periods.
+export const TOTP_WINDOW_STEPS = 1;
+
 // Whether the submitted password field looks like a 6-digit TOTP code.
 function isTotpCode(value: string): boolean {
     return /^\d{6}$/.test((value || "").trim());
+}
+
+// Best-effort client IP extraction. OAuth/email logins are not throttled, so
+// this is only consulted for password/TOTP logins.
+function getClientIp(c: AppContext): string {
+    return (
+        c.req.header("CF-Connecting-IP") ||
+        c.req.header("x-real-ip") ||
+        (c.req.header("x-forwarded-for") || "").split(",")[0]?.trim() ||
+        "unknown"
+    );
+}
+
+/**
+ * Record failed login attempts for both the client IP and the account, then
+ * throw an error carrying the rate-limit state. When a cooldown has just been
+ * triggered the message is `LOGIN_RATE_LIMIT:ip:blocked` / `:user:blocked`;
+ * when only 1-2 attempts remain it is `LOGIN_RATE_LIMIT:ip:<remaining>` etc.
+ * Otherwise the original error (if provided) is re-thrown so callers like the
+ * TOTP-disabled hint keep working.
+ */
+async function rejectLogin(c: AppContext, ip: string, username: string, fallbackErr?: Error): Promise<never> {
+    const ipResult = await recordLoginFailure(c, "ip", ip, IP_MAX_ATTEMPTS);
+    const userResult = await recordLoginFailure(c, "user", username, USER_MAX_ATTEMPTS);
+
+    const messages: string[] = [];
+    if (ipResult.locked) messages.push(`${LOGIN_RATE_LIMIT_PREFIX}:ip:blocked`);
+    else if (ipResult.remaining > 0 && ipResult.remaining <= 2) messages.push(`${LOGIN_RATE_LIMIT_PREFIX}:ip:${ipResult.remaining}`);
+    if (userResult.locked) messages.push(`${LOGIN_RATE_LIMIT_PREFIX}:user:blocked`);
+    else if (userResult.remaining > 0 && userResult.remaining <= 2) messages.push(`${LOGIN_RATE_LIMIT_PREFIX}:user:${userResult.remaining}`);
+
+    if (messages.length > 0) {
+        throw new RateLimitError(messages.join(";"));
+    }
+    if (fallbackErr) {
+        throw fallbackErr;
+    }
+    throw new ForbiddenError('Invalid credentials');
 }
 
 // Authorize login for a user. When the user has TOTP enabled, only a valid
@@ -88,6 +143,17 @@ export function PasswordAuthService(): Hono<{
             throw new BadRequestError('Username and password are required');
         }
 
+        // Throttle password/TOTP logins. OAuth and email logins are not limited.
+        const ip = getClientIp(c);
+        const ipCheck = await checkLoginRateLimit(c, "ip", ip);
+        if (ipCheck.blocked) {
+            throw new RateLimitError(`${LOGIN_RATE_LIMIT_PREFIX}:ip:blocked`);
+        }
+        const userCheck = await checkLoginRateLimit(c, "user", username);
+        if (userCheck.blocked) {
+            throw new RateLimitError(`${LOGIN_RATE_LIMIT_PREFIX}:user:blocked`);
+        }
+
         // Hash the provided password
         const hashedPassword = await profileAsync(c, 'auth_login_hash', () => hashPassword(password));
 
@@ -102,10 +168,14 @@ export function PasswordAuthService(): Hono<{
             }));
 
             if (user?.totpSecret) {
-                await authorizeLogin(c, user, password, hashedPassword);
+                try {
+                    await authorizeLogin(c, user, password, hashedPassword);
+                } catch (err) {
+                    await rejectLogin(c, ip, username, err as Error);
+                }
             } else {
                 if (hashedPassword !== expectedHash) {
-                    throw new ForbiddenError('Invalid credentials');
+                    await rejectLogin(c, ip, username);
                 }
 
                 if (!user) {
@@ -145,6 +215,10 @@ export function PasswordAuthService(): Hono<{
             }
             const adminUser = user;
 
+            // Successful admin password/TOTP login resets both attempt counters.
+            await clearLoginRateLimit(c, "ip", ip);
+            await clearLoginRateLimit(c, "user", username);
+
             // Generate JWT token
             const token = await profileAsync(c, 'auth_admin_token', () => jwt.sign({ id: adminUser.id }));
 
@@ -164,7 +238,7 @@ export function PasswordAuthService(): Hono<{
         }
 
         // Regular user login (if we want to support multiple users with passwords in the future)
-        const user = await profileAsync(c, 'auth_user_lookup', () => db.query.users.findFirst({ 
+        let user = await profileAsync(c, 'auth_user_lookup', () => db.query.users.findFirst({ 
             where: eq(users.username, username) 
         }));
 
@@ -172,13 +246,18 @@ export function PasswordAuthService(): Hono<{
         // still enable TOTP. Such accounts must be allowed to login with a
         // valid TOTP code, so only reject when neither factor exists.
         if (!user || (!user.password && !user.totpSecret)) {
-            throw new ForbiddenError('Invalid credentials');
+            await rejectLogin(c, ip, username);
         }
+        user = user!;
 
         const allowed = await authorizeLogin(c, user, password, hashedPassword);
         if (!allowed) {
-            throw new ForbiddenError('Invalid credentials');
+            await rejectLogin(c, ip, username);
         }
+
+        // Successful password/TOTP login resets both attempt counters.
+        await clearLoginRateLimit(c, "ip", ip);
+        await clearLoginRateLimit(c, "user", username);
 
         // Generate JWT token
         const token = await profileAsync(c, 'auth_user_token', () => jwt.sign({ id: user.id }));
@@ -196,6 +275,79 @@ export function PasswordAuthService(): Hono<{
                 permission: user.permission === 1,
             }
         });
+    });
+
+    // POST /auth/recover - Restore an account with a TOTP recovery code.
+    // On success the user's TOTP is disabled so they can log in with a password
+    // again. All remaining recovery codes for the account are invalidated.
+    app.post("/recover", async (c: AppContext) => {
+        const db = c.get('db');
+        const env = c.env;
+
+        if (!env.ADMIN_USERNAME || !env.ADMIN_PASSWORD) {
+            throw new BadRequestError('Admin credentials not configured');
+        }
+
+        const { username, recoveryCode } = await profileAsync(c, 'auth_recover_parse', () => c.req.json()) as { username: string; recoveryCode: string };
+
+        if (!username || !recoveryCode) {
+            throw new BadRequestError('Username and recovery code are required');
+        }
+
+        const normalized = normalizeRecoveryCode(recoveryCode);
+        if (normalized.length !== 8) {
+            throw new BadRequestError('Recovery code must be 8 digits');
+        }
+
+        // The account-bound throttle applies here too to slow brute-forcing.
+        const ip = getClientIp(c);
+        const preIp = await checkLoginRateLimit(c, "ip", ip);
+        if (preIp.blocked) {
+            throw new RateLimitError(`${LOGIN_RATE_LIMIT_PREFIX}:ip:blocked`);
+        }
+        const preUser = await checkLoginRateLimit(c, "user", username);
+        if (preUser.blocked) {
+            throw new RateLimitError(`${LOGIN_RATE_LIMIT_PREFIX}:user:blocked`);
+        }
+
+        const user = await profileAsync(c, 'auth_recover_user', () => db.query.users.findFirst({
+            where: eq(users.username, username),
+            columns: { id: true, username: true, totpSecret: true },
+        }));
+
+        if (!user || !user.totpSecret) {
+            // Record the attempt as a failure against both scopes to avoid
+            // leaking whether the account or code was wrong.
+            await recordLoginFailure(c, "ip", ip, IP_MAX_ATTEMPTS);
+            await recordLoginFailure(c, "user", username, USER_MAX_ATTEMPTS);
+            throw new BadRequestError('Invalid username or recovery code');
+        }
+
+        const codeHash = await hashRecoveryCode(normalized);
+        const match = await profileAsync(c, 'auth_recover_match', () => db.query.recoveryCodes.findFirst({
+            where: and(
+                eq(recoveryCodes.userId, user.id),
+                eq(recoveryCodes.codeHash, codeHash),
+            ),
+        }));
+
+        if (!match) {
+            await recordLoginFailure(c, "ip", ip, IP_MAX_ATTEMPTS);
+            await recordLoginFailure(c, "user", username, USER_MAX_ATTEMPTS);
+            throw new BadRequestError('Invalid username or recovery code');
+        }
+
+        // Success: disable TOTP and remove all recovery codes for this account.
+        await profileAsync(c, 'auth_recover_disable_totp', () => db.update(users)
+            .set({ totpSecret: null })
+            .where(eq(users.id, user.id)));
+        await profileAsync(c, 'auth_recover_clear_codes', () => db.delete(recoveryCodes)
+            .where(eq(recoveryCodes.userId, user.id)));
+
+        await clearLoginRateLimit(c, "ip", ip);
+        await clearLoginRateLimit(c, "user", username);
+
+        return c.json({ success: true });
     });
 
     // Check if password login is available

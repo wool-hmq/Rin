@@ -275,6 +275,13 @@
     "title": "登入",
     "username": {
       "placeholder": "請輸入用戶名"
+    },
+    "lost_totp": "遺失 TOTP 驗證器？點此尋求解決方案",
+    "rate_limit": {
+      "ip_locked": "該 IP 因嘗試次數過多已被鎖定 15 分鐘，期間無法進行帳號+密碼/TOTP 登入",
+      "account_locked": "該帳號因嘗試次數過多已被鎖定 15 分鐘，期間無法進行帳號+密碼/TOTP 登入",
+      "ip_warn": "該 IP 還有 {{count}} 次試錯次數，如再輸入錯誤，該 IP 會被冷卻 15 分鐘，中途不可以嘗試登入",
+      "account_warn": "該帳號還有 {{count}} 次試錯次數，如再輸入錯誤，該帳號會被冷卻 15 分鐘，中途不可以嘗試登入"
     }
   },
   "register": {
@@ -745,7 +752,11 @@
       "bind_success": "TOTP 已成功綁定，下次登入請使用驗證碼",
       "unbind_confirm": "確定要解綁 TOTP 嗎？解綁後將恢復使用密碼登入。",
       "unbind_success": "已解綁 TOTP",
-      "unbind_failed": "解綁失敗"
+      "unbind_failed": "解綁失敗",
+      "recovery_title": "保存你的恢復碼",
+      "recovery_warning": "請立即妥善保存以下恢復碼，每個只能使用一次，且僅在本次開啟時展示，之後不再顯示。",
+      "recovery_hint": "當你的驗證器遺失時，可在登入頁選擇「遺失 TOTP 驗證器」並使用恢復碼找回帳號。",
+      "recovery_done": "我已保存恢復碼"
     },
     "error": {
       "file_too_large": "文件大小不能超過 2MB",
@@ -981,5 +992,25 @@
     "encrypted_option_title": "加密儲存（不可切換為可檢視）",
     "encrypted_option_desc": "此金鑰建立時選擇了加密儲存，明文只在建立和輪換時顯示一次。如需可隨時檢視的金鑰，請新建一個。",
     "reveal_unavailable": "此金鑰無法檢視明文，請使用輪換取得新金鑰。"
+  },
+  "totp_recovery": {
+    "title": "恢復 TOTP 帳號",
+    "description": "選擇一種方式恢復你的帳號存取。",
+    "option_recover_title": "1. 使用恢復碼恢復帳號",
+    "option_recover_desc": "輸入你的使用者名稱與 TOTP 恢復碼，恢復後 TOTP 將被關閉。",
+    "option_admin_title": "2. 請向管理員尋求協助",
+    "option_admin_desc": "聯絡站點管理員手動處理。",
+    "modal_title": "使用恢復碼恢復帳號",
+    "username_label": "使用者名稱",
+    "code_label": "恢復碼",
+    "code_placeholder": "XXXX-XXXX",
+    "code_hint": "格式為 XXXX-XXXX，共 8 位數字。",
+    "submit": "恢復帳號",
+    "success": "恢復成功！該帳號的 TOTP 已被關閉，請使用密碼登入。",
+    "error": {
+      "empty": "請填寫使用者名稱和恢復碼",
+      "invalid": "使用者名稱或恢復碼錯誤",
+      "network": "網路錯誤，請重試"
+    }
   }
 }

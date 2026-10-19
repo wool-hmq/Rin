@@ -183,6 +183,13 @@ export interface LoginResponse {
  */
 export const TOTP_LOGIN_DISABLED_MESSAGE = "Password login is disabled for this account";
 
+/**
+ * Prefix for login rate-limit warning/blocked error messages. The full message
+ * is structured as `<prefix>:<scope>:<remaining|cooldownMinutes>` and shared by
+ * client and server so the UI can render a localized notice.
+ */
+export const LOGIN_RATE_LIMIT_PREFIX = "LOGIN_RATE_LIMIT";
+
 export interface TotpStatusResponse {
   success: boolean;
   enabled: boolean;
@@ -204,6 +211,18 @@ export interface TotpConfirmRequest {
 export interface TotpConfirmResponse {
   success: boolean;
   enabled: boolean;
+  /** One-time recovery codes (XXXX-XXXX). Shown only when TOTP is enabled. */
+  recovery_codes?: string[];
+}
+
+/** Request to restore an account using a recovery code. */
+export interface TotpRecoverRequest {
+  username: string;
+  recoveryCode: string;
+}
+
+export interface TotpRecoverResponse {
+  success: boolean;
 }
 
 // ============================================================================

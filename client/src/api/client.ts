@@ -38,6 +38,8 @@ import type {
   EmailLoginRequest,
   EmailLoginResponse,
   LoginResponse,
+  TotpRecoverRequest,
+  TotpRecoverResponse,
   LinkedAccount,
   SearchResponse,
   SearchMode,
@@ -753,6 +755,11 @@ class AuthAPI {
   // POST /api/auth/email/login
   async emailLogin(body: EmailLoginRequest): Promise<ApiResponse<EmailLoginResponse>> {
     return this.http.post<EmailLoginResponse>("/api/auth/email/login", body);
+  }
+
+  // POST /api/auth/recover - Restore an account with a TOTP recovery code
+  async recoverTotp(body: TotpRecoverRequest): Promise<ApiResponse<TotpRecoverResponse>> {
+    return this.http.post<TotpRecoverResponse>("/api/auth/recover", body);
   }
 }
 

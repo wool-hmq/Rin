@@ -187,6 +187,18 @@ export function createMockDB() {
         );
 
         CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_unique ON api_keys(key_hash);
+
+        -- Recovery codes table
+        CREATE TABLE IF NOT EXISTS recovery_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            code_hash TEXT NOT NULL,
+            created_at INTEGER DEFAULT (unixepoch()),
+            updated_at INTEGER DEFAULT (unixepoch()),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS recovery_codes_user_code_hash_unique ON recovery_codes(user_id, code_hash);
     `);
 
     return { db, sqlite };
