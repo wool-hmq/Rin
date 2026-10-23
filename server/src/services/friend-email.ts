@@ -24,6 +24,10 @@ const CAPTCHA_TYPE = "friend.email.captcha";
 
 // Domain verification must finish within 10 minutes of the last instruction.
 const VERIFY_TIMEOUT_MS = 10 * 60 * 1000;
+// DNS TXT record name used by the DNS verification method.
+const DNS_RECORD_NAME = "_jiaofriend";
+
+type VerifyMethod = "dns" | "file";
 // An application must finish within 30 minutes overall.
 const APPLICATION_TIMEOUT_MS = 30 * 60 * 1000;
 // Outbound fetch timeout for the verification probe.
@@ -36,11 +40,13 @@ const CAPTCHA_MAX_ATTEMPTS = 5;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnpqrstuvwxyz";
 
 interface FriendEmailState {
-    stage: "awaiting_captcha" | "awaiting_json" | "verifying";
+    stage: "awaiting_captcha" | "awaiting_json" | "awaiting_method_choice" | "awaiting_verification" | "verifying";
     op: "apply" | "modify" | "delete";
     payload: Record<string, unknown>;
     // Remaining URLs to verify. Each entry carries its own 8-char code.
     verifyTargets: Array<{ url: string; code: string }>;
+    // Verification method chosen by the applicant for the current target.
+    verifyMethod?: VerifyMethod;
     expiresAt: number;
     deadline: number;
     sender: string;
@@ -60,6 +66,8 @@ interface FriendEmailDeps {
     configGet: <T>(key: string, defaultValue: T) => Promise<T>;
     send: (to: string, subject: string, text: string, inlineImage?: { imageBase64: string; cid: string }) => Promise<void>;
     httpGet: (url: string) => Promise<ProbeResult>;
+    /** 查询 TXT 记录,返回记录值列表(DNS 验证方式使用) */
+    resolveTxt?: (name: string) => Promise<string[]>;
     /** 生成验证码图片;返回 PNG 的 base64、正确答案与内嵌 cid */
     generateCaptcha?: () => Promise<{ imageBase64: string; text: string; cid: string }>;
     notifyOwner?: (op: "apply" | "modify" | "delete", payload: Record<string, unknown>, sender: string) => Promise<void>;
@@ -129,6 +137,61 @@ function verifyInstruction(target: { url: string; code: string }): string {
 }
 
 const CANCEL_HINT = `如需结束本次申请，请新建一封邮件，并将正文设为：${EMAIL_OP_CANCEL}`;
+
+// Hostname of the site being verified (TXT records are attached to a domain,
+// not to a full URL).
+function targetDomain(url: string): string {
+    try {
+        return new URL(url).hostname.toLowerCase();
+    } catch {
+        return "";
+    }
+}
+
+// Ask the applicant to pick a verification method for the current target.
+function methodChoiceInstruction(target: { url: string; code: string }): string {
+    const domain = targetDomain(target.url) || target.url;
+    return (
+        `您的友链申请信息已收到！为了验证您对站点 ${domain} 的所有权，请选择一种验证方式：\n\n` +
+        `1. 方案一：DNS TXT 记录验证（强烈推荐，无需改动网站文件）\n` +
+        `2. 方案二：上传 HTML 文件验证（适合熟悉服务器部署的站长）\n\n` +
+        `请直接回复数字 1 或 2。`
+    );
+}
+
+// Tutorial for the DNS TXT method: tell the applicant the exact record to add.
+function dnsVerifyInstruction(target: { url: string; code: string }): string {
+    const domain = targetDomain(target.url) || target.url;
+    return (
+        `您已选择【方案一：DNS TXT 记录验证】。\n\n` +
+        `请前往您的域名解析后台（如阿里云、腾讯云、Cloudflare），为域名 ${domain} 添加以下记录：\n\n` +
+        `· 主机记录：${DNS_RECORD_NAME}\n` +
+        `· 记录类型：TXT\n` +
+        `· 记录值：${target.code}\n\n` +
+        `如果解析后台要求填写完整域名，主机记录请填写：${DNS_RECORD_NAME}.${domain}\n\n` +
+        `保存后请等待解析生效（通常几分钟内），然后新建邮件并回复正文：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
+        `验证码 ${target.code} 将在 10 分钟内有效。`
+    );
+}
+
+function methodInstruction(method: VerifyMethod, target: { url: string; code: string }): string {
+    return method === "dns" ? dnsVerifyInstruction(target) : verifyInstruction(target);
+}
+
+function methodLabel(method: VerifyMethod): string {
+    return method === "dns" ? "DNS TXT 记录验证" : "上传 HTML 文件验证";
+}
+
+// Parse the reply to the method-choice mail. Tolerates the common variants:
+// 1 / 一 / 方案一 / 方案1 / 方法一, and 2 / 二 / 方案二 / 方案2 / 方法二.
+function parseMethodChoice(raw: string): VerifyMethod | null {
+    const first = firstLine(cleanBody(raw));
+    const cleaned = first.replace(/[\s\r\n\t，。！!.,:：、]/g, "");
+    if (!cleaned) return null;
+    if (/^(1|一|方案1|方案一|方法1|方法一)$/.test(cleaned)) return "dns";
+    if (/^(2|二|方案2|方案二|方法2|方法二)$/.test(cleaned)) return "file";
+    return null;
+}
 
 // Applicants tend to hit "Reply" in their mail client, which sends to the
 // outbound address instead of the worker's receiving address. Remind them to
@@ -403,7 +466,7 @@ function jsonTemplateFor(op: "apply" | "modify" | "delete"): string {
 
 function jsonTemplateInstruction(op: "apply" | "modify" | "delete"): string {
     return (
-        `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统将进入站点验证：\n\n` +
+        `请在回复邮件正文中完整填写下面的 JSON 模板（不要包含任何其他内容），回复后系统会请你选择验证方式：\n\n` +
         jsonTemplateFor(op) +
         `\n\n说明：\n- 友链申请：站点URL、站点图标URL、站点名称、站点简介\n- 友链修改：旧站点URL、新站点URL、站点图标URL、站点名称、站点简介\n- 友链删除：站点URL`
     );
@@ -743,7 +806,8 @@ export async function processFriendEmail(
 
         state.payload = payload;
         state.verifyTargets = targets;
-        state.stage = "verifying";
+        state.stage = "awaiting_method_choice";
+        state.verifyMethod = undefined;
         state.deadline = now + VERIFY_TIMEOUT_MS;
         await saveState(deps.db, sender, state);
         console.log(`[friend-email] JSON accepted, op=${state.op} targets=${targets.map(t => t.url).join(",")}`);
@@ -752,8 +816,48 @@ export async function processFriendEmail(
         await notify(
             deps,
             sender,
-            "友链申请 - 站点验证",
-            verifyInstruction(first),
+            "友链申请 - 请选择验证方式",
+            methodChoiceInstruction(first),
+            true,
+            true,
+            applyAddress,
+        );
+        return;
+    }
+
+    // ---- Choosing a verification method ----
+    if (state.stage === "awaiting_method_choice") {
+        const target = state.verifyTargets[0];
+        if (!target) {
+            await terminate(deps, sender, state, "验证信息缺失，本次申请已终止。", applyAddress);
+            return;
+        }
+
+        const method = parseMethodChoice(body);
+        if (!method) {
+            console.log("[friend-email] awaiting method choice but reply is not 1/2");
+            await notify(
+                deps,
+                sender,
+                "友链申请 - 请选择验证方式",
+                "请选择一种验证方式后再回复。\n\n" + methodChoiceInstruction(target),
+                true,
+                true,
+                applyAddress,
+            );
+            return;
+        }
+
+        state.verifyMethod = method;
+        state.stage = "awaiting_verification";
+        state.deadline = now + VERIFY_TIMEOUT_MS;
+        await saveState(deps.db, sender, state);
+        console.log(`[friend-email] method=${method} selected for ${target.url}`);
+        await notify(
+            deps,
+            sender,
+            method === "dns" ? "友链申请 - DNS TXT 验证" : "友链申请 - 站点验证",
+            methodInstruction(method, target),
             true,
             true,
             applyAddress,
@@ -762,20 +866,24 @@ export async function processFriendEmail(
     }
 
     // ---- Verifying domain ownership ----
-    if (state.stage === "verifying") {
+    // `verifying` is kept for states created before the method-choice upgrade;
+    // those applications fall back to the original file-based check.
+    if (state.stage === "awaiting_verification" || state.stage === "verifying") {
         const target = state.verifyTargets[0];
         if (!target) {
             await terminate(deps, sender, state, "验证信息缺失，本次申请已终止。", applyAddress);
             return;
         }
 
-        if (firstLine(body) !== EMAIL_CONFIRM_TRIGGER) {
-            console.log("[friend-email] verifying stage but body is not the confirm trigger");
+        const method: VerifyMethod = state.verifyMethod ?? "file";
+
+        if (!body.includes(EMAIL_CONFIRM_TRIGGER)) {
+            console.log("[friend-email] verifying stage but body is missing the confirm trigger");
             await notify(
                 deps,
                 sender,
                 "友链申请 - 验证提示",
-                `当前正在进行站点验证。\n\n` + verifyInstruction(target),
+                `当前正在进行${methodLabel(method)}。\n\n` + methodInstruction(method, target),
                 true,
                 true,
                 applyAddress,
@@ -783,39 +891,57 @@ export async function processFriendEmail(
             return;
         }
 
-        const probeUrl = `${target.url}/${target.code}.html`;
-        let probe: ProbeResult | null = null;
-        try {
-            probe = await deps.httpGet(probeUrl);
-        } catch {
-            probe = null;
-        }
-        const status = probe?.status ?? 0;
-        const bodyText = extractBodyText(probe?.body ?? "");
-        const bodyMatches = bodyText.includes(target.code);
-        console.log(`[friend-email] probing ${probeUrl} status=${status} bodyMatch=${bodyMatches}`);
+        let passed = false;
+        let failureDetail = "";
+        if (method === "dns") {
+            const recordName = `${DNS_RECORD_NAME}.${targetDomain(target.url)}`;
+            let records: string[] = [];
+            try {
+                records = deps.resolveTxt ? await deps.resolveTxt(recordName) : [];
+            } catch {
+                records = [];
+            }
+            passed = records.some((value) => value.includes(target.code));
+            console.log(`[friend-email] dns lookup ${recordName} records=${records.length} match=${passed}`);
+            failureDetail = `未在 ${recordName} 的 TXT 记录中找到验证码`;
+        } else {
+            const probeUrl = `${target.url}/${target.code}.html`;
+            let probe: ProbeResult | null = null;
+            try {
+                probe = await deps.httpGet(probeUrl);
+            } catch {
+                probe = null;
+            }
+            const status = probe?.status ?? 0;
+            const bodyText = extractBodyText(probe?.body ?? "");
+            const bodyMatches = bodyText.includes(target.code);
+            console.log(`[friend-email] probing ${probeUrl} status=${status} bodyMatch=${bodyMatches}`);
 
-        // Strict verification: the URL must return 200 AND the <body> text must
-        // contain the verification code (after stripping tags/scripts/styles and
-        // collapsing whitespace). This defeats SPA fallbacks, custom 404 pages,
-        // 403/500 responses and followed redirects, all of which used to pass
-        // the old "anything but 404" check. A plain contains() (not exact
-        // equality) tolerates analytics/Live2D/CDN injection while still
-        // requiring the code to be actually present in the served page.
-        if (status !== 200 || !bodyMatches) {
-            console.log("[friend-email] verification probe failed");
-            const reason = status === 0
+            // Strict verification: the URL must return 200 AND the <body> text must
+            // contain the verification code (after stripping tags/scripts/styles and
+            // collapsing whitespace). This defeats SPA fallbacks, custom 404 pages,
+            // 403/500 responses and followed redirects, all of which used to pass
+            // the old "anything but 404" check. A plain contains() (not exact
+            // equality) tolerates analytics/Live2D/CDN injection while still
+            // requiring the code to be actually present in the served page.
+            passed = status === 200 && bodyMatches;
+            failureDetail = status === 0
                 ? "网络错误/超时"
                 : status !== 200
                     ? `HTTP 状态码 ${status}（需要 200）`
                     : "页面 <body> 中未找到验证码";
+        }
+
+        if (!passed) {
+            console.log("[friend-email] verification failed");
             await notify(
                 deps,
                 sender,
                 "友链申请 - 验证失败",
-                `验证失败：${probeUrl}\n\n原因：${reason}\n\n` +
-                    `请将验证源码原样复制到 ${target.code}.html 后，重新回复：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
-                    `验证码将在 10 分钟内有效，超时后申请自动结束。`,
+                `验证失败（${methodLabel(method)}）。\n\n原因：${failureDetail}\n\n` +
+                    `请按下面的说明完成验证后，重新回复：\n\n${EMAIL_CONFIRM_TRIGGER}\n\n` +
+                    methodInstruction(method, target) +
+                    `\n\n验证码将在 10 分钟内有效，超时后申请自动结束。`,
                 true,
                 true,
                 applyAddress,
@@ -827,14 +953,16 @@ export async function processFriendEmail(
         state.verifyTargets.shift();
         if (state.verifyTargets.length > 0) {
             const next = state.verifyTargets[0];
+            state.stage = "awaiting_method_choice";
+            state.verifyMethod = undefined;
             state.deadline = now + VERIFY_TIMEOUT_MS;
             await saveState(deps.db, sender, state);
             console.log(`[friend-email] first target passed, moving to ${next.url}`);
             await notify(
                 deps,
                 sender,
-                "友链申请 - 站点验证（下一步）",
-                `第一个站点验证通过。\n\n` + verifyInstruction(next),
+                "友链申请 - 请选择验证方式（下一步）",
+                `第一个站点验证通过。\n\n` + methodChoiceInstruction(next),
                 true,
                 true,
                 applyAddress,

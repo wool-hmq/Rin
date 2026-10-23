@@ -19,6 +19,7 @@ describe("processFriendEmail", () => {
     let currentTime: number;
     let sent: SentMail[];
     let probeResults: Record<string, number | { status: number; body: string }>;
+    let txtRecords: Record<string, string[]>;
     let captchaQueue: Array<{ imageBase64: string; text: string; cid: string }>;
 
     // 默认验证码答案,与 process() 里 generateCaptcha 的返回保持一致
@@ -31,6 +32,7 @@ describe("processFriendEmail", () => {
         currentTime = Date.parse("2026-10-04T00:00:00Z");
         sent = [];
         probeResults = {};
+        txtRecords = {};
         captchaQueue = [];
 
         // Admin user required by the friends FK (email-sourced rows use uid=1)
@@ -77,6 +79,7 @@ describe("processFriendEmail", () => {
                     sent.push({ to, subject, text, inlineImage });
                 },
                 httpGet,
+                resolveTxt: async (name: string) => txtRecords[name] ?? [],
                 generateCaptcha: useCaptcha
                     ? async () => {
                           const next = captchaQueue.shift();
@@ -94,6 +97,15 @@ describe("processFriendEmail", () => {
     async function startApplication(command: string, from = "applicant@example.com") {
         await process(command, from);
         await process(CAPTCHA_ANSWER, from);
+    }
+
+    // 选择验证方式:1 = DNS TXT,2 = 上传 HTML 文件。
+    async function chooseDns(from = "applicant@example.com") {
+        await process("1", from);
+    }
+
+    async function chooseFile(from = "applicant@example.com") {
+        await process("2", from);
     }
 
     async function captchaRows() {
@@ -122,8 +134,15 @@ describe("processFriendEmail", () => {
 
             await process(JSON.stringify({ name: "Friend", url: "https://friend.com", avatar: "https://friend.com/icon.png", desc: "hello" }));
             expect(sent.length).toBe(3);
-            expect(sent[2].subject).toContain("站点验证");
-            const urlMatch = sent[2].text.match(/https:\/\/friend\.com\/([A-Za-z0-9]+)\.html/);
+            // 解析 JSON 后先让用户选择验证方式
+            expect(sent[2].subject).toContain("请选择验证方式");
+            expect(sent[2].text).toContain("方案一");
+            expect(sent[2].text).toContain("方案二");
+
+            await chooseFile();
+            expect(sent.length).toBe(4);
+            expect(sent[3].subject).toContain("站点验证");
+            const urlMatch = sent[3].text.match(/https:\/\/friend\.com\/([A-Za-z0-9]+)\.html/);
             expect(urlMatch).not.toBeNull();
 
             probeResults[`https://friend.com/${urlMatch![1]}.html`] = 200;
@@ -145,11 +164,12 @@ describe("processFriendEmail", () => {
     });
 
     describe("verification strictness", () => {
-        // 发起申请并走到站点验证步骤,返回验证码
+        // 发起申请并走到文件验证步骤,返回验证码
         async function reachVerify() {
             await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "F", url: "https://friend.com", avatar: "https://friend.com/icon.png", desc: "d" }));
-            const urlMatch = sent[2].text.match(/https:\/\/friend\.com\/([A-Za-z0-9]+)\.html/);
+            await chooseFile();
+            const urlMatch = sent.at(-1)!.text.match(/https:\/\/friend\.com\/([A-Za-z0-9]+)\.html/);
             expect(urlMatch).not.toBeNull();
             return urlMatch![1];
         }
@@ -223,6 +243,151 @@ describe("processFriendEmail", () => {
         });
     });
 
+    describe("verification method choice", () => {
+        const APPLY_JSON = JSON.stringify({
+            name: "F",
+            url: "https://friend.com",
+            avatar: "https://friend.com/icon.png",
+            desc: "d",
+        });
+
+        async function reachChoice() {
+            await startApplication(EMAIL_OP_APPLY);
+            await process(APPLY_JSON);
+            expect(sent.at(-1)!.subject).toContain("请选择验证方式");
+            expect((await stateRows()).length).toBe(1);
+            return sent.at(-1)!.text;
+        }
+
+        it("should offer both methods with the domain and no code", async () => {
+            const choice = await reachChoice();
+            expect(choice).toContain("friend.com");
+            expect(choice).toContain("方案一");
+            expect(choice).toContain("方案二");
+            expect(choice).toContain("1 或 2");
+        });
+
+        it("should accept the documented choice variants", async () => {
+            const variants: Array<[string, string]> = [
+                ["1", "方案一"],
+                ["一", "方案一"],
+                ["方案一", "方案一"],
+                ["方案1", "方案一"],
+                ["方法一", "方案一"],
+                ["2", "原样复制"],
+                ["二", "原样复制"],
+                ["方案二", "原样复制"],
+                ["方案2", "原样复制"],
+                ["方法二", "原样复制"],
+            ];
+
+            for (const [reply, expected] of variants) {
+                await reachChoice();
+                await process(reply);
+                expect(sent.at(-1)!.text).toContain(expected);
+                // 重置状态,进入下一轮
+                await process(EMAIL_OP_CANCEL);
+            }
+        });
+
+        it("should remind instead of advancing on an unrecognized choice", async () => {
+            await reachChoice();
+            await process("3");
+
+            expect(sent.at(-1)!.subject).toContain("请选择验证方式");
+            expect((await stateRows()).length).toBe(1);
+            expect((await friendsTable()).length).toBe(0);
+        });
+
+        it("should verify through DNS TXT records", async () => {
+            await reachChoice();
+            await process("1");
+
+            const tutorial = sent.at(-1)!;
+            expect(tutorial.subject).toContain("DNS TXT");
+            expect(tutorial.text).toContain("_jiaofriend");
+            const code = tutorial.text.match(/记录值：([A-Za-z0-9]+)/)![1];
+
+            // 文件验证路径故意失败,确保成功只能来自 DNS 查询。
+            probeResults[`https://friend.com/${code}.html`] = { status: 404, body: "" };
+            txtRecords["_jiaofriend.friend.com"] = [`some-prefix-${code}`];
+
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            const rows = await friendsTable();
+            expect(rows.length).toBe(1);
+            expect(rows[0].url).toBe("https://friend.com");
+            expect(sent.at(-1)!.subject).toContain("成功");
+            expect((await stateRows()).length).toBe(0);
+        });
+
+        it("should fail DNS verification when the record is missing", async () => {
+            await reachChoice();
+            await process("1");
+            const code = sent.at(-1)!.text.match(/记录值：([A-Za-z0-9]+)/)![1];
+            probeResults[`https://friend.com/${code}.html`] = { status: 200, body: code };
+            txtRecords["_jiaofriend.friend.com"] = [];
+
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            expect(sent.at(-1)!.subject).toContain("验证失败");
+            expect(sent.at(-1)!.text).toContain("_jiaofriend.friend.com");
+            expect((await stateRows()).length).toBe(1);
+            expect((await friendsTable()).length).toBe(0);
+        });
+
+        it("should fail DNS verification when the record holds a different code", async () => {
+            await reachChoice();
+            await process("1");
+            const code = sent.at(-1)!.text.match(/记录值：([A-Za-z0-9]+)/)![1];
+            probeResults[`https://friend.com/${code}.html`] = { status: 200, body: code };
+            txtRecords["_jiaofriend.friend.com"] = ["WRONGCODE"];
+
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            expect(sent.at(-1)!.subject).toContain("验证失败");
+            expect((await friendsTable()).length).toBe(0);
+        });
+
+        it("should ask for a method again for the second target of a modify", async () => {
+            sqlite.exec(`
+                INSERT INTO friends (name, desc, avatar, url, uid, accepted, sort_order)
+                VALUES ('Old', 'd', 'icon', 'https://old.example.com', 1, 1, 0)
+            `);
+
+            await startApplication(EMAIL_OP_MODIFY);
+            await process(JSON.stringify({
+                oldUrl: "https://old.example.com",
+                newUrl: "https://new.example.com",
+                avatar: "i",
+                name: "New",
+                desc: "hi",
+            }));
+
+            await process("1");
+            const oldCode = sent.at(-1)!.text.match(/记录值：([A-Za-z0-9]+)/)![1];
+            txtRecords["_jiaofriend.old.example.com"] = [oldCode];
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            // 新目标重新进入方式选择,且上一次的 dns 选择不应沿用
+            expect(sent.at(-1)!.subject).toContain("请选择验证方式");
+            expect(sent.at(-1)!.text).toContain("new.example.com");
+            const state = JSON.parse((await stateRows())[0].value);
+            expect(state.stage).toBe("awaiting_method_choice");
+            expect(state.verifyMethod).toBeUndefined();
+
+            await process("2");
+            const newCodeMatch = sent.at(-1)!.text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(newCodeMatch).not.toBeNull();
+            probeResults[`https://new.example.com/${newCodeMatch![1]}.html`] = 200;
+            await process(EMAIL_CONFIRM_TRIGGER);
+
+            const rows = await friendsTable();
+            expect(rows.length).toBe(1);
+            expect(rows[0].url).toBe("https://new.example.com");
+        });
+    });
+
     describe("modify flow", () => {
         it("should verify old and new URLs with different codes", async () => {
             sqlite.exec(`
@@ -234,16 +399,25 @@ describe("processFriendEmail", () => {
             await process(JSON.stringify({ oldUrl: "https://old.example.com", newUrl: "https://new.example.com", avatar: "https://new.example.com/i.png", name: "New", desc: "hi" }));
 
             expect(sent.length).toBe(3);
-            const firstTargetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            expect(sent[2].subject).toContain("请选择验证方式");
+            await chooseFile();
+
+            expect(sent.length).toBe(4);
+            const firstTargetMatch = sent[3].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(firstTargetMatch).not.toBeNull();
             const firstCode = firstTargetMatch![1];
 
             probeResults[`https://old.example.com/${firstCode}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
 
-            // Round 2 prompt for the new URL with a different code
-            expect(sent.length).toBe(4);
-            const secondTargetMatch = sent[3].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
+            // Round 2: ask for the method choice again for the new URL
+            expect(sent.length).toBe(5);
+            expect(sent[4].subject).toContain("请选择验证方式");
+            expect(sent[4].text).toContain("new.example.com");
+            await chooseFile();
+
+            expect(sent.length).toBe(6);
+            const secondTargetMatch = sent[5].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(secondTargetMatch).not.toBeNull();
             const secondCode = secondTargetMatch![1];
             expect(secondCode).not.toBe(firstCode);
@@ -268,8 +442,9 @@ describe("processFriendEmail", () => {
 
             await startApplication(EMAIL_OP_DELETE);
             await process(JSON.stringify({ url: "https://old.example.com" }));
+            await chooseFile();
 
-            const targetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[3].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
 
             probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
@@ -481,8 +656,9 @@ describe("processFriendEmail", () => {
         it("should not append the cancel hint to the success email", async () => {
             await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+            await chooseFile();
 
-            const targetMatch = sent[2].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[3].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
@@ -514,8 +690,9 @@ describe("processFriendEmail", () => {
         it("should omit the reply hint from the success email", async () => {
             await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+            await chooseFile();
 
-            const targetMatch = sent[2].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[3].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
@@ -534,9 +711,10 @@ describe("processFriendEmail", () => {
             `);
 
             await startApplication(EMAIL_OP_DELETE);
-            await process(JSON.stringify({ url: REDIRECT_URL }));
+            await process(JSON.stringify({ url: "https://old.example.com" }));
+            await chooseFile();
 
-            const targetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[3].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
 
             probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
@@ -553,8 +731,9 @@ describe("processFriendEmail", () => {
 
             await startApplication(EMAIL_OP_DELETE);
             await process(JSON.stringify({ url: "https://old.example.com" }));
+            await chooseFile();
 
-            const targetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[3].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
 
             probeResults[`https://old.example.com/${targetMatch![1]}.html`] = 200;
@@ -571,13 +750,15 @@ describe("processFriendEmail", () => {
 
             await startApplication(EMAIL_OP_MODIFY);
             await process(JSON.stringify({ oldUrl: REDIRECT_URL, newUrl: "https://new.example.com", avatar: "i", name: "New", desc: "hi" }));
+            await chooseFile();
 
-            const firstTargetMatch = sent[2].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const firstTargetMatch = sent[3].text.match(/https:\/\/old\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(firstTargetMatch).not.toBeNull();
             probeResults[`https://old.example.com/${firstTargetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
 
-            const secondTargetMatch = sent[3].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
+            await chooseFile();
+            const secondTargetMatch = sent[5].text.match(/https:\/\/new\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(secondTargetMatch).not.toBeNull();
             probeResults[`https://new.example.com/${secondTargetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);
@@ -598,8 +779,9 @@ describe("processFriendEmail", () => {
 
             await startApplication(EMAIL_OP_APPLY, "bound@example.com");
             await process(JSON.stringify({ name: "B", url: "https://b.example.com", avatar: "i", desc: "d" }), "bound@example.com");
+            await chooseFile("bound@example.com");
 
-            const targetMatch = sent[2].text.match(/https:\/\/b\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[3].text.match(/https:\/\/b\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://b.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER, "bound@example.com");
@@ -612,8 +794,9 @@ describe("processFriendEmail", () => {
         it("should fall back to the default UID when no account matches", async () => {
             await startApplication(EMAIL_OP_APPLY);
             await process(JSON.stringify({ name: "T", url: "https://t.example.com", avatar: "x", desc: "d" }));
+            await chooseFile();
 
-            const targetMatch = sent[2].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
+            const targetMatch = sent[3].text.match(/https:\/\/t\.example\.com\/([A-Za-z0-9]+)\.html/);
             expect(targetMatch).not.toBeNull();
             probeResults[`https://t.example.com/${targetMatch![1]}.html`] = 200;
             await process(EMAIL_CONFIRM_TRIGGER);

@@ -9,9 +9,10 @@ Visitors email your dedicated address (e.g. `friend-request@your-domain.com`). R
 1. Visitor emails with body **友链申请** (or 友链修改 to modify, 友链删除 to delete).
 2. Rin replies with a JSON template to fill in.
 3. Visitor fills in the JSON and replies.
-4. Rin generates an 8-character code (`a`) and, in the reply email, includes the verification HTML source; the visitor must create an `a.html` file at the root of their site and copy the source in **verbatim** (no additions or changes).
-5. Visitor replies with body **请你进行下一步验证**.
-6. Rin fetches `https://site-url/a.html`; the GET must return **200** and the page `<body>` must **contain** the verification code (`a`) — only then does Rin treat domain ownership as verified and add/update/delete the friend link in the database.
+4. Rin generates an 8-character code (`a`) and asks the visitor to pick a verification method: reply `1` for **DNS TXT record verification** or `2` for **HTML file upload** (`1` / `一` / `方案一` / `方法一` are all accepted; likewise `2` / `二` / `方案二` / `方法二`).
+5. For DNS, Rin sends instructions to add a TXT record — host `_jiaofriend`, type `TXT`, value `a`. For file upload, Rin sends the verification HTML source and asks the visitor to create `a.html` at the site root with the source copied in **verbatim**.
+6. Visitor completes the setup and replies with body **请你进行下一步验证**.
+7. Rin verifies by the chosen method: DNS looks up the TXT records for `_jiaofriend.visitor-domain` through Cloudflare DNS-over-HTTPS and requires one to contain `a`; file upload fetches `https://site-url/a.html` and requires **200** with the code present in the `<body>` text. On success Rin adds/updates/deletes the friend link in the database.
 
 ### Operations and JSON templates
 
@@ -25,7 +26,7 @@ Visitors email your dedicated address (e.g. `friend-request@your-domain.com`). R
 Notes:
 
 - The reply body must contain **only** that JSON.
-- Modifying requires two verifications, one code for the old site and one for the new site.
+- Modifying requires two verifications, one code for the old site and one for the new site, and the visitor is asked to choose a method again before each site.
 - Replying `结束本次友链申请` at any stage terminates the current application and frees the slot for others.
 - The cancel hint only appears in emails sent **while an application is in flight**. Once it ends (success, invalid data, forced cancel, or timeout) that email carries no cancel hint.
 - The receiving address differs from the outbound sending address, so hitting "Reply" in a mail client sends to the outbound address and the system never sees it. Every email that expects a reply ends with a reminder to compose a new email to the receiving address instead.
@@ -44,7 +45,7 @@ Notes:
 - **10-minute verification window**: a code is valid for 10 minutes from the moment it's issued; exceeding it auto-terminates the application.
 - **30-minute total window**: an application must finish within 30 minutes of starting.
 - **Invalid JSON or site URL**: Rin emails the visitor about the error and terminates the application.
-- **Strict verification**: the GET must return 200 and the `<body>` text (after stripping tags/scripts/styles) must contain the code. SPA fallbacks, custom 404 pages (full-page HTML with 200), 403/500, and 30x redirects all fail and can be retried within the window. Analytics/style scripts injected by the framework do not affect the result.
+- **Strict verification**: file upload requires a 200 response and the code present in the `<body>` text (after stripping tags/scripts/styles); SPA fallbacks, custom 404 pages (full-page HTML with 200), 403/500, and 30x redirects all fail. DNS requires the TXT record at `_jiaofriend.visitor-domain` to contain the code. Both methods can be retried within the window.
 - Email-completed friend links have `accepted` = `1`, with no backend review step. Their owner `uid` is resolved as described below.
 
 ## Optional toggle

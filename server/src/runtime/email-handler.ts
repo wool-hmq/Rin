@@ -16,6 +16,7 @@ const PostalMime = (PostalMimeModule as any)?.default?.default
     ?? PostalMimeModule;
 
 const PROBE_TIMEOUT_MS = 8 * 1000;
+const DNS_TIMEOUT_MS = 5 * 1000;
 
 interface ProbeResult {
     status: number;
@@ -45,6 +46,37 @@ async function probeUrl(url: string): Promise<ProbeResult> {
         return { status: resp.status, body };
     } catch {
         return { status: 0, body: "" };
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+// Resolve TXT records through Cloudflare's DNS-over-HTTPS endpoint. Used by
+// the DNS verification method so applicants can prove ownership without
+// uploading a file.
+async function resolveTxtRecords(name: string): Promise<string[]> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), DNS_TIMEOUT_MS);
+    try {
+        const resp = await fetch(
+            `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=TXT`,
+            {
+                headers: { Accept: "application/dns-json" },
+                signal: controller.signal,
+            },
+        );
+        if (!resp.ok) return [];
+        const data = (await resp.json()) as {
+            Status?: number;
+            Answer?: Array<{ type?: number; data?: string }>;
+        };
+        // Status 0 means NOERROR; anything else (NXDOMAIN/SERVFAIL) has no records.
+        if (data.Status !== 0 || !Array.isArray(data.Answer)) return [];
+        return data.Answer
+            .filter((record) => record.type === 16 && typeof record.data === "string")
+            .map((record) => (record.data as string).replace(/"/g, "").trim());
+    } catch {
+        return [];
     } finally {
         clearTimeout(timer);
     }
@@ -224,7 +256,7 @@ export async function handleEmail(
                     `请务必：\n` +
                     `1. 点击「新建邮件」或「写邮件」。\n` +
                     `2. 收件人填写：${message.to}\n` +
-                    `3. 正文填写：${"请你进行下一步验证"}\n\n` +
+                    `3. 正文按系统最新一封邮件的提示填写（选择验证方式时回复 1 或 2，验证时回复：${"请你进行下一步验证"}）。\n\n` +
                     `您的申请状态目前仍在倒计时中，请尽快新建邮件发送。`,
             );
         } catch (err: any) {
@@ -248,6 +280,7 @@ export async function handleEmail(
                 configGet: (key, defaultValue) => serverConfig.getOrDefault(key, defaultValue),
                 send: (to, subject, text, inlineImage) => sendEmail(env, to, subject, text, inlineImage),
                 httpGet: probeUrl,
+                resolveTxt: resolveTxtRecords,
                 generateCaptcha: async () => {
                     const image = await generateCaptchaImage(4);
                     return { imageBase64: pngToBase64(image.png), text: image.text, cid: image.cid };
