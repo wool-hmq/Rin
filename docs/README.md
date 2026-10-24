@@ -1,8 +1,7 @@
 # 羊角快车二创版 Rin 文档
 
 > **二次开发声明**
-> 本文档基于 [openRin/Rin](https://github.com/openRin/Rin) 的官方文档修改而来。原项目版权归 Xeu 及贡献者所有。
-> 
+> 本文档基于 [openRin/Rin](https://github.com/openRin/Rin) 的官方文档修改而来。原项目版权归 Xeu 及贡献者所有。  
 > 本仓库文档由 [羊角快车](https://github.com/wool-hmq) 维护，可能会包含与本版代码对应的新增或修改内容。
 
 ## 阅读说明
