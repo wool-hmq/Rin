@@ -162,6 +162,7 @@ bun run deploy:client
 ```
 MIT 许可证
 
+版权所有 (c) 2024 Xeu
 版权所有 (c) 2026 羊角快车
 
 【非官方中文译文声明】
