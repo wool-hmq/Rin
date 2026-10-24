@@ -5,14 +5,14 @@
 English | [简体中文](./README_zh_CN.md)
 
 [![Ask DeepWiki](https://pic1.imgdb.cn/i/034YqRniL3rFn8RORsOh6q.svg)](https://deepwiki.com/wool-hmq/Rin)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/w/openRin/Rin?style=for-the-badge)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/openRin/Rin/main?style=for-the-badge)
-![GitHub top language](https://img.shields.io/github/languages/top/openRin/Rin?style=for-the-badge)
-![GitHub License](https://img.shields.io/github/license/openRin/Rin?style=for-the-badge)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/openRin/Rin/deploy.yml?style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/wool-hmq/Rin?style=for-the-badge)
+![GitHub branch check runs](https://img.shields.io/github/check-runs/wool-hmq/Rin/main?style=for-the-badge)
+![GitHub top language](https://img.shields.io/github/languages/top/wool-hmq/Rin?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/wool-hmq/Rin?style=for-the-badge)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/wool-hmq/Rin/deploy.yml?style=for-the-badge)
 
-[![Discord](https://img.shields.io/badge/Discord-openRin-red?style=for-the-badge&color=%236e7acc)](https://discord.gg/JWbSTHvAPN)
-[![Telegram](https://img.shields.io/badge/Telegram-openRin-red?style=for-the-badge&color=%233390EC)](https://t.me/openRin)
+[![Upstream Discord](https://img.shields.io/badge/Discord-openRin-red?style=for-the-badge&color=%236e7acc)](https://discord.gg/JWbSTHvAPN)
+[![Upstream Telegram](https://img.shields.io/badge/Telegram-openRin-red?style=for-the-badge&color=%233390EC)](https://t.me/openRin)
 
 ## Introduction
 
@@ -20,9 +20,7 @@ Rin is a modern, serverless blog platform built entirely on Cloudflare's develop
 
 ## Live Demo
 
-https://xeu.life
-**or**
-https://jiaoblog.dpdns.org
+- This edition: [https://jiaoblog.dpdns.org](https://jiaoblog.dpdns.org)
 
 ## Features
 
@@ -46,11 +44,11 @@ https://jiaoblog.dpdns.org
 ### Quick Start
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/openRin/Rin.git && cd Rin
+# 1. Clone this repository (Secondary Development Edition)
+git clone https://github.com/wool-hmq/Rin.git && cd Rin
 
-# Yangjiao Express Second Creation Edition Rin Blog
-# git clone http://github.com/wool-hmq/Rin.git && cd Rin
+# Upstream original project (for reference only)
+# git clone https://github.com/openRin/Rin.git && cd Rin
 
 # 2. Install dependencies
 bun install
@@ -141,9 +139,11 @@ Please visit the complete document of the Rin blog of Yangjiao Express Second Cr
 
 ## Community & Support
 
-- Join our https://discord.gg/JWbSTHvAPN for discussions and help.
-- Follow updates on https://t.me/openRin.
-- Found a bug or have a feature request? Please open an issue on GitHub.
+- **For this edition**: If you found a bug or have a feature request specifically for this secondary-development version, please open an issue at [wool-hmq/Rin Issues](https://github.com/wool-hmq/Rin/issues).
+- **Upstream Community (Not Official Support for this Edition)**: 
+  The following links belong to the original openRin project. You can join for general discussions about the core platform.
+  - [Upstream Discord](https://discord.gg/JWbSTHvAPN)
+  - [Upstream Telegram](https://t.me/openRin)
 
 ## Star History
 
