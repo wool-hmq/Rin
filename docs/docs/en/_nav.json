@@ -66,11 +66,11 @@
     "items": [
       {
         "text": "Environment Variables",
-        "link": "/env"
+        "link": "/configuration/env"
       },
       {
         "text": "Database Schema",
-        "link": "/database"
+        "link": "/configuration/database"
       }
     ]
   }
