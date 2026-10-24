@@ -56,6 +56,10 @@
     "text": "Blog",
     "items": [
       {
+        "text": "Secondary edition yjv1.0.0 release",
+        "link": "/blog/yjv1.0.0-release"
+      },
+      {
         "text": "Official upstream v0.3.0 release",
         "link": "/blog/v0.3.0-release"
       }
