@@ -65,8 +65,12 @@
     "text": "配置",
     "items": [
       {
-        "text": "环境变量",
+        "text": "环境变量说明",
         "link": "/env"
+      },
+      {
+        "text": "数据库结构说明",
+        "link": "/database"
       }
     ]
   }
