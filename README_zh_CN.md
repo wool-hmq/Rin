@@ -3,14 +3,14 @@
 [English](./README.md) | 简体中文
 
 [![Ask DeepWiki](https://pic1.imgdb.cn/i/034YqRniL3rFn8RORsOh6q.svg)](https://deepwiki.com/wool-hmq/Rin)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/w/openRin/Rin?style=for-the-badge)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/openRin/Rin/main?style=for-the-badge)
-![GitHub top language](https://img.shields.io/github/languages/top/openRin/Rin?style=for-the-badge)
-![GitHub License](https://img.shields.io/github/license/openRin/Rin?style=for-the-badge)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/openRin/Rin/deploy.yml?style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/wool-hmq/Rin?style=for-the-badge)
+![GitHub branch check runs](https://img.shields.io/github/check-runs/wool-hmq/Rin/main?style=for-the-badge)
+![GitHub top language](https://img.shields.io/github/languages/top/wool-hmq/Rin?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/wool-hmq/Rin?style=for-the-badge)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/wool-hmq/Rin/deploy.yml?style=for-the-badge)
 
-[![Discord](https://img.shields.io/badge/Discord-openRin-red?style=for-the-badge&color=%236e7acc)](https://discord.gg/JWbSTHvAPN)
-[![Telegram](https://img.shields.io/badge/Telegram-openRin-red?style=for-the-badge&color=%233390EC)](https://t.me/openRin)
+[![上游 Discord](https://img.shields.io/badge/Discord-openRin-red?style=for-the-badge&color=%236e7acc)](https://discord.gg/JWbSTHvAPN)
+[![上游 Telegram](https://img.shields.io/badge/Telegram-openRin-red?style=for-the-badge&color=%233390EC)](https://t.me/openRin)
 
 ## 项目简介
 
@@ -18,9 +18,7 @@ Rin 是一个基于 Cloudflare 开发者平台构建的现代化、无服务器�
 
 ## 在线演示
 
-https://xeu.life
-或
-https://jiaoblog.dpdns.org
+- 本版演示站点：[https://jiaoblog.dpdns.org](https://jiaoblog.dpdns.org)
 
 ## 功能特性
 
@@ -37,18 +35,18 @@ https://jiaoblog.dpdns.org
 - **特色图片**：自动识别文章内首张图片，并将其作为列表页的封面图展示。
 - **标签解析**：输入如 `#博客 #Cloudflare` 的标签文本，自动解析并展示为标签。
 - **类型安全**：通过 `@rin/api` 包在客户端和服务器之间共享 TypeScript 类型，实现端到端类型安全。
-- ……更多功能请访问 https://xeu.life 或者 https://jiaoblog.dpdns.org 探索。
+- ……更多功能请访问 https://jiaoblog.dpdns.org 探索。
 
 ## 文档
 
 ### 快速开始
 
 ```bash
-# 1. 克隆仓库
-git clone https://github.com/openRin/Rin.git && cd Rin
+# 1. 克隆本仓库（二次开发版）
+git clone https://github.com/wool-hmq/Rin.git && cd Rin
 
-# 羊角快车二创版Rin
-# git clone http://github.com/wool-hmq/Rin.git && cd Rin
+# 上游原项目（仅供参考）
+# git clone https://github.com/openRin/Rin.git && cd Rin
 
 # 2. 安装依赖
 bun install
@@ -139,9 +137,11 @@ bun run deploy:client
 
 ## 社区与支持
 
-- 加入我们的 https://discord.gg/JWbSTHvAPN 参与讨论或获取帮助。
-- 关注 https://t.me/openRin 频道获取最新动态。
-- 发现 Bug 或有功能建议？欢迎在 GitHub 上提交 Issue。
+- **本版支持**：如果你发现了本二创版的 Bug 或有针对新增功能的建议，请在本仓库提交 [Issue](https://github.com/wool-hmq/Rin/issues)。
+- **上游社区（非本版官方支持）**：
+  以下链接属于 openRin 原项目，你可以加入以讨论核心平台的基础功能。
+  - [上游 Discord 频道](https://discord.gg/JWbSTHvAPN)
+  - [上游 Telegram 频道](https://t.me/openRin)
 
 ## Star 历史
 
