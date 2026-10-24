@@ -72,8 +72,8 @@ Entries discovered by the Agent during task execution should follow this format:
 - Date: 2026-09-02
 - Context: 用户要求建立文档同步习惯
 - Instructions:
-  - 修改环境变量配置（新增/删除/重命名 env var、修改默认值、修改必填性）后，必须同步更新 docs/docs/zh/env.md 和 docs/docs/en/env.md。
-  - 修改数据库字段含义（新增/删除/重命名字段、修改字段类型/约束/默认值）后，必须同步更新 docs/docs/zh/database.md 和 docs/docs/en/database.md。
+  - 修改环境变量配置（新增/删除/重命名 env var、修改默认值、修改必填性）后，必须同步更新 docs/docs/zh/configuration/env.md 和 docs/docs/en/configuration/env.md。
+  - 修改数据库字段含义（新增/删除/重命名字段、修改字段类型/约束/默认值）后，必须同步更新 docs/docs/zh/configuration/database.md 和 docs/docs/en/configuration/database.md。
   - 以上文档修改应与代码修改在同一 commit 中完成，确保代码与文档始终一致。
 
 [Project Knowledge Summary]
@@ -86,3 +86,13 @@ Entries discovered by the Agent during task execution should follow this format:
   - 搜索行为约束（用户决策）：SearchService 仅匹配标题、unlisted 文章必须排除出公开搜索（searchFeedPage 的 public where 需含 draft=0 AND listed=1）；原版 searchFeedPage 会泄露 unlisted，勿直接照搬。
   - CLI fixTopField 必须在 SQL 迁移执行之前调用（0015/0016 建含 feeds.top 的索引，top 缺失的旧库先迁移会失败）。
   - 预存测试失败基线：server 端 rss.test.ts（9）/favicon.test.ts（3）因 S3 环境超时失败，与代码改动无关，全量测试判读时以 366 pass / 12 fail 为基线。
+
+[User Instruction Summary]
+- Date: 2026-10-24
+- Context: 用户要求开始维护更新日志并统一二创版/官方原版的文档标注方式
+- Instructions:
+  - 从 2026-10-24 起维护更新日志，文档写入 docs/docs/zh/guide/changelog.md 与 docs/docs/en/guide/changelog.md，中英文内容保持同步。
+  - 二创版使用独立版本线 yjvX.Y.Z，首个版本为 yjv1.0.0（2026-10-24）；官方原版继续使用 vX.Y.Z，两者分开记录。
+  - 文档中同时出现两个仓库时，羊角快车二创版（wool-hmq/Rin）排在前面并标注身份，官方原版（openRin/Rin）排在后面并标注为官方原版/上游。
+  - README.md 保持纯英文，README_zh_CN.md 使用中文，两者分别维护。
+  - 部署、迁移、发布等说明文档需与仓库实际状态保持一致（工作流清单、CLI 默认值、环境变量名等），过时内容需同步修正。

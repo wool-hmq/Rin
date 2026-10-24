@@ -297,8 +297,11 @@ fixed bug
 
 不确定时，对新功能使用 **minor**。
 
+> **二创版版本号**：羊角快车二创版的发布说明与 tag 使用 `yjvX.Y.Z` 前缀，从 `yjv1.0.0` 开始，用于与官方原版的 `vX.Y.Z` 版本线区分。
+
 ## 有问题？
 
 - 📖 阅读[提交规范](./commit-convention.md)了解提交指南
-- 🐛 报告问题：[GitHub Issues](https://github.com/openRin/Rin/issues)
-- 💬 加入我们的社区讨论
+- 🐛 报告问题：[羊角快车二创版 Issues](https://github.com/wool-hmq/Rin/issues)
+- 📖 官方原版 Issues（上游）：[openRin/Rin Issues](https://github.com/openRin/Rin/issues)
+- 💬 加入我们的社区讨论（二创版优先）

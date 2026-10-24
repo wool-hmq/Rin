@@ -42,10 +42,10 @@ Rin 是一个基于 Cloudflare 开发者平台构建的现代化、无服务器�
 ### 快速开始
 
 ```bash
-# 1. 克隆本仓库（二次开发版）
+# 1. 克隆本仓库（羊角快车二创版，推荐）
 git clone https://github.com/wool-hmq/Rin.git && cd Rin
 
-# 上游原项目（仅供参考）
+# 官方原版（上游 openRin/Rin，不含本版新增功能，仅供参考）
 # git clone https://github.com/openRin/Rin.git && cd Rin
 
 # 2. 安装依赖
@@ -127,21 +127,22 @@ bun run deploy:client
 
 **可选配置(Repository Settings → Secrets and variables → Variables):**
 
-- `WORKER_NAME`, `PAGES_NAME`, `DB_NAME` - 资源名称
+- `WORKER_NAME`, `DB_NAME` - 资源名称
 - `NAME`, `DESCRIPTION`, `AVATAR` - 站点配置
 - `R2_BUCKET_NAME` - 要使用的特定 R2 存储桶
 
-完整文档请访问 https://docs.openrin.org。
+羊角快车二创版 Rin 完整文档请访问 https://wool-hmq.github.io/Rin ，文档源文件位于 [./docs/docs/zh](https://github.com/wool-hmq/Rin/tree/main/docs/docs/zh)。
 
-羊角快车二创版Rin博客完整文档请访问 [./docs/docs/zh](https://github.com/wool-hmq/Rin/tree/main/docs/docs/zh)。
+官方原版文档位于 https://docs.openrin.org。
 
 ## 社区与支持
 
-- **本版支持**：如果你发现了本二创版的 Bug 或有针对新增功能的建议，请在本仓库提交 [Issue](https://github.com/wool-hmq/Rin/issues)。
-- **上游社区（非本版官方支持）**：
+- **本版支持（羊角快车二创版）**：如果你发现了本二创版的 Bug 或有针对新增功能的建议，请在本仓库提交 [Issue](https://github.com/wool-hmq/Rin/issues)。
+- **官方原版（openRin/Rin，不提供本版官方支持）**：
   以下链接属于 openRin 原项目，你可以加入以讨论核心平台的基础功能。
   - [上游 Discord 频道](https://discord.gg/JWbSTHvAPN)
   - [上游 Telegram 频道](https://t.me/openRin)
+  - [上游 Issues](https://github.com/openRin/Rin/issues)
 
 ## Star 历史
 

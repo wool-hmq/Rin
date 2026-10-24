@@ -172,16 +172,19 @@ After successful migration, you can:
 
 If migration fails and you need to rollback:
 
-1. Restore previous git tag: `git checkout v0.2.x`
+1. Switch to the previous stable tag (the secondary development edition uses a `yjv` prefix, e.g. `yjv1.0.0`): `git checkout yjv1.0.0`
 2. Force push to main (⚠️ destructive): `git push origin HEAD:main --force`
 3. Redeploy from Actions
 
 ## Need Help?
 
-- 📖 [Full Documentation](https://rin-docs.xeu.life)
-- 🐛 [GitHub Issues](https://github.com/openRin/Rin/issues) | [Fork Issues](https://github.com/wool-hmq/Rin/issues)
-- 💬 [GitHub Discussions](https://github.com/openRin/Rin/discussions) | [Fork Discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 [Yangjiao Express Secondary Development Edition docs](https://wool-hmq.github.io/Rin)
+- 🐛 [Yangjiao Express Secondary Development Edition issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [Yangjiao Express Secondary Development Edition discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 [Official upstream docs](https://docs.openrin.org)
+- 🐛 [Official upstream issues](https://github.com/openRin/Rin/issues)
+- 💬 [Official upstream discussions](https://github.com/openRin/Rin/discussions)
 
 ---
 
-*Last updated: 2025-02-08*
+*Last updated: 2026-10-24*

@@ -44,10 +44,10 @@ Rin is a modern, serverless blog platform built entirely on Cloudflare's develop
 ### Quick Start
 
 ```bash
-# 1. Clone this repository (Secondary Development Edition)
+# 1. Clone this repository (secondary development edition, recommended)
 git clone https://github.com/wool-hmq/Rin.git && cd Rin
 
-# Upstream original project (for reference only)
+# Official upstream (openRin/Rin, does not include this edition's features, for reference only)
 # git clone https://github.com/openRin/Rin.git && cd Rin
 
 # 2. Install dependencies
@@ -129,21 +129,22 @@ The repository includes several automated workflows:
 
 **Optional configuration (Repository Settings → Secrets and variables → Variables):**
 
-- `WORKER_NAME`, `PAGES_NAME`, `DB_NAME` - Resource names
+- `WORKER_NAME`, `DB_NAME` - Resource names
 - `NAME`, `DESCRIPTION`, `AVATAR` - Site configuration
 - `R2_BUCKET_NAME` - Specific R2 bucket to use
 
-Full documentation is available at https://docs.openrin.org.
+Full documentation for this edition is available at https://wool-hmq.github.io/Rin, with sources in [./docs/docs/en](https://github.com/wool-hmq/Rin/tree/main/docs/docs/en).
 
-Please visit the complete document of the Rin blog of Yangjiao Express Second Creation Edition [./docs/docs/en](https://github.com/wool-hmq/Rin/tree/main/docs/docs/en).
+The official upstream documentation lives at https://docs.openrin.org.
 
 ## Community & Support
 
-- **For this edition**: If you found a bug or have a feature request specifically for this secondary-development version, please open an issue at [wool-hmq/Rin Issues](https://github.com/wool-hmq/Rin/issues).
-- **Upstream Community (Not Official Support for this Edition)**: 
+- **For this edition (secondary development)**: If you found a bug or have a feature request specifically for this secondary-development version, please open an issue at [wool-hmq/Rin Issues](https://github.com/wool-hmq/Rin/issues).
+- **Official upstream (openRin/Rin, not official support for this edition)**: 
   The following links belong to the original openRin project. You can join for general discussions about the core platform.
   - [Upstream Discord](https://discord.gg/JWbSTHvAPN)
   - [Upstream Telegram](https://t.me/openRin)
+  - [Upstream issues](https://github.com/openRin/Rin/issues)
 
 ## Star History
 

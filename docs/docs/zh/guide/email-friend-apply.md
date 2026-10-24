@@ -35,7 +35,7 @@ Rin 支持通过邮件自动完成友链的申请、修改与删除，全程无�
 
 ## 前提条件
 
-1. 已部署 [MailPort](https://github.com/wool-hmq/mailport) 并配置 `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`（见 `env.md`）。
+1. 已部署 [MailPort](https://github.com/wool-hmq/mailport) 并配置 `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`（见 [环境变量说明](../configuration/env)）。
 2. 已开通 Cloudflare Email Routing，并把专用地址（如 `friend-request@你的域名.com`）的**路由规则动作**设为 **Send to a Worker**，目标 Worker 选择部署 Rin 的 Worker。
 3. 出站邮件（MailPort）所用的发件域名不要与你用于接收的域名完全相同，避免 Rin 处理到自己发出的邮件导致循环。
 

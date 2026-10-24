@@ -300,8 +300,11 @@ fixed bug
 
 When in doubt, use **minor** for new features.
 
+> **Secondary development versioning**: Release notes and tags for the Yangjiao Express secondary development edition use the `yjvX.Y.Z` prefix, starting at `yjv1.0.0`, to keep them distinct from the official upstream `vX.Y.Z` line.
+
 ## Questions?
 
 - 📖 Read [Commit Convention](./commit-convention.md) for commit guidelines
-- 🐛 Report issues: [GitHub Issues](https://github.com/openRin/Rin/issues) | [Fork Issues](https://github.com/wool-hmq/Rin/issues)
-- 💬 Join discussions in our community
+- 🐛 Report issues: [Yangjiao Express Secondary Development Edition issues](https://github.com/wool-hmq/Rin/issues)
+- 📖 Official upstream issues: [openRin/Rin issues](https://github.com/openRin/Rin/issues)
+- 💬 Join discussions in our community (secondary development edition first)

@@ -1,5 +1,64 @@
 # Changelog
 
+> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
+
+## yjv1.0.0 - October 24, 2026
+
+The first release of the secondary development edition's own version line. It summarizes the features, fixes, and documentation changes landed in this repository since the fork.
+
+### In this release
+
+- **Friend-link verification now supports DNS TXT and HTML file uploads**
+  - After the JSON payload is accepted, the state machine enters `awaiting_method_choice` and asks the applicant to pick a method: reply `1` (also `一` / `方案一` / `方法一`) for a DNS TXT record, or `2` (also `二` / `方案二` / `方法二`) for an HTML file
+  - DNS: the instruction email lists host `_jiaofriend`, type `TXT`, value = verification code; verification queries the TXT records of `_jiaofriend.<visitor-domain>` through Cloudflare DNS-over-HTTPS and checks whether one contains the code
+  - File: the existing strict check stays — the GET must return 200 and the `<body>` text (after stripping tags/scripts/styles) must contain the code
+  - The state machine gains an `awaiting_verification` stage and records `verifyMethod`; a modify application asks for the method again for the old site and for the new site; pre-upgrade `verifying` states fall back to file verification
+
+### New features
+
+- **Self-service friend links over email**: applicants request, modify, or delete friend links by email, with a JSON template, an image captcha, a cancel command, reply interception with "compose a new email" guidance, and owner UID resolution by bound email
+- **Friend-link groups and ordering**: manage groups and display order from the admin panel
+- **TOTP two-factor authentication**: available to every user, with recovery codes and login rate limiting
+- **API keys for external calls**: admins create and revoke keys with scoped permissions from the settings page
+- **friends-sitemap.xml**: lists approved friend links with names and descriptions
+- **MailPort multi-sender support**: ordered polling across several sender endpoints with legacy fallback
+- **AI capabilities**: AI summaries, AI-enhanced search, custom models, and a reorderable fallback model queue
+- **Content and reading experience**: multiple comment systems, webhook notifications, RSS, sitemap with dynamic robots.txt, and scheduled friend-link availability checks
+
+### Fixes
+
+- Fixed accounts without a password being unable to log in after enabling TOTP
+- Fixed duplicated "not found" text and empty permission scopes on API key endpoints
+- Fixed viewing a key turning encrypted storage into plaintext storage
+- Fixed repeated captcha initialization crashing friend-link applications
+- Fixed inbound email parsing under CJS / ESM bundles
+- Fixed the 10214 race failure when uploading deployment secrets in bulk
+- Fixed friend-link verification accepting SPA fallbacks, custom 404 pages, 403/500 responses, and 30x redirects
+- Fixed the `awaiting_json` stage terminating an application when the body was not a JSON attempt
+- Fixed `/friends-sitemap.xml` being swallowed by the frontend SPA
+
+### Architecture and deployment
+
+- Backend runtime moved to a lightweight framework tailored for Cloudflare Workers, with on-demand route and dependency loading
+- Extracted shared packages such as `@rin/api` and `@rin/ui` for shared types and components
+- Deployment, development, and database tasks unified behind the Rin CLI, with Build / Deploy / Preview / Release / docs-site workflows on GitHub Actions
+- Synced upstream improvements: feed service repository layer, route guards, sitemap service, Modal component, image fallback component, and stable table-of-contents rendering
+
+### Documentation
+
+- Rewrote the deployment guide against the current implementation: repository order, site variables, workflow inventory, migration script paths, and deployment URL notes
+- Wherever both repositories appear, the **secondary development edition (this repository)** is listed first and labeled, followed by the **official upstream openRin/Rin**
+- Documentation directory restructure: `env.md` and `database.md` moved into `configuration/`
+- Chinese and English docs updated together
+
+### Upgrade notes
+
+- When upgrading from the official upstream to this edition, the deployment script applies the migrations in `server/sql/` automatically; no manual step is required
+- Email login, email verification codes, and self-service friend links are optional and require `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS` (see [Environment Variables](../configuration/env))
+- TOTP, API keys, and friend-link groups need no extra environment variables; enable them from the admin pages when needed
+
+## Official upstream history
+
 ### v0.3.0 - February 4, 2025
 
 #### Architecture Refactoring
@@ -84,7 +143,7 @@ CACHE_STORAGE_MODE=<Cache storage mode: database or s3, default database>
 - Updated GitHub variable configuration, added encrypted variables that must be configured through GitHub (S3 storage for SEO index storage)
 - `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are now prefixed with `RIN_` (`RIN_GITHUB_CLIENT_ID`, `RIN_GITHUB_CLIENT_SECRET`) to solve the issue where GitHub variables cannot start with `GITHUB_`. Variables configured through the Cloudflare panel (`GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`) are not affected.
 
-## Migration Guide
+## Official upstream migration guide
 
 For normal version updates without special instructions, simply synchronize the forked repository.
 

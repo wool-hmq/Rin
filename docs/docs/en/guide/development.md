@@ -298,6 +298,8 @@ Please refer to the [Deployment Guide](./deploy.mdx) for production deployment p
 
 ## Getting Help
 
-- 📖 Full documentation: https://docs.openrin.org
-- 💬 Discord: https://discord.gg/JWbSTHvAPN
-- 🐛 Submit Issue: https://github.com/openRin/Rin/issues | https://github.com/wool-hmq/Rin/issues
+- 📖 [Yangjiao Express Secondary Development Edition docs](https://wool-hmq.github.io/Rin)
+- 🐛 [Yangjiao Express Secondary Development Edition issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [Yangjiao Express Secondary Development Edition discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 [Official upstream docs](https://docs.openrin.org)
+- 💬 Official upstream Discord: https://discord.gg/JWbSTHvAPN

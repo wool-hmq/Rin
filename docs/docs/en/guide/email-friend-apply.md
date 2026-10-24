@@ -35,7 +35,7 @@ Notes:
 
 ## Prerequisites
 
-1. Deploy [MailPort](https://github.com/wool-hmq/mailport) and set `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS` (see `env.md`).
+1. Deploy [MailPort](https://github.com/wool-hmq/mailport) and set `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS` (see [Environment Variables](../configuration/env)).
 2. Enable Cloudflare Email Routing and set the routing rule for your dedicated address (e.g. `friend-request@your-domain.com`) to **Send to a Worker**, selecting the worker running Rin.
 3. The sender domain used by MailPort should not be the same as your receiving domain, to avoid Rin processing its own outgoing mail.
 

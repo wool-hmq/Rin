@@ -1,6 +1,6 @@
-# Rin 部署指南
+# Rin（羊角快车二创版）部署指南
 
-本文档将指导您从零开始部署 Rin 博客系统到 Cloudflare。
+本文档将指导您从零开始把 **羊角快车二创版 Rin** 部署到 Cloudflare。
 
 ## 前置要求
 
@@ -12,11 +12,14 @@
 
 ### 第一步：Fork 仓库
 
-1. 访问 [Rin GitHub 仓库](https://github.com/openRin/Rin)
-羊角快车二创版 Rin Github 仓库：[https://github.com/wool-hmq/Rin](https://github.com/wool-hmq/Rin)
+本仓库是 **羊角快车二创版 Rin**，在官方原版基础上增加了邮箱自助友链、TOTP 双因素认证、API Key 等能力，推荐直接 Fork 本仓库：
+
+1. 访问 **羊角快车二创版 Rin（本仓库，推荐）**：[https://github.com/wool-hmq/Rin](https://github.com/wool-hmq/Rin)
 2. 点击右上角的 **"Fork"** 按钮
 ![1000000657](https://github.com/OXeu/Rin/assets/36541432/df3607ca-a8a9-49b8-92ce-6b348afeb13f)
 3. 选择您的个人账户，保持默认设置，点击 **"Create fork"**
+
+> **官方原版（上游）**：[openRin/Rin](https://github.com/openRin/Rin)。它不包含本版新增功能；只有在你明确需要跟随上游时再使用它。本文后续步骤默认基于二创版。
 
 ### 获取用户 ID 与 API 令牌
 
@@ -70,16 +73,13 @@ Rin 目前支持账号密码登录与 Github OAuth 登录，可二选一或同�
 3. 点击 **"Run workflow"** 按钮
 4. 保持默认分支（main），点击 **"Run workflow"**
 
-部署过程大约需要 3-5 分钟。您可以在 Actions 页面查看部署进度。
+部署过程大约需要 3-5 分钟。**Build** 成功后会通过 `workflow_run` 自动触发 **Deploy** 工作流，手动触发 Deploy 时需要提供构建产物 URL。
 
-> **提示**: 部署脚本会自动配置前端环境变量，无需手动配置。您可以在 GitHub Variables 中自定义网站名称、描述等（可选）。
+> **提示**: 部署脚本会自动配置前端环境变量，无需手动配置。站点名称、描述、Worker 名称等可以在 GitHub Variables 中自定义（见下方「站点基础变量」）。
 
 ### 第四步：访问您的博客
 
-部署完成后，您可以通过以下地址访问：
-
-- **前端页面**: `https://rin-client.pages.dev`（或您在 `PAGES_NAME` 中设置的名称）
-- **后端 API**: `https://rin-server.your-account-id.workers.dev`
+部署完成后，Deploy 工作流的日志会打印 **App URL**，前端页面与后端 API 都通过该地址访问。默认 Worker 名称为 `rin-server`，可通过 Variables 中的 `WORKER_NAME` 覆盖。
 
 ### 第五步：首次登录
 
@@ -87,6 +87,22 @@ Rin 目前支持账号密码登录与 Github OAuth 登录，可二选一或同�
 2. 点击右上角的登录图标
 3. 使用您在 Secrets 中设置的 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD` 登录
 4. 登录后，点击头像进入 **个人资料** 页面，可以修改昵称和上传头像
+
+### 站点基础变量（可选）
+
+以下 GitHub Variables 用于覆盖部署默认值：
+
+| Variable 名称 | 说明 | 默认值 |
+|--------------|------|--------|
+| `NAME` | 站点名称 | `Rin` |
+| `DESCRIPTION` | 站点描述 | `A lightweight personal blogging system` |
+| `AVATAR` | 站点头像 URL | 空 |
+| `PAGE_SIZE` | 列表每页数量 | `5` |
+| `RSS_ENABLE` | 是否启用 RSS | `false` |
+| `WORKER_NAME` | Worker 名称 | `rin-server` |
+| `DB_NAME` | D1 数据库名称 | `rin` |
+
+邮箱登录、邮箱验证码与邮件自助友链还需要配置 `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`，详见 [环境变量说明](../configuration/env)。
 
 ## 发布第一篇文章
 
@@ -185,7 +201,7 @@ Rin 支持两种存储方式：**Cloudflare R2**（推荐）或 **S3 兼容存�
 
 1. 手动进入 Cloudflare Dashboard > D1
 2. 找到您的数据库，点击 **"Console"**
-3. 手动执行迁移 SQL（参考 `server/migrations/` 目录下的文件）
+3. 手动执行迁移 SQL（参考 `server/sql/` 目录下的文件，按编号顺序执行）
 
 ---
 
@@ -194,31 +210,44 @@ Rin 支持两种存储方式：**Cloudflare R2**（推荐）或 **S3 兼容存�
 仓库包含多个 GitHub Actions 工作流，用于自动化测试、构建和部署：
 
 ### CI 工作流 (`ci.yml`)
-每次推送和 Pull Request 时运行，检查代码质量：
+在推送到 `main` / `trunk` 或提交 PR 时运行：
 - TypeScript 类型检查
 - 代码格式化验证
-- 构建验证
 
 ### 测试工作流 (`test.yml`)
-每次推送和 PR 时运行全面的测试：
+在推送到 `main` / `trunk` 或提交 PR 时运行：
 - **服务端测试**：使用 Bun 的单元测试和集成测试
 - **客户端测试**：使用 Vitest 的组件测试
-- **覆盖率报告**：上传覆盖率到 Codecov
+- **类型检查**：客户端与服务端分别执行 `tsc --noEmit`
+- **构建验证**：客户端生产构建
 
 ### 构建工作流 (`build.yml`)
-在推送到 main 和 develop 分支时运行：
-- 构建前端和后端
-- 验证构建产物
-- 成功后触发部署工作流
+在推送到 `main` / `master` / `trunk`、提交 PR 或手动触发时运行：
+- 类型检查
+- 构建前端
+- 通过 Wrangler dry-run 构建后端
+- 上传构建产物；成功后自动触发 Deploy
 
 ### 部署工作流 (`deploy.yml`)
-手动触发或由构建完成时触发：
+由 Build 成功后自动触发，或手动提供构建产物 URL 触发：
 - 部署前端到 Cloudflare Pages
 - 部署后端到 Cloudflare Workers
-- 运行数据库迁移
+- 执行 D1 数据库迁移
+- 在 Actions 日志中输出部署后的 App URL
+
+### 文档工作流 (`docs.yml`)
+推送到 `main` 且改动涉及 `docs/**` 时运行：
+- 使用 Rspress 构建文档站
+- 发布到 GitHub Pages
+
+### 发布工作流 (`release.yml`)
+推送 `vX.Y.Z` 形式的 tag 时运行：
+- 校验各 workspace 版本一致性
+- 执行类型检查与构建
+- 打包并发布构建产物
 
 ### PR 预览
-创建 Pull Request 时，会自动生成预览部署，方便在合并前测试更改。
+创建 Pull Request 时会自动生成预览部署；PR 关闭后由 `clean.yml` 清理预览 Worker。
 
 ---
 
@@ -230,19 +259,23 @@ Rin 支持两种存储方式：**Cloudflare R2**（推荐）或 **S3 兼容存�
 2. 点击 **"Update branch"**
 3. 部署会自动触发
 
-或者手动更新：
+### 更新羊角快车二创版（推荐）
 
 ```bash
-git remote add upstream https://github.com/openRin/Rin.git
+# 添加二创版仓库为上游
+git remote add upstream https://github.com/wool-hmq/Rin.git
 git fetch upstream
 git checkout main
 git merge upstream/main
 git push origin main
 ```
 
-或 羊角快车二创版手动更新方式
+### 同步官方原版（上游，可选）
+
+只在需要合并官方原版改动时使用。官方原版不包含本版新增功能：
+
 ```bash
-git remote add upstream https://github.com/wool-hmq/Rin.git
+git remote add upstream https://github.com/openRin/Rin.git
 git fetch upstream
 git checkout main
 git merge upstream/main
@@ -253,6 +286,9 @@ git push origin main
 
 ## 需要帮助？
 
-- 📖 [完整文档](https://docs.openrin.org)
-- 🐛 [GitHub Issues](https://github.com/openRin/Rin/issues)
-- 💬 [GitHub Discussions](https://github.com/openRin/Rin/discussions)
+- 📖 [羊角快车二创版在线文档](https://wool-hmq.github.io/Rin)
+- 🐛 [羊角快车二创版 Issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [羊角快车二创版 Discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 [官方原版文档（上游）](https://docs.openrin.org)
+- 🐛 [官方原版 Issues（上游）](https://github.com/openRin/Rin/issues)
+- 💬 [官方原版 Discussions（上游）](https://github.com/openRin/Rin/discussions)

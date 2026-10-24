@@ -1,5 +1,64 @@
 # 更新日志
 
+> **版本说明**：羊角快车二创版使用独立的 `yjvX.Y.Z` 版本线，从 **yjv1.0.0** 开始，与官方原版 openRin/Rin 的 `vX.Y.Z` 版本线区分。下文 `v0.3.0` / `v0.2.0` 为官方原版（上游）的历史记录。
+
+## yjv1.0.0 2026-10-24
+
+二创版首个独立版本线，汇总自与官方原版分叉以来在本仓库落地的功能、修复与文档改动。
+
+### 本次更新
+
+- **友链验证支持 DNS TXT 与 HTML 文件两种方式**
+  - JSON 解析完成后进入 `awaiting_method_choice` 阶段，由访客选择验证方式：回复 `1`（或 `一` / `方案一` / `方法一`）使用 DNS TXT 记录，回复 `2`（或 `二` / `方案二` / `方法二`）上传 HTML 文件
+  - DNS 方式：向访客下发 `_jiaofriend` 主机记录、TXT 类型、验证码为记录值的教程；验证时通过 Cloudflare DNS-over-HTTPS 查询 `_jiaofriend.访客域名` 的 TXT 记录并检查是否包含验证码
+  - 文件方式：保留原有严格校验，GET 必须返回 200 且剔除标签/脚本后的 `<body>` 文本包含验证码
+  - 状态机新增 `awaiting_verification` 阶段并记录 `verifyMethod`；修改友链时旧站点与新站点分别重新选择验证方式；升级前的 `verifying` 状态自动回退到文件验证
+
+### 新增功能
+
+- **邮件自助友链**：访客通过邮件完成友链申请 / 修改 / 删除，包含 JSON 模板、人机验证码图片、申请取消指令、回复拦截与新建邮件引导、按邮箱绑定归属 UID
+- **友链分组与排序**：后台管理友链分组与展示顺序
+- **TOTP 双因素认证**：全体用户可用，支持恢复码与登录限流
+- **API Key 外部调用体系**：管理员在后台设置页创建、吊销密钥并限定权限范围
+- **friends-sitemap.xml**：输出已通过审核的友链，包含名称与描述
+- **MailPort 多发件地址**：支持多个发件端点顺序轮询，并兼容旧配置
+- **AI 能力**：AI 摘要、AI 增强搜索、自定义模型与回退模型队列排序
+- **内容与阅读体验**：多套评论系统、Webhook 通知、RSS、Sitemap 与动态 robots.txt、友链可访问状态定时检查
+
+### 修复
+
+- 修复无密码账号启用 TOTP 后无法登录
+- 修复 API Key 接口 404 文案重复拼接、权限范围列表为空
+- 修复点击查看密钥会把加密存储改成明文存储
+- 修复验证码图片重复初始化导致申请崩溃
+- 修复邮件解析在 CJS / ESM 产物下的兼容性
+- 修复部署时批量上传 Secret 的 10214 竞态失败
+- 修复友链验证被 SPA 回退、自定义 404 页面、403/500 与 30x 重定向误判通过
+- 修复 awaiting_json 阶段把非 JSON 正文误判为格式错误并终止申请
+- 修复 friends-sitemap.xml 路由被前端 SPA 拦截
+
+### 架构与部署
+
+- 后端运行时迁移到面向 Cloudflare Workers 的轻量框架，路由与依赖按需加载
+- 抽出 `@rin/api`、`@rin/ui` 等共享包，前后端共享类型与组件
+- 部署、开发、数据库任务统一收敛到 Rin CLI，并提供 GitHub Actions 的 Build / Deploy / Preview / Release / 文档站工作流
+- 同步官方原版改进：feed service 的 repository 分层、路由守卫、sitemap 服务、Modal 组件、图片回退组件与目录树稳定化
+
+### 文档
+
+- 部署指南按当前实现重写：仓库选择顺序、站点变量、工作流清单、迁移脚本路径与部署地址说明
+- 文档中同时出现两个仓库时，统一先列 **羊角快车二创版（本仓库）** 并标注 **官方原版 openRin/Rin（上游）**
+- 文档目录重构：`env.md`、`database.md` 迁入 `configuration/`
+- 中英文文档同步更新
+
+### 升级说明
+
+- 从官方原版升级到二创版时，部署脚本会自动执行 `server/sql/` 下的迁移脚本，无需手动操作
+- 邮件登录、邮箱验证码与邮件自助友链属于可选功能，需要额外配置 `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`（见 [环境变量说明](../configuration/env)）
+- TOTP、API Key、友链分组等功能无需额外环境变量，在后台页面按需启用即可
+
+## 官方原版历史版本
+
 ### v0.3.0 2025-02-04 更新
 
 #### 架构重构
@@ -84,7 +143,7 @@ CACHE_STORAGE_MODE=<缓存存储模式：database 或 s3，默认 database>
 - GitHub 变量配置更新，新增必须通过 GitHub 配置的加密变量（S3 存储，用于 SEO 索引保存）
 - `GITHUB_CLIENT_ID`与`GITHUB_CLIENT_SECRET`现在添加了前缀`RIN_`（`RIN_GITHUB_CLIENT_ID`,`RIN_GITHUB_CLIENT_SECRET`），以解决 GitHub 变量不能以 `GITHUB_` 开头的问题，使用 Cloudflare 面板配置的 `GITHUB_CLIENT_ID` 与 `GITHUB_CLIENT_SECRET` 不受影响
 
-## 迁移指南
+## 官方原版迁移指南
 
 无特别说明时正常的版本更新直接同步 fork 的仓库即可
 

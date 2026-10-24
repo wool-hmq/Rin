@@ -175,16 +175,19 @@ const feeds = await client.feed.list({ page: 1 });
 
 如果迁移失败需要回滚：
 
-1. 恢复之前的 git 标签：`git checkout v0.2.x`
+1. 切换到上一个稳定版本标签（二创版使用 `yjv` 前缀，例如 `yjv1.0.0`）：`git checkout yjv1.0.0`
 2. 强制推送到 main（⚠️ 破坏性）：`git push origin HEAD:main --force`
 3. 从 Actions 重新部署
 
 ## 需要帮助？
 
-- 📖 [完整文档](https://rin-docs.xeu.life)
-- 🐛 [GitHub Issues](https://github.com/openRin/Rin/issues)
-- 💬 [GitHub Discussions](https://github.com/openRin/Rin/discussions)
+- 📖 [羊角快车二创版在线文档](https://wool-hmq.github.io/Rin)
+- 🐛 [羊角快车二创版 Issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [羊角快车二创版 Discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 [官方原版文档（上游）](https://docs.openrin.org)
+- 🐛 [官方原版 Issues（上游）](https://github.com/openRin/Rin/issues)
+- 💬 [官方原版 Discussions（上游）](https://github.com/openRin/Rin/discussions)
 
 ---
 
-*最后更新：2025-02-08*
+*最后更新：2026-10-24*

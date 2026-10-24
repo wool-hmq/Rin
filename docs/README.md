@@ -45,24 +45,24 @@ docs/
 │   │   │   ├── _meta.json       # 导航菜单配置
 │   │   │   ├── index.md         # 简介与快速开始
 │   │   │   ├── api-guide.md     # API 使用指南
-│   │   │   ├── changelog.md     # 更新日志
+│   │   │   ├── changelog.md     # 更新日志（二创版 yjv 版本线）
 │   │   │   ├── commit-convention.md # 提交规范
 │   │   │   ├── contribution.md  # 贡献指南
 │   │   │   ├── deploy.mdx       # 部署指南
 │   │   │   ├── development.md   # 开发指南
-│   │   │   ├── email-friend-apply.md # 友链申请说明
+│   │   │   ├── email-friend-apply.md # 邮件自助友链说明
 │   │   │   ├── migration.md     # 数据迁移指南
 │   │   │   ├── release.md       # 发布说明
 │   │   │   ├── rss.md           # RSS 配置
 │   │   │   ├── testing.md       # 测试指南
 │   │   │   └── webhook.md       # Webhook 配置
-│   │   ├── blog/                # 博客相关文章
-│   │   │   └── v0.3.0-release.md # 版本发布博客
+│   │   ├── blog/                # 版本发布相关文章
+│   │   │   └── v0.3.0-release.md # 官方原版 v0.3.0 发布说明（上游）
 │   │   ├── configuration/       # 环境变量与数据库配置文档
-│   │        └── env.md             # 环境变量说明
-│   │        └── database.md        # 数据库结构说明
-│   ├── en/                      # 英文文档
-│   │   └── ...                  # 结构同 zh 目录
+│   │   │   ├── env.md           # 环境变量说明
+│   │   │   └── database.md      # 数据库结构说明
+│   │   └── _nav.json            # 中文导航
+│   ├── en/                      # 英文文档（结构同 zh）
 │   ├── index.md                 # 文档首页
 │   └── public/                  # 静态资源 (如 Logo)
 ├── package.json                 # 依赖配置
@@ -75,6 +75,8 @@ docs/
 由于本项目是二次开发版，文档的更新策略如下：
 
 1. 核心基础文档（如部署、环境变量）：保持与上游原版逻辑一致，如果上游有更好的修正，我们会同步。
-2. 二次开发新增功能（如特定 API、友链验证机制等）：由本项目（羊角快车）独立维护和更新，上游暂无这些内容。
+2. 二次开发新增功能（如特定 API、邮件友链验证机制、TOTP、API Key 等）：由本项目（羊角快车）独立维护和更新，上游暂无这些内容。
+3. 当文档中同时出现本仓库与官方原版时，先列出 **羊角快车二创版（本仓库，推荐）**，再列出 **官方原版 openRin/Rin（上游）**，并明确标注两者身份。
+4. 版本号：二创版从 `yjv1.0.0` 开始使用 `yjvX.Y.Z` 版本线，与官方原版的 `vX.Y.Z` 区分；更新日志见 [guide/changelog.md](./docs/zh/guide/changelog.md)。
 
 如果你在阅读文档时发现与实际代码不符的地方，欢迎提交 [Issue](https://github.com/wool-hmq/Rin/issues) 指正！
