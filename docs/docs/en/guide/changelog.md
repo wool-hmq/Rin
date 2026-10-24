@@ -1,10 +1,10 @@
 # Changelog
 
-> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
+> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The latest release is **yjv1.0.1**. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
 
-## yjv1.0.0 - October 24, 2026
+## yjv1.0.1 - October 24, 2026
 
-The first release of the secondary development edition's own version line. It summarizes the features, fixes, and documentation changes landed in this repository since the fork.
+The first feature release of the secondary development edition's own version line. It ships the dual friend-link verification methods and keeps the Chinese and English docs in sync.
 
 ### In this release
 
@@ -13,6 +13,34 @@ The first release of the secondary development edition's own version line. It su
   - DNS: the instruction email lists host `_jiaofriend`, type `TXT`, value = verification code; verification queries the TXT records of `_jiaofriend.<visitor-domain>` through Cloudflare DNS-over-HTTPS and checks whether one contains the code
   - File: the existing strict check stays — the GET must return 200 and the `<body>` text (after stripping tags/scripts/styles) must contain the code
   - The state machine gains an `awaiting_verification` stage and records `verifyMethod`; a modify application asks for the method again for the old site and for the new site; pre-upgrade `verifying` states fall back to file verification
+  - DNS lookups go through an injectable dependency `resolveTxt(name) => Promise<string[]>`, which keeps the resolver testable and replaceable
+
+### Fixes
+
+- Fixed friend-link verification accepting SPA fallbacks, custom 404 pages, 403/500 responses, and 30x redirects
+- Fixed the `awaiting_json` stage terminating an application when the body was not a JSON attempt
+- Fixed `/friends-sitemap.xml` being swallowed by the frontend SPA
+- Fixed viewing a key turning encrypted storage into plaintext storage
+- Fixed repeated captcha initialization crashing friend-link applications
+- Fixed inbound email parsing under CJS / ESM bundles
+
+### Documentation
+
+- Rewrote the deployment guide against the current implementation: repository order, site variables, workflow inventory, migration script paths, and deployment URL notes
+- Documentation directory restructure: `env.md` and `database.md` moved into `configuration/`
+- Added the [yjv1.0.0 release announcement](../blog/yjv1.0.0-release); the secondary edition entry comes before the official upstream entry in the blog navigation
+- Documented the `users.password` hashing rule in the database guide: SHA-256 without salt, so manual D1 password updates must store the hashed value
+- Wherever both repositories appear, the **secondary development edition (this repository)** is listed first and labeled, followed by the **official upstream openRin/Rin**
+- Chinese and English docs updated together
+
+### Upgrade notes
+
+- The verification method choice does not affect existing friend links: pre-upgrade `verifying` states fall back to HTML file verification
+- The remaining features need no extra environment variables
+
+## yjv1.0.0 - October 24, 2026
+
+The starting point of the secondary development edition's own version line. It carries the capabilities of official upstream openRin/Rin `v0.3.0` and adds the features and infrastructure already landed in this edition.
 
 ### New features
 
@@ -29,13 +57,7 @@ The first release of the secondary development edition's own version line. It su
 
 - Fixed accounts without a password being unable to log in after enabling TOTP
 - Fixed duplicated "not found" text and empty permission scopes on API key endpoints
-- Fixed viewing a key turning encrypted storage into plaintext storage
-- Fixed repeated captcha initialization crashing friend-link applications
-- Fixed inbound email parsing under CJS / ESM bundles
 - Fixed the 10214 race failure when uploading deployment secrets in bulk
-- Fixed friend-link verification accepting SPA fallbacks, custom 404 pages, 403/500 responses, and 30x redirects
-- Fixed the `awaiting_json` stage terminating an application when the body was not a JSON attempt
-- Fixed `/friends-sitemap.xml` being swallowed by the frontend SPA
 
 ### Architecture and deployment
 
@@ -46,10 +68,8 @@ The first release of the secondary development edition's own version line. It su
 
 ### Documentation
 
-- Rewrote the deployment guide against the current implementation: repository order, site variables, workflow inventory, migration script paths, and deployment URL notes
+- The documentation set ships with the repository and keeps Chinese and English in sync
 - Wherever both repositories appear, the **secondary development edition (this repository)** is listed first and labeled, followed by the **official upstream openRin/Rin**
-- Documentation directory restructure: `env.md` and `database.md` moved into `configuration/`
-- Chinese and English docs updated together
 
 ### Upgrade notes
 
