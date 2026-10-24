@@ -49,3 +49,12 @@ sidebar: false
 - TOTP、API Key、友链分组等功能无需额外环境变量，在后台页面按需启用即可
 
 完整的版本改动记录见 [更新日志](../guide/changelog)，部署步骤见 [部署指南](../guide/deploy)。
+
+## 反馈
+
+如果你在验证 `yjv1.0.0` 时发现问题，建议直接通过以下方式反馈：
+
+- 🐛 [羊角快车二创版 Issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [羊角快车二创版 Discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 官方原版 Issues（上游）：[openRin/Rin Issues](https://github.com/openRin/Rin/issues)
+- 💬 官方原版 Discussions（上游）：[openRin/Rin Discussions](https://github.com/openRin/Rin/discussions)
