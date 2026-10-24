@@ -32,7 +32,7 @@ Stores user information, supporting multiple login methods.
 | `openid` | text | NOT NULL | OAuth OpenID, format `provider:openid` (e.g. `github:12345`, `qq:abcdef`) |
 | `email` | text | DEFAULT "" | Email address (for email verification login) |
 | `avatar` | text | NULLABLE | Avatar URL |
-| `password` | text | NULLABLE | Password hash (for username/password login) |
+| `password` | text | NULLABLE | Password hash (for username/password login), unsalted SHA-256 hash as a 64-character lowercase hex string |
 | `permission` | integer | DEFAULT 0 | Permission level, 0 = regular user |
 | `created_at` | integer | DEFAULT (unixepoch()) | Creation timestamp (Unix timestamp) |
 | `updated_at` | integer | DEFAULT (unixepoch()) | Update timestamp (Unix timestamp) |
@@ -43,6 +43,29 @@ Stores user information, supporting multiple login methods.
 **Notes:**
 - Same user can login via multiple methods (GitHub + QQ + Email), `openid` distinguishes different login methods
 - `email` field is used for email verification login, username becomes full email address after login
+
+**Password hashing rules:**
+- `users.password` stores an **unsalted SHA-256** hash as a 64-character lowercase hex string; at login the server hashes the submitted password the same way and compares the results
+- When you set a password manually in the D1 database, write the **hashed value** into the column; a plaintext password makes the account unable to log in
+- Compute the hash on Linux:
+
+```bash
+printf '%s' 'your-plaintext-password' | sha256sum | cut -d' ' -f1
+```
+
+- Compute the hash on macOS:
+
+```bash
+printf '%s' 'your-plaintext-password' | shasum -a 256 | cut -d' ' -f1
+```
+
+- Update the password in D1:
+
+```sql
+UPDATE users
+SET password = 'hash-from-the-step-above'
+WHERE username = 'target-username';
+```
 
 ---
 
