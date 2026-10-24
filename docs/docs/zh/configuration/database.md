@@ -32,7 +32,7 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 12 张表。
 | `openid` | text | NOT NULL | OAuth OpenID，格式为 `provider:openid`（如 `github:12345`、`qq:abcdef`） |
 | `email` | text | DEFAULT "" | 邮箱地址（用于邮箱验证码登录） |
 | `avatar` | text | NULLABLE | 头像 URL |
-| `password` | text | NULLABLE | 密码哈希（账号密码登录使用） |
+| `password` | text | NULLABLE | 密码哈希（账号密码登录使用），SHA-256 无盐哈希，64 位十六进制小写字符串 |
 | `permission` | integer | DEFAULT 0 | 权限级别，0 为普通用户 |
 | `created_at` | integer | DEFAULT (unixepoch()) | 创建时间戳（Unix 时间戳） |
 | `updated_at` | integer | DEFAULT (unixepoch()) | 更新时间戳（Unix 时间戳） |
@@ -43,6 +43,29 @@ Rin 使用 SQLite 数据库（通过 Drizzle ORM），共包含 12 张表。
 **注意：**
 - 同一用户可通过多种方式登录（GitHub + QQ + 邮箱），`openid` 用于区分不同登录方式
 - `email` 字段用于邮箱验证码登录，登录后 username 为完整邮箱地址
+
+**密码哈希规则：**
+- `users.password` 保存的是 **SHA-256（无盐）** 哈希值，格式为 64 位十六进制小写字符串，服务端登录时对输入的密码做同样的哈希计算后比对
+- 需要手动在 D1 数据库中为用户设置密码时，必须写入**加密后的哈希值**，直接填写明文密码会导致该账号无法登录
+- 计算哈希值（Linux）：
+
+```bash
+printf '%s' '你的明文密码' | sha256sum | cut -d' ' -f1
+```
+
+- 计算哈希值（macOS）：
+
+```bash
+printf '%s' '你的明文密码' | shasum -a 256 | cut -d' ' -f1
+```
+
+- 更新 D1 中的密码：
+
+```sql
+UPDATE users
+SET password = '上一步得到的哈希值'
+WHERE username = '目标用户名';
+```
 
 ---
 
