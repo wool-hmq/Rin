@@ -67,6 +67,10 @@
       {
         "text": "Environment Variables",
         "link": "/env"
+      },
+      {
+        "text": "Database Schema",
+        "link": "/database"
       }
     ]
   }
