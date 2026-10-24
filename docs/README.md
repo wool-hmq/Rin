@@ -57,6 +57,7 @@ docs/
 │   │   │   ├── testing.md       # 测试指南
 │   │   │   └── webhook.md       # Webhook 配置
 │   │   ├── blog/                # 版本发布相关文章
+│   │   │   ├── yjv1.0.0-release.md # 二创版 yjv1.0.0 发布公告
 │   │   │   └── v0.3.0-release.md # 官方原版 v0.3.0 发布说明（上游）
 │   │   ├── configuration/       # 环境变量与数据库配置文档
 │   │   │   ├── env.md           # 环境变量说明
@@ -78,5 +79,6 @@ docs/
 2. 二次开发新增功能（如特定 API、邮件友链验证机制、TOTP、API Key 等）：由本项目（羊角快车）独立维护和更新，上游暂无这些内容。
 3. 当文档中同时出现本仓库与官方原版时，先列出 **羊角快车二创版（本仓库，推荐）**，再列出 **官方原版 openRin/Rin（上游）**，并明确标注两者身份。
 4. 版本号：二创版从 `yjv1.0.0` 开始使用 `yjvX.Y.Z` 版本线，与官方原版的 `vX.Y.Z` 区分；更新日志见 [guide/changelog.md](./docs/zh/guide/changelog.md)。
+5. 发布公告：每次二创版发布在 `blog/` 下新增公告页（如 [yjv1.0.0-release.md](./docs/zh/blog/yjv1.0.0-release.md)），导航中二创版公告排在官方原版公告之前。
 
 如果你在阅读文档时发现与实际代码不符的地方，欢迎提交 [Issue](https://github.com/wool-hmq/Rin/issues) 指正！
