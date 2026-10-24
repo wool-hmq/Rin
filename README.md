@@ -37,7 +37,7 @@ Rin is a modern, serverless blog platform built entirely on Cloudflare's develop
 - **Featured Images**: Automatically detect the first image in an article and use it as the cover image in listings.
 - **Tag Parsing**: Input tags like `#Blog #Cloudflare` and have them automatically parsed and displayed.
 - **Type Safety**: End-to-end type safety with shared TypeScript types between client and server via `@rin/api` package.
-- ...and more! Explore all features at https://xeu.life or https://jiaoblog.dpdns.org.
+- ...and more! Explore all features at https://jiaoblog.dpdns.org.
 
 ## Documentation
 
