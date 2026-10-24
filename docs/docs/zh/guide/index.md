@@ -4,7 +4,6 @@ Rin 是一个基于 Cloudflare Pages + Workers + D1 + R2 全家桶的博客，�
 
 ## 演示地址
 
-[xeu.life](https://xeu.life)
 [羊角快车Blog](https://jiaoblog.dpdns.org)
 
 
