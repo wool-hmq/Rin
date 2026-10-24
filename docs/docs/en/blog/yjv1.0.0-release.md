@@ -49,3 +49,12 @@ Starting today, the Yangjiao Express secondary development edition ([wool-hmq/Ri
 - TOTP, API keys, and friend-link groups need no extra environment variables; enable them from the admin pages when needed
 
 The full change list lives in the [changelog](../guide/changelog), and the deployment steps live in the [deployment guide](../guide/deploy).
+
+ Feedback
+
+If you find issues while validating `yjv-1.0.0`, report them through:
+
+- 🐛 [Yangjiao Express Secondary Development Edition issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [Yangjiao Express Secondary Development Edition discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 Official upstream issues: [openRin/Rin issues](https://github.com/openRin/Rin/issues)
+- 💬 Official upstream discussions: [openRin/Rin discussions](https://github.com/openRin/Rin/discussions)
