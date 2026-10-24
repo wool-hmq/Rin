@@ -4,7 +4,7 @@ Rin 是一个基于 Cloudflare Pages + Workers + D1 + R2 全家桶的博客，�
 
 ## 演示地址
 
-[羊角快车Blog](https://jiaoblog.dpdns.org)
+[jiaoblog.dpdns.org](https://jiaoblog.dpdns.org)
 
 
 ## 特性
@@ -18,11 +18,11 @@ Rin 是一个基于 Cloudflare Pages + Workers + D1 + R2 全家桶的博客，�
 8. 支持本地实时保存对任意文章的修改/编辑且多篇文章互不干扰
 9. 支持设置为仅自己可见，可以充当云端同步的草稿箱或者记录隐私性较强的内容
 10. 支持拖拽/粘贴上传图片到支持 S3 协议的存储桶并生成链接
-11. 支持设置文章别名，可通过形如 https://xeu.life/about 链接访问文章
+11. 支持设置文章别名，可通过形如 https://jiaoblog.dpdns.org/about 链接访问文章
 12. 支持文章不列出在首页列表中
 13. 支持添加友链，同时后端每间隔 20 分钟定期检查更新友链可访问状态
 14. 支持回复评论文章/删除评论
 15. 支持通过 Webhook 发送评论通知
 16. 支持自动识别文章中的第一张图片并作为头图展示在文章列表中
 17. 支持输入形如"#博客 #部署 #Cloudflare"之类的标签文本并自动解析为标签
-18. 更多特性请参考 https://xeu.life 或 https://jiaoblog.dpdns.org
+18. 更多特性请参考 https://jiaoblog.dpdns.org
