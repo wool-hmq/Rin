@@ -1,0 +1,48 @@
+name: 友链申请
+description: 提交友链交换申请，系统将自动进行域名所有权验证。
+title: "[友链申请] "
+labels: ["友链申请", "待验证"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您申请与本站交换友链！在填写表单前，请确保：
+        1. 您的站点已添加本站链接（双向奔赴）。
+        2. 站点内容健康，且有一定的原创文章。
+        提交后，系统会自动拉起验证流程（DNS 或 文件验证），请耐心等待。
+
+  - type: input
+    id: site-name
+    attributes:
+      label: 站点名称
+      description: 您的博客/网站名称（将展示在友链列表中）。
+      placeholder: 例如：知海图书馆
+    validations:
+      required: true
+
+  - type: input
+    id: site-url
+    attributes:
+      label: 站点URL
+      description: 您的网站主页地址，请务必带上 https:// 或 http://。
+      placeholder: https://www.example.com
+    validations:
+      required: true
+
+  - type: input
+    id: avatar-url
+    attributes:
+      label: 头像 URL
+      description: 您的站点图标或作者头像的直链地址。
+      placeholder: https://www.example.com/avatar.png
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 站点简介
+      description: 用一句话简单介绍您的站点（建议 50 字以内）。
+      placeholder: 一个分享技术与生活的地方...
+    validations:
+      required: true
