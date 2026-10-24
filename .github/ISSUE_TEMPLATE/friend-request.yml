@@ -38,7 +38,7 @@ body:
     validations:
       required: true
 
-  - type: textarea
+  - type: input
     id: description
     attributes:
       label: 站点简介
