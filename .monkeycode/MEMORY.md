@@ -96,6 +96,7 @@ Entries discovered by the Agent during task execution should follow this format:
   - 文档中同时出现两个仓库时，羊角快车二创版（wool-hmq/Rin）排在前面并标注身份，官方原版（openRin/Rin）排在后面并标注为官方原版/上游。
   - README.md 保持纯英文，README_zh_CN.md 使用中文，两者分别维护。
   - 部署、迁移、发布等说明文档需与仓库实际状态保持一致（工作流清单、CLI 默认值、环境变量名等），过时内容需同步修正。
+  - 网络不可用期间的协作方式：改动完成后输出涉及的文件路径清单，由用户在 GitHub 网页版逐个上传；用户提供仓库 zip 快照时，用解压内容覆盖工作区对应目录（保留 `.git`、`node_modules` 等本地目录），随后再恢复常规推送流程。
 
 [Project Knowledge Summary]
 - Date: 2026-10-24
