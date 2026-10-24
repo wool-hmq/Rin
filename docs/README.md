@@ -7,9 +7,13 @@
 
 ## 阅读说明
 
-目前本项目**没有独立部署在线文档站点**。所有文档均以 Markdown 格式直接存放在 `docs/docs` 目录中，你可以直接在 GitHub 仓库中点击对应的 `.md` 或 `.mdx` 文件进行阅读。
+本项目已启用在线文档站点，推荐直接访问在线文档阅读：
 
-*(注：原版项目使用 [Rspress](https://rspress.dev/) 构建文档站，本项目暂时保留了相关的构建配置（如 `package.json` 和 `rspress.config.ts`），如果你未来希望将其构建为静态网页，仍可以参考下方的构建命令。)*
+> **在线文档地址：https://wool-hmq.github.io/Rin**
+
+文档源文件仍以 Markdown / MDX 格式存放在 `docs/docs` 目录中。你也可以在 GitHub 仓库中直接点击对应的 `.md` 或 `.mdx` 文件查看原始内容。
+
+*(注：本项目基于原版项目的 [Rspress](https://rspress.dev/) 构建配置启用了文档站，相关配置如 `package.json` 和 `rspress.config.ts` 仍然保留。如需本地预览或自行构建，可参考下方的构建命令。)*
 
 ## 本地构建（可选）
 
@@ -54,8 +58,9 @@ docs/
 │   │   │   └── webhook.md       # Webhook 配置
 │   │   ├── blog/                # 博客相关文章
 │   │   │   └── v0.3.0-release.md # 版本发布博客
-│   │   ├── env.md               # 环境变量说明
-│   │   └── database.md          # 数据库结构说明
+│   │   ├── configuration/       # 环境变量与数据库配置文档
+│   │        └── env.md             # 环境变量说明
+│   │        └── database.md        # 数据库结构说明
 │   ├── en/                      # 英文文档
 │   │   └── ...                  # 结构同 zh 目录
 │   ├── index.md                 # 文档首页
