@@ -298,7 +298,7 @@ Please refer to the [Deployment Guide](./deploy.mdx) for production deployment p
 
 ## Getting Help
 
-- 📖 [Yangjiao Express Secondary Development Edition docs](https://wool-hmq.github.io/Rin)
+- 📖 [Yangjiao Express Secondary Development Edition docs](https://rin.lab.j3.ink)
 - 🐛 [Yangjiao Express Secondary Development Edition issues](https://github.com/wool-hmq/Rin/issues)
 - 💬 [Yangjiao Express Secondary Development Edition discussions](https://github.com/wool-hmq/Rin/discussions)
 - 📖 [Official upstream docs](https://docs.openrin.org)

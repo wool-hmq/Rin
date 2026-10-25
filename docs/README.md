@@ -8,7 +8,7 @@
 
 本项目已启用在线文档站点，推荐直接访问在线文档阅读：
 
-> **在线文档地址：https://wool-hmq.github.io/Rin**
+> **在线文档地址：https://rin.lab.j3.ink**
 
 文档源文件仍以 Markdown / MDX 格式存放在 `docs/docs` 目录中。你也可以在 GitHub 仓库中直接点击对应的 `.md` 或 `.mdx` 文件查看原始内容。
 

@@ -297,7 +297,7 @@ bun run dev:setup
 
 ## 获取帮助
 
-- 📖 [羊角快车二创版在线文档](https://wool-hmq.github.io/Rin)
+- 📖 [羊角快车二创版在线文档](https://rin.lab.j3.ink)
 - 🐛 [羊角快车二创版 Issues](https://github.com/wool-hmq/Rin/issues)
 - 💬 [羊角快车二创版 Discussions](https://github.com/wool-hmq/Rin/discussions)
 - 📖 [官方原版文档（上游）](https://docs.openrin.org)

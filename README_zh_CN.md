@@ -131,7 +131,7 @@ bun run deploy:client
 - `NAME`, `DESCRIPTION`, `AVATAR` - 站点配置
 - `R2_BUCKET_NAME` - 要使用的特定 R2 存储桶
 
-羊角快车二创版 Rin 完整文档请访问 https://wool-hmq.github.io/Rin ，文档源文件位于 [./docs/docs/zh](https://github.com/wool-hmq/Rin/tree/main/docs/docs/zh)。
+羊角快车二创版 Rin 完整文档请访问 https://rin.lab.j3.ink ，文档源文件位于 [./docs/docs/zh](https://github.com/wool-hmq/Rin/tree/main/docs/docs/zh)。
 
 官方原版文档位于 https://docs.openrin.org。
 
@@ -156,7 +156,7 @@ bun run deploy:client
 
 ## 参与贡献
 
-我们欢迎各种形式的贡献——代码、文档、设计和想法。请查阅我们的[贡献指南](https://docs.openrin.org/guide/contribution.html)，一起参与 Rin 的构建！
+我们欢迎各种形式的贡献——代码、文档、设计和想法。请查阅我们的[贡献指南](https://rin.lab.j3.ink/guide/contribution.html)，一起参与 Rin 的构建！
 
 ## License
 

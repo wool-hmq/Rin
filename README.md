@@ -133,7 +133,7 @@ The repository includes several automated workflows:
 - `NAME`, `DESCRIPTION`, `AVATAR` - Site configuration
 - `R2_BUCKET_NAME` - Specific R2 bucket to use
 
-Full documentation for this edition is available at https://wool-hmq.github.io/Rin, with sources in [./docs/docs/en](https://github.com/wool-hmq/Rin/tree/main/docs/docs/en).
+Full documentation for this edition is available at https://rin.lab.j3.ink, with sources in [./docs/docs/en](https://github.com/wool-hmq/Rin/tree/main/docs/docs/en).
 
 The official upstream documentation lives at https://docs.openrin.org.
 
@@ -158,7 +158,7 @@ The official upstream documentation lives at https://docs.openrin.org.
 
 ## Contributing
 
-We welcome contributions of all kinds—code, documentation, design, and ideas. Please check out our [contributing guidelines](https://docs.openrin.org/en/guide/contribution.html) and join us in building Rin together!
+We welcome contributions of all kinds—code, documentation, design, and ideas. Please check out our [contributing guidelines](https://rin.lab.j3.ink/en/guide/contribution.html) and join us in building Rin together!
 
 ## License
 
