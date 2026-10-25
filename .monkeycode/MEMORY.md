@@ -125,3 +125,14 @@ Entries discovered by the Agent during task execution should follow this format:
   - 用户明确表示要休息并要求「不要提问」，遇到需求模糊点由 Agent 自主决策并完整落地实现、测试、文档与提交推送。
   - 在该场景下禁止中途抛出问题或等待确认；方案取舍以现有项目约定与代码事实为依据，完成后一次性汇报结果与关键决策。
 
+[Project Knowledge Summary]
+- Date: 2026-10-25
+- Context: 验证 MCP 服务端线上部署与本地 workerd 运行时行为时确认的环境限制
+- Category: Operations & Deployment | Troubleshooting & Debugging
+- Instructions:
+  - 生产 Worker 地址为 `rin-server.<账号>.workers.dev`（可从 GitHub deployments API 的 `environment_url` 取到），本沙箱访问 `*.workers.dev` 会被 DNS 污染成 Meta 网段地址，TLS 握手失败，无法直连线上 Worker 验证。
+  - 线上功能验证改用本地 `bunx wrangler dev`（workerd 运行时）：先 `bun run build:client` 生成 `dist/client` 供 assets 绑定，再按 `server/sql/*.sql` 逐个 `bunx wrangler d1 execute rin --local --file ...` 建本地库。
+  - `wrangler d1 execute --local` 不会建 `users` 行，插入 `api_keys` 前需先插入 `users(id=1, ...)`，否则触发外键约束失败。
+  - 本地冒烟端口需避开已被占用的 11499/11498，沙箱内占用端口的服务会统一返回 `{"id":"upstream-msg-001"}`，容易误判为应用返回。
+  - CI 的 `CI - Test and Type Check` 工作流中 `coverage` 作业（客户端覆盖率）长期失败，与服务端改动无关，判读 CI 结果时按该基线处理。
+
