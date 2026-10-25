@@ -107,3 +107,14 @@ Entries discovered by the Agent during task execution should follow this format:
   - 凭据由 `/app/agent/bin/agent git-credential-helper` 提供（仓库 `.git/config` 中已配置），无需手动填写账号密码；该 helper 不区分邮箱，git 推送认证与提交邮箱无关。
   - 处理方式：短间隔重试 `git push` / `git fetch`；长时间不通时改用 GitHub 网页版直接编辑提交，之后本地执行 `git fetch origin && git reset --hard origin/main` 覆盖本地，再恢复常规推送。
   - 文档站构建验证命令：`cd docs && bun install && bun run build`（Rspress v2，产物在 docs/doc_build，已被 gitignore）；中英文文档改动后必须重新构建确认无死链。
+
+[Project Knowledge Summary]
+- Date: 2026-10-25
+- Context: 为 MailPort 仓库新建 Rspress v2 双语文档站时验证出的路由与导航规则
+- Category: Build Methods | Troubleshooting & Debugging
+- Instructions:
+  - Rspress v2 中 `lang`（默认语言）对应目录的内容输出到站点根路径，其余语言保留语言前缀；MailPort 配置 `lang: 'zh-cn'` 后，简体中文位于 `/`，English 位于 `/en/`。
+  - 语言目录根部的 `_nav.json` 声明顶部导航栏；根部 `_meta.json` 声明全局侧边栏，且条目必须用 v2 对象格式（`{"type": "file", "name": "api.md", "label": "..."}`），沿用带 `text` 键的旧格式会触发 Rspress v2 迁移校验并终止构建。
+  - Rspress v2 内置界面文案只提供 en/zh，zh-cn 需在 `i18nSource` 中补齐，否则主题文案回退为英文并产生构建警告。
+  - `base` 会自动加到首页动作链接等绝对路径前，链接应写站点内路径（如 `/api.html`），不要自行拼接 base。
+
