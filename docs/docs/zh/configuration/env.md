@@ -375,4 +375,4 @@ MailPort 支持以下发件方式：
 - HTTP API：转发到自定义的 HTTP 接口
 - Outlook OAuth2 / Gmail OAuth2：免应用密码，授权后直接发件
 
-详见 [MailPort 项目文档](https://github.com/wool-hmq/mailport)。
+详见 [MailPort 项目文档](https://mailport.lab.j3.ink)。

@@ -379,4 +379,4 @@ MailPort supports the following delivery methods:
 - HTTP API: forward to a custom HTTP endpoint
 - Outlook OAuth2 / Gmail OAuth2: send without app passwords
 
-See the [MailPort project documentation](https://github.com/wool-hmq/mailport).
+See the [MailPort project documentation](https://mailport.lab.j3.ink).
