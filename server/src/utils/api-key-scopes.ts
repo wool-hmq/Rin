@@ -7,6 +7,12 @@ export interface ApiKeyScopeDefinition {
 
 export const API_KEY_SCOPES: ApiKeyScopeDefinition[] = [
     {
+        scope: "content.read",
+        title: "内容读取",
+        description: "通过 MCP 读取文章、标签、动态与友链内容。",
+        endpoints: ["POST /mcp (tools/list, tools/call)"],
+    },
+    {
         scope: "feed.write",
         title: "文章管理",
         description: "通过 API 发布、编辑、删除文章。",

@@ -27,6 +27,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
     "@rin/api": "workspace:*",
     "@rin/config": "workspace:*",
     "arctic": "^3.7.0",
@@ -42,7 +43,8 @@
     "remark-gfm": "^4.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.0",
-    "unified": "^11.0.4"
+    "unified": "^11.0.4",
+    "zod": "^4.6.7"
   },
   "trustedDependencies": [
     "es5-ext"

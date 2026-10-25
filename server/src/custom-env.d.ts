@@ -8,6 +8,7 @@ declare global {
     RIN_WECHAT_APPID?: string;
     RIN_WECHAT_APPKEY?: string;
     FRONTEND_URL?: string;
+    MCP_ALLOWED_HOSTS?: string;
   }
 }
 

@@ -2,6 +2,21 @@
 
 > **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The latest release is **yjv1.0.1**. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
 
+## Unreleased
+
+### New features
+
+- **MCP server**: The site now exposes an `/mcp` endpoint that turns articles, moments, friend links and site settings into MCP tools, so MCP clients such as Claude Desktop and Cursor can read and maintain content
+  - Authentication reuses the API keys created on the settings page, accepting both the `X-API-Key` header and `Authorization: Bearer`, and refreshes the key's last-used timestamp
+  - The tool list is filtered by key scopes: a new `content.read` scope covers reading content, while writes keep using `feed.write`, `moment.write`, `friend.write` and the `config.*` section scopes; config reads and writes re-check the target section at call time
+  - A `whoami` tool returns the current key identity and scopes to make permission issues easy to diagnose
+  - Host and Origin validation blocks DNS rebinding attacks, allowing `FRONTEND_URL` hostnames, local addresses and `*.workers.dev` by default; extra hostnames are enabled through the `MCP_ALLOWED_HOSTS` environment variable
+
+### Documentation
+
+- Added an MCP server section to the API guide (Chinese and English), covering the tool-to-scope mapping, client configuration and debugging
+- Documented the new `MCP_ALLOWED_HOSTS` environment variable (Chinese and English)
+
 ## yjv1.0.1 - October 24, 2026
 
 The first feature release of the secondary development edition's own version line. It ships the dual friend-link verification methods and keeps the Chinese and English docs in sync.

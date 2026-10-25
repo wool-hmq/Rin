@@ -63,6 +63,7 @@ The response lists the key's scopes and the endpoints available for each one:
 
 | Scope | Purpose | Endpoints |
 | --- | --- | --- |
+| `content.read` | Content reading (MCP) | `POST /mcp` (`tools/list`, `tools/call`) |
 | `feed.write` | Articles | `POST /api/key/feed`, `POST /api/key/feed/:id`, `DELETE /api/key/feed/:id` |
 | `friend.write` | Friend links | `POST /api/key/friend`, `PUT /api/key/friend/:id`, `DELETE /api/key/friend/:id` |
 | `moment.write` | Moments | `POST /api/key/moment`, `POST /api/key/moment/:id`, `DELETE /api/key/moment/:id` |
@@ -75,6 +76,80 @@ The response lists the key's scopes and the endpoints available for each one:
 | `config.friend` | Friend link settings | `GET/POST /api/key/config/friend` |
 | `config.maintenance` | Maintenance | `GET/POST /api/key/config/maintenance`, `DELETE /api/key/config/cache` |
 | `config.ai` | AI settings | `GET/POST /api/key/config/ai` |
+
+## MCP server
+
+The site exposes an MCP (Model Context Protocol) server at the root path `/mcp`, so MCP-capable clients (Claude Code, Cursor, MCP Inspector, and similar tools) manage site content with the same API key.
+
+- Transport: Streamable HTTP
+- Endpoint: `https://your-site/mcp`
+- Authentication: send the key in the `X-API-Key` or `Authorization: Bearer <your-key>` header, sharing the same key and scopes as the REST endpoints
+- Scope filtering: the server registers only the tools the key is allowed to use, so unauthorized tools never appear in `tools/list` and direct calls are rejected as well
+
+### Tools and scopes
+
+| Tool | Required scope | Purpose |
+| --- | --- | --- |
+| `whoami` | none | Returns the calling key, its scopes and the available tools |
+| `list_posts` | `content.read` | Lists articles with `normal`, `draft`, `unlisted` or `all` filtering |
+| `get_post` | `content.read` | Reads a full article by ID or alias |
+| `search_posts` | `content.read` | Searches articles by title keyword |
+| `list_tags` | `content.read` | Lists tags |
+| `list_moments` | `content.read` | Lists moments |
+| `list_friends` | `content.read` | Lists friend links |
+| `create_post`, `update_post`, `delete_post` | `feed.write` | Creates, edits and deletes articles |
+| `create_moment`, `update_moment`, `delete_moment` | `moment.write` | Creates, edits and deletes moments |
+| `create_friend`, `update_friend`, `delete_friend` | `friend.write` | Creates, edits and deletes friend links |
+| `get_config`, `update_config` | the `config.*` scope of the section | Reads and writes settings, matching `GET/POST /api/key/config/{section}` |
+
+`update_config` accepts only the keys writable in the requested section. A missing section scope or a key outside the section returns an error result naming the missing scope and the rejected keys.
+
+### Client configuration
+
+Claude Code, Cursor and other clients use the common MCP server configuration format:
+
+```json
+{
+  "mcpServers": {
+    "rin": {
+      "type": "http",
+      "url": "https://your-site/mcp",
+      "headers": {
+        "X-API-Key": "<your-key>"
+      }
+    }
+  }
+}
+```
+
+### Debugging
+
+```bash
+# Start MCP Inspector, then fill in the endpoint and the X-API-Key header
+npx @modelcontextprotocol/inspector
+```
+
+MCP methods can also be called directly with curl:
+
+```bash
+curl -X POST https://your-site/mcp \
+  -H "X-API-Key: <your-key>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list"
+  }'
+```
+
+### Access control
+
+The server validates the `Host` and `Origin` headers to block DNS rebinding attacks. Allowed hostnames come from the `FRONTEND_URL` setting, local addresses and `*.workers.dev`. When the served domain differs from the site address, append the allowed hostnames to the `MCP_ALLOWED_HOSTS` environment variable, separated by commas:
+
+```bash
+MCP_ALLOWED_HOSTS=blog.example.com,www.example.com
+```
 
 ## Articles
 

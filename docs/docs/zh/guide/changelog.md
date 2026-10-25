@@ -2,6 +2,21 @@
 
 > **版本说明**：羊角快车二创版使用独立的 `yjvX.Y.Z` 版本线，从 **yjv1.0.0** 开始，与官方原版 openRin/Rin 的 `vX.Y.Z` 版本线区分。当前最新版本为 **yjv1.0.1**。下文 `v0.3.0` / `v0.2.0` 为官方原版（上游）的历史记录。
 
+## 未发布
+
+### 新增功能
+
+- **MCP 服务端**：站点提供 `/mcp` 端点，把文章、动态、友链与站点设置暴露为 MCP 工具，供 MCP 客户端（如 Claude Desktop、Cursor）读取与维护内容
+  - 沿用设置页创建的 API Key 鉴权，支持 `X-API-Key` 请求头与 `Authorization: Bearer` 两种写法，并刷新密钥最近使用时间
+  - 按密钥权限裁剪工具列表：新增 `content.read` 读取权限，写入操作继续使用 `feed.write`、`moment.write`、`friend.write` 与 `config.*` 分区权限；配置读写在调用时再次校验目标分区
+  - 提供 `whoami` 工具返回当前密钥身份与权限，便于排查权限问题
+  - Host 与 Origin 校验用于阻断 DNS rebinding 攻击，默认允许 `FRONTEND_URL` 主机名、本机地址与 `*.workers.dev`，额外域名通过 `MCP_ALLOWED_HOSTS` 环境变量放行
+
+### 文档
+
+- API 指南新增 MCP 服务端章节（中英文同步），说明工具与权限的对应关系、客户端配置与调试方式
+- 环境变量文档新增 `MCP_ALLOWED_HOSTS`（中英文同步）
+
 ## yjv1.0.1 2026-10-24
 
 二创版独立版本线上的首个功能版本，收录友链验证双方式等近期能力，并同步维护中英文文档。

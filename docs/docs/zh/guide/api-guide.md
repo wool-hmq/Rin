@@ -63,6 +63,7 @@ curl -H "X-API-Key: <你的密钥>" https://your-site/api/key/help
 
 | 权限 | 说明 | 接口 |
 | --- | --- | --- |
+| `content.read` | 内容读取（MCP） | `POST /mcp`（`tools/list`、`tools/call`） |
 | `feed.write` | 文章管理 | `POST /api/key/feed`、`POST /api/key/feed/:id`、`DELETE /api/key/feed/:id` |
 | `friend.write` | 友链管理 | `POST /api/key/friend`、`PUT /api/key/friend/:id`、`DELETE /api/key/friend/:id` |
 | `moment.write` | 动态管理 | `POST /api/key/moment`、`POST /api/key/moment/:id`、`DELETE /api/key/moment/:id` |
@@ -75,6 +76,80 @@ curl -H "X-API-Key: <你的密钥>" https://your-site/api/key/help
 | `config.friend` | 友链设置 | `GET/POST /api/key/config/friend` |
 | `config.maintenance` | 维护 | `GET/POST /api/key/config/maintenance`、`DELETE /api/key/config/cache` |
 | `config.ai` | AI 设置 | `GET/POST /api/key/config/ai` |
+
+## MCP 服务端
+
+站点在根路径 `/mcp` 提供 MCP（Model Context Protocol）服务端，支持 MCP 的客户端（Claude Code、Cursor、MCP Inspector 等）可以用同一把 API 密钥管理站点内容。
+
+- 传输方式：Streamable HTTP
+- 服务地址：`https://your-site/mcp`
+- 鉴权方式：请求头携带 `X-API-Key` 或 `Authorization: Bearer <你的密钥>`，与 REST 接口共用同一把密钥和同一套权限
+- 权限裁剪：服务端按密钥权限过滤工具，未授权的工具不会出现在 `tools/list` 中，直接调用同样会被拒绝
+
+### 工具与权限
+
+| 工具 | 所需权限 | 说明 |
+| --- | --- | --- |
+| `whoami` | 无需权限 | 返回当前密钥信息、权限范围与可用工具列表 |
+| `list_posts` | `content.read` | 分页列出文章，支持 `normal`、`draft`、`unlisted`、`all` 过滤 |
+| `get_post` | `content.read` | 按 ID 或别名读取文章全文 |
+| `search_posts` | `content.read` | 按标题关键字搜索文章 |
+| `list_tags` | `content.read` | 列出标签 |
+| `list_moments` | `content.read` | 分页列出动态 |
+| `list_friends` | `content.read` | 分页列出友链 |
+| `create_post`、`update_post`、`delete_post` | `feed.write` | 创建、修改、删除文章 |
+| `create_moment`、`update_moment`、`delete_moment` | `moment.write` | 创建、修改、删除动态 |
+| `create_friend`、`update_friend`、`delete_friend` | `friend.write` | 创建、修改、删除友链 |
+| `get_config`、`update_config` | 对应分区的 `config.*` | 读取与写入设置项，参数与 `GET/POST /api/key/config/{section}` 一致 |
+
+`update_config` 只能写入当前分区允许的键，缺少分区权限或传入越权键时返回错误结果，并指明缺少的权限与被拒绝的键名。
+
+### 客户端配置
+
+Claude Code、Cursor 等客户端使用通用的 MCP 服务器配置格式：
+
+```json
+{
+  "mcpServers": {
+    "rin": {
+      "type": "http",
+      "url": "https://your-site/mcp",
+      "headers": {
+        "X-API-Key": "<你的密钥>"
+      }
+    }
+  }
+}
+```
+
+### 调试
+
+```bash
+# 启动 MCP Inspector，在界面中填入服务地址与 X-API-Key 请求头
+npx @modelcontextprotocol/inspector
+```
+
+也可以直接用 curl 调用 MCP 方法：
+
+```bash
+curl -X POST https://your-site/mcp \
+  -H "X-API-Key: <你的密钥>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list"
+  }'
+```
+
+### 访问控制
+
+服务端会校验 `Host` 与 `Origin` 请求头，防止 DNS rebinding 攻击。允许的域名来自 `FRONTEND_URL` 配置、本机地址与 `*.workers.dev`。域名与站点地址不一致时，可通过 `MCP_ALLOWED_HOSTS` 环境变量追加允许的域名，多个域名用英文逗号分隔：
+
+```bash
+MCP_ALLOWED_HOSTS=blog.example.com,www.example.com
+```
 
 ## 文章管理
 

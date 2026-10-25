@@ -50,6 +50,7 @@ Site configuration can be modified via the **Settings Page** after deployment. E
 | `WEBHOOK_URL` | No | Comment notification webhook | - | - |
 | `RSS_TITLE` | No | RSS feed title | Rin Development | - |
 | `RSS_DESCRIPTION` | No | RSS feed description | Development Environment | - |
+| `MCP_ALLOWED_HOSTS` | No | Extra hostnames allowed by the MCP server, comma separated (defaults to `FRONTEND_URL`, local addresses and `*.workers.dev`) | - | `blog.example.com,www.example.com` |
 
 :::tip For New Users
 We recommend setting `CACHE_STORAGE_MODE` to `database` to reduce deployment complexity without additional S3 cache configuration.

@@ -13,6 +13,9 @@ which automatically generates release notes from commit messages.
 
 ### Added
 
+- **MCP server**: New `/mcp` endpoint that exposes articles, moments, friend links and settings as MCP tools. It reuses the existing API keys for authentication (`X-API-Key` or `Authorization: Bearer`) and filters the tool list by key scopes, with a new `content.read` scope for reading content. Host and Origin validation blocks DNS rebinding attacks; extra hostnames can be allowed through `MCP_ALLOWED_HOSTS`.
+- **MCP 服务端**：新增 `/mcp` 端点，把文章、动态、友链与设置以 MCP 工具形式暴露。沿用现有 API Key 鉴权（`X-API-Key` 或 `Authorization: Bearer`），按密钥权限裁剪工具列表，并新增 `content.read` 读取权限。Host 与 Origin 校验用于阻断 DNS rebinding 攻击，额外域名可通过 `MCP_ALLOWED_HOSTS` 放行。
+
 ### Changed
 
 ### Deprecated

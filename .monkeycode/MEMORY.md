@@ -118,3 +118,10 @@ Entries discovered by the Agent during task execution should follow this format:
   - Rspress v2 内置界面文案只提供 en/zh，zh-cn 需在 `i18nSource` 中补齐，否则主题文案回退为英文并产生构建警告。
   - `base` 会自动加到首页动作链接等绝对路径前，链接应写站点内路径（如 `/api.html`），不要自行拼接 base。
 
+[User Instruction Summary]
+- Date: 2026-10-25
+- Context: 用户休息期间交代 MCP 服务端需求，明确要求不要提问、自主完成全部任务
+- Instructions:
+  - 用户明确表示要休息并要求「不要提问」，遇到需求模糊点由 Agent 自主决策并完整落地实现、测试、文档与提交推送。
+  - 在该场景下禁止中途抛出问题或等待确认；方案取舍以现有项目约定与代码事实为依据，完成后一次性汇报结果与关键决策。
+

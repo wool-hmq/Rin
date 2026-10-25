@@ -16,6 +16,7 @@ import { UserService } from "../services/user";
 import { R2Service } from "../services/r2-service"; // ✅ 新增
 import { ApiKeyService } from "../services/api-key";
 import { ApiKeyApiService } from "../services/api-key-api";
+import { McpService } from "../services/mcp";
 
 export function registerRoutes(app: RinApp) {
   app.get("/", (c) => c.text("Hi"));
@@ -41,4 +42,5 @@ export function registerRoutes(app: RinApp) {
   app.route("/r2", R2Service()); // ✅ 新增
   app.route("/key/manage", ApiKeyService());
   app.route("/key", ApiKeyApiService());
+  app.route("/mcp", McpService());
 }
