@@ -9,7 +9,7 @@ export default defineConfig({
   description: '基于 openRin/Rin 的二次开发版博客系统。基于 Cloudflare Pages + Workers + D1 + R2，无需服务器即可部署。',
   icon: '/rin-icon.png',
   // 2. 指定 GitHub Pages 的子路径 (如果是自己域名则写 '/')
-  base: '/Rin/', 
+  base: '/', 
   locales: [
     {
       lang: 'en',
