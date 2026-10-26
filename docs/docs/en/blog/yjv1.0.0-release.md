@@ -50,7 +50,7 @@ Starting today, the Yangjiao Express secondary development edition ([wool-hmq/Ri
 
 The full change list lives in the [changelog](../guide/changelog), and the deployment steps live in the [deployment guide](../guide/deploy).
 
- Feedback
+## Feedback
 
 If you find issues while validating `yjv-1.0.0`, report them through:
 
