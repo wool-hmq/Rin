@@ -11,11 +11,11 @@ const READ_KEY = "read-key-000000000000000000000";
 const WRITE_KEY = "write-key-000000000000000000000";
 const CONFIG_KEY = "config-key-00000000000000000000";
 
-async function insertApiKey(ctx: TestContext, id: number, rawKey: string, scopes: string[]) {
+async function insertApiKey(ctx: TestContext, id: number, rawKey: string, scopes: string[], keyType = 2) {
     const keyHash = await hashApiKey(rawKey);
     ctx.sqlite.exec(`
-        INSERT INTO api_keys (id, uid, name, key_hash, key_encrypted, visible, scopes)
-        VALUES (${id}, 1, 'key-${id}', '${keyHash}', NULL, 0, '${JSON.stringify(scopes)}')
+        INSERT INTO api_keys (id, uid, name, key_hash, key_encrypted, visible, key_type, scopes)
+        VALUES (${id}, 1, 'key-${id}', '${keyHash}', NULL, 0, ${keyType}, '${JSON.stringify(scopes)}')
     `);
 }
 
@@ -134,6 +134,14 @@ describe("MCP service", () => {
         expect(res.status).toBe(401);
         const body = await res.json() as any;
         expect(body.error).toBe("Invalid API key");
+    });
+
+    it("rejects REST API keys on the MCP endpoint", async () => {
+        await insertApiKey(ctx, 9, "rest-key-000000000000000000000", ["feed.write"], 1);
+        const res = await rpc(ctx, { method: "tools/list" }, { key: "rest-key-000000000000000000000" });
+        expect(res.status).toBe(403);
+        const body = await res.json() as any;
+        expect(body.error).toContain("create an MCP key");
     });
 
     it("answers the initialize handshake", async () => {

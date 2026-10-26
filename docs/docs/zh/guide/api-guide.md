@@ -1,15 +1,21 @@
 # API 使用指南
 
-Rin 提供了基于 API 密钥的外部调用接口，允许脚本或 AI 智能体在不登录的情况下管理站点内容与设置。所有接口都位于 `/api/key/` 路径下。
+Rin 提供了基于 API 密钥的外部调用接口，允许脚本或 AI 智能体在不登录的情况下管理站点内容与设置。REST 接口位于 `/api/key/` 路径下，MCP 服务端位于 `/mcp`。
+
+密钥分为两类，互不通用：
+
+- **API 接口密钥**：只能调用 `/api/key/*`，用于外部脚本自动化。
+- **MCP 密钥**：只能调用 `/mcp`，用于 Claude Code、Cursor 等 MCP 客户端。
 
 ## 创建 API 密钥
 
-API 密钥只能由管理员创建。以管理员身份登录后，进入后台「设置」页面，滚动到底部的「API 密钥」区域即可创建、修改、轮换和删除密钥。
+API 密钥只能由管理员创建。以管理员身份登录后，进入后台「设置」页面，滚动到底部的「API 密钥」区域，可在「API 接口」与「MCP」两个标签页中分别创建、修改、轮换和删除密钥。
 
 密钥归属于创建它的管理员账号，其他账号不会看到这些密钥。
 
 创建时可设置：
 
+- **密钥类型**：API 接口密钥或 MCP 密钥。类型在创建时确定，之后不可更改，两个标签页的密钥列表互不可见。
 - **名称**：便于识别的备注，可随时修改。
 - **权限范围**：勾选该密钥允许调用的能力，每个业务域为一个独立权限。
 - **存储方式**：
@@ -32,7 +38,7 @@ curl -H "X-API-Key: <你的密钥>" https://your-site/api/key/help
 curl -H "Authorization: Bearer <你的密钥>" https://your-site/api/key/help
 ```
 
-密钥是 32 位字符。缺失或无效时返回 `401`，权限不足时返回 `403`。
+密钥是 32 位字符。缺失或无效时返回 `401`，权限不足时返回 `403`。使用与接口类型不匹配的密钥同样返回 `403`，例如用 API 接口密钥调用 `/mcp`。
 
 ## 查询当前密钥的权限
 
@@ -63,7 +69,7 @@ curl -H "X-API-Key: <你的密钥>" https://your-site/api/key/help
 
 | 权限 | 说明 | 接口 |
 | --- | --- | --- |
-| `content.read` | 内容读取（MCP） | `POST /mcp`（`tools/list`、`tools/call`） |
+| `content.read` | 内容读取（仅 MCP 密钥） | `POST /mcp`（`tools/list`、`tools/call`） |
 | `feed.write` | 文章管理 | `POST /api/key/feed`、`POST /api/key/feed/:id`、`DELETE /api/key/feed/:id` |
 | `friend.write` | 友链管理 | `POST /api/key/friend`、`PUT /api/key/friend/:id`、`DELETE /api/key/friend/:id` |
 | `moment.write` | 动态管理 | `POST /api/key/moment`、`POST /api/key/moment/:id`、`DELETE /api/key/moment/:id` |
@@ -79,12 +85,13 @@ curl -H "X-API-Key: <你的密钥>" https://your-site/api/key/help
 
 ## MCP 服务端
 
-站点在根路径 `/mcp` 提供 MCP（Model Context Protocol）服务端，支持 MCP 的客户端（Claude Code、Cursor、MCP Inspector 等）可以用同一把 API 密钥管理站点内容。
+站点在根路径 `/mcp` 提供 MCP（Model Context Protocol）服务端，支持 MCP 的客户端（Claude Code、Cursor、MCP Inspector 等）可以用 MCP 密钥管理站点内容。
 
 - 传输方式：Streamable HTTP
 - 服务地址：`https://your-site/mcp`
-- 鉴权方式：请求头携带 `X-API-Key` 或 `Authorization: Bearer <你的密钥>`，与 REST 接口共用同一把密钥和同一套权限
+- 鉴权方式：请求头携带 `X-API-Key` 或 `Authorization: Bearer <你的密钥>`，必须使用 MCP 密钥；API 接口密钥调用 `/mcp` 会返回 `403`
 - 权限裁剪：服务端按密钥权限过滤工具，未授权的工具不会出现在 `tools/list` 中，直接调用同样会被拒绝
+- 可用权限：MCP 密钥支持 `content.read` 与各类写入、配置权限，因此同一个密钥既能读取也能维护内容；API 接口密钥不能勾选 `content.read`
 
 ### 工具与权限
 
@@ -355,7 +362,7 @@ curl -X DELETE https://your-site/api/key/config/cache \
 | --- | --- |
 | `400` | 请求参数不合法，或包含当前权限不可写的配置键 |
 | `401` | 缺少 API 密钥，或密钥无效、已轮换、已删除 |
-| `403` | 密钥有效但缺少对应权限 |
+| `403` | 密钥有效但缺少对应权限，或密钥类型与接口不匹配 |
 | `404` | 目标资源或配置 section 不存在 |
 
 ## 安全建议

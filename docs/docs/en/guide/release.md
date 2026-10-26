@@ -22,6 +22,16 @@ Versions follow the format `MAJOR.MINOR.PATCH`:
 
 Pre-release versions can be tagged with a hyphen, e.g., `v1.0.0-beta.1`.
 
+### Secondary edition version line
+
+The Yangjiao Express secondary development edition stays outside the upstream `vX.Y.Z` automated release flow and uses its own `yjvX.Y.Z` line, incremented by the size of the change:
+
+- **`X` (major update)**: many new features or a full refactor, with `Y` and `Z` reset
+- **`Y` (regular update)**: one or two features or several small ones, with `Z` reset
+- **`Z` (patch)**: fixes and small changes
+
+Each release updates `CHANGELOG.md` and the version note in `docs/docs/{zh,en}/guide/changelog.md`, and adds a release post under `docs/docs/{zh,en}/blog/` registered in the blog section of `_nav.json`.
+
 ## Commit Message Convention
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. This allows us to automatically generate release notes.

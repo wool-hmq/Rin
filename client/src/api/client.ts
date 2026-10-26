@@ -469,14 +469,16 @@ class UserAPI {
     return this.http.delete<TotpStatusResponse>("/api/user/totp");
   }
 
-  // GET /api/key/manage - List API keys
-  async listApiKeys(): Promise<ApiResponse<{ success: boolean; keys: ApiKeyRecord[] }>> {
-    return this.http.get<{ success: boolean; keys: ApiKeyRecord[] }>("/api/key/manage");
+  // GET /api/key/manage - List API keys, optionally filtered by key type
+  async listApiKeys(type?: number): Promise<ApiResponse<{ success: boolean; keys: ApiKeyRecord[] }>> {
+    const query = type === undefined ? "" : `?type=${type}`;
+    return this.http.get<{ success: boolean; keys: ApiKeyRecord[] }>(`/api/key/manage${query}`);
   }
 
-  // GET /api/key/manage/scopes - Available API key scopes
-  async listApiKeyScopes(): Promise<ApiResponse<{ success: boolean; scopes: ApiKeyScopeInfo[] }>> {
-    return this.http.get<{ success: boolean; scopes: ApiKeyScopeInfo[] }>("/api/key/manage/scopes");
+  // GET /api/key/manage/scopes - Available API key scopes for a key type
+  async listApiKeyScopes(type?: number): Promise<ApiResponse<{ success: boolean; scopes: ApiKeyScopeInfo[] }>> {
+    const query = type === undefined ? "" : `?type=${type}`;
+    return this.http.get<{ success: boolean; scopes: ApiKeyScopeInfo[] }>(`/api/key/manage/scopes${query}`);
   }
 
   // POST /api/key/manage - Create an API key
@@ -484,6 +486,7 @@ class UserAPI {
     name: string;
     scopes: string[];
     visible?: boolean;
+    type?: number;
   }): Promise<ApiResponse<{ success: boolean; key: ApiKeyRecord; plaintext: string }>> {
     return this.http.post<{ success: boolean; key: ApiKeyRecord; plaintext: string }>("/api/key/manage", body);
   }
@@ -511,6 +514,7 @@ export interface ApiKeyRecord {
   id: number;
   name: string;
   visible: boolean;
+  type: number;
   scopes: string[];
   last_used_at: number | null;
   created_at: string;

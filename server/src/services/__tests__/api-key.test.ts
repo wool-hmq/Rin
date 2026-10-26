@@ -310,4 +310,85 @@ describe("ApiKeyService", () => {
     );
     expect(res.status).toBe(403);
   });
+
+  it("creates an MCP key that can read content", async () => {
+    const { res, body } = await createKey(ctx, { type: 2, scopes: ["content.read"] });
+    expect(res.ok).toBe(true);
+    expect(body.key.type).toBe(2);
+    expect(body.key.scopes).toEqual(["content.read"]);
+  });
+
+  it("defaults new keys to the REST type", async () => {
+    const { body } = await createKey(ctx);
+    expect(body.key.type).toBe(1);
+  });
+
+  it("rejects content.read on REST keys", async () => {
+    const { res } = await createKey(ctx, { scopes: ["content.read"] });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects unknown key types", async () => {
+    const { res } = await createKey(ctx, { type: 3 });
+    expect(res.status).toBe(400);
+  });
+
+  it("filters keys and scopes by type", async () => {
+    await createKey(ctx, { name: "rest", scopes: ["feed.write"] });
+    await createKey(ctx, { name: "mcp", type: 2, scopes: ["content.read"] });
+
+    const restRes = await ctx.app.fetch(
+      new Request("http://localhost/key/manage?type=1", { headers: authHeaders() }),
+      ctx.env,
+    );
+    const restList = await restRes.json() as any;
+    expect(restList.keys).toHaveLength(1);
+    expect(restList.keys[0].name).toBe("rest");
+
+    const mcpRes = await ctx.app.fetch(
+      new Request("http://localhost/key/manage?type=2", { headers: authHeaders() }),
+      ctx.env,
+    );
+    const mcpList = await mcpRes.json() as any;
+    expect(mcpList.keys).toHaveLength(1);
+    expect(mcpList.keys[0].name).toBe("mcp");
+
+    const scopesRes = await ctx.app.fetch(
+      new Request("http://localhost/key/manage/scopes?type=1", { headers: authHeaders() }),
+      ctx.env,
+    );
+    const scopesBody = await scopesRes.json() as any;
+    expect(scopesBody.scopes.some((item: any) => item.scope === "content.read")).toBe(false);
+
+    const mcpScopesRes = await ctx.app.fetch(
+      new Request("http://localhost/key/manage/scopes?type=2", { headers: authHeaders() }),
+      ctx.env,
+    );
+    const mcpScopesBody = await mcpScopesRes.json() as any;
+    expect(mcpScopesBody.scopes.some((item: any) => item.scope === "content.read")).toBe(true);
+  });
+
+  it("rejects MCP keys on REST endpoints", async () => {
+    const { body } = await createKey(ctx, { type: 2, scopes: ["content.read"] });
+    const res = await ctx.app.fetch(
+      new Request("http://localhost/key/help", { headers: keyHeaders(body.plaintext) }),
+      ctx.env,
+    );
+    expect(res.status).toBe(403);
+    const payload = await res.json() as any;
+    expect(payload.error).toContain("create an API key");
+  });
+
+  it("keeps the key type immutable", async () => {
+    const { body } = await createKey(ctx, { scopes: ["feed.write"] });
+    const res = await ctx.app.fetch(
+      new Request(`http://localhost/key/manage/${body.key.id}`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ type: 2 }),
+      }),
+      ctx.env,
+    );
+    expect(res.status).toBe(400);
+  });
 });

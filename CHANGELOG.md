@@ -9,6 +9,18 @@ This file contains **detailed** changelog information for each release.
 For a quick overview of changes, see the [GitHub Releases](https://github.com/openRin/Rin/releases) page
 which automatically generates release notes from commit messages.
 
+## [yjv1.0.3] - 2026-10-26
+
+### Added
+
+- **Separate key types**: `api_keys` gains `key_type` (1 = REST API, 2 = MCP), with separate management tabs, and each key only authenticates against its own endpoint.
+- **独立密钥类型**：`api_keys` 新增 `key_type`（1 = API 接口，2 = MCP），设置页分标签页管理，密钥只能用于对应端点。
+
+### Fixed
+
+- **Scope boundary**: `content.read` is limited to MCP keys, and REST keys calling `/mcp` or MCP keys calling `/api/key/*` get `403`.
+- **权限边界**：`content.read` 仅限 MCP 密钥，密钥类型与端点不匹配时返回 `403`。
+
 ## [yjv1.0.2] - 2026-10-26
 
 ### Added

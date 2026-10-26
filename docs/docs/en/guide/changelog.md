@@ -1,6 +1,24 @@
 # Changelog
 
-> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The latest release is **yjv1.0.2**. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
+> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The numbers follow the size of the change: `X` for a major update (many features or a full refactor), `Y` for a regular update (one or two features or several small ones), and `Z` for a patch (fixes and small changes). The latest release is **yjv1.0.3**. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
+
+## yjv1.0.3 - October 26, 2026
+
+Splits REST API keys and MCP keys into two separate types.
+
+### In this release
+
+- **Key types**: the `api_keys` table gains a `key_type` column (1 = REST API key, 2 = MCP key), and the settings page manages both under separate REST API and MCP tabs
+- **Endpoint isolation**: REST API keys only call `/api/key/*`, MCP keys only call `/mcp`, and a type mismatch returns `403`
+- **Scope boundary**: `content.read` is available to MCP keys only
+
+### Documentation
+
+- The API guide documents both key types, and migration `0021.sql` classifies existing keys automatically
+
+### Upgrade notes
+
+- The migration runs automatically: existing keys holding `content.read` become MCP keys, the rest become REST API keys
 
 ## yjv1.0.2 - October 26, 2026
 

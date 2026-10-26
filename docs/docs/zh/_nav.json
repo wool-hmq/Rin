@@ -56,6 +56,10 @@
     "text": "博客",
     "items": [
       {
+        "text": "二创版 yjv1.0.3 发布（API/MCP 密钥分离）",
+        "link": "/blog/yjv1.0.3-release"
+      },
+      {
         "text": "二创版 yjv1.0.2 发布",
         "link": "/blog/yjv1.0.2-release"
       },

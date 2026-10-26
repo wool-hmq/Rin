@@ -56,6 +56,10 @@
     "text": "Blog",
     "items": [
       {
+        "text": "Secondary edition yjv1.0.3 release (API/MCP keys)",
+        "link": "/blog/yjv1.0.3-release"
+      },
+      {
         "text": "Secondary edition yjv1.0.2 release (MCP)",
         "link": "/blog/yjv1.0.2-release"
       },

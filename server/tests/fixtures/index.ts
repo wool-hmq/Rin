@@ -179,6 +179,7 @@ export function createMockDB() {
             key_hash TEXT NOT NULL,
             key_encrypted TEXT,
             visible INTEGER DEFAULT 0 NOT NULL,
+            key_type INTEGER DEFAULT 1 NOT NULL,
             scopes TEXT DEFAULT '[]' NOT NULL,
             last_used_at INTEGER,
             created_at INTEGER DEFAULT (unixepoch()),

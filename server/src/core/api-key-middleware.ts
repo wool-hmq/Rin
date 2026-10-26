@@ -5,6 +5,7 @@ import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { apiKeys } from "../db/schema";
 import { hashApiKey } from "../utils/api-key";
+import { API_KEY_TYPE_MCP, type ApiKeyType } from "../utils/api-key-scopes";
 
 function readApiKey(c: AppContext): string | null {
     const header = c.req.header("X-API-Key") || c.req.header("x-api-key");
@@ -18,7 +19,12 @@ function readApiKey(c: AppContext): string | null {
     return null;
 }
 
-export function apiKeyAuthMiddleware(): MiddlewareHandler<{
+export interface ApiKeyAuthOptions {
+    // When set, only keys of this type may authenticate against the endpoint.
+    keyType?: ApiKeyType;
+}
+
+export function apiKeyAuthMiddleware(options: ApiKeyAuthOptions = {}): MiddlewareHandler<{
     Bindings: Env;
     Variables: import("../core/hono-types").Variables;
 }> {
@@ -37,6 +43,13 @@ export function apiKeyAuthMiddleware(): MiddlewareHandler<{
 
         if (!row) {
             return c.json({ success: false, error: "Invalid API key" }, 401);
+        }
+
+        if (options.keyType !== undefined && row.key_type !== options.keyType) {
+            const error = options.keyType === API_KEY_TYPE_MCP
+                ? "This key is for the REST API; create an MCP key to call /mcp"
+                : "This key is for MCP; create an API key to call /api/key";
+            return c.json({ success: false, error }, 403);
         }
 
         let scopes: string[] = [];

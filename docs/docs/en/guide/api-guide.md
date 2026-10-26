@@ -1,15 +1,21 @@
 # API Guide
 
-Rin exposes an API-key based interface that lets scripts or AI agents manage site content and settings without a login session. Every endpoint lives under `/api/key/`.
+Rin exposes an API-key based interface that lets scripts or AI agents manage site content and settings without a login session. REST endpoints live under `/api/key/`, and the MCP server lives at `/mcp`.
+
+Keys come in two types that do not work interchangeably:
+
+- **REST API keys**: call `/api/key/*` only, for scripted automation.
+- **MCP keys**: call `/mcp` only, for MCP clients such as Claude Code and Cursor.
 
 ## Creating an API key
 
-Only administrators can create API keys. Sign in as an administrator, open the admin Settings page, and scroll to the API keys section at the bottom to create, edit, rotate, and delete keys.
+Only administrators can create API keys. Sign in as an administrator, open the admin Settings page, and scroll to the API keys section at the bottom. The REST API and MCP tabs each list, create, edit, rotate, and delete their own keys.
 
 Each key belongs to the administrator who created it, and other accounts never see those keys.
 
 When creating a key you choose:
 
+- **Key type**: REST API or MCP. The type is fixed at creation and cannot be changed, and each tab only lists its own keys.
 - **Name**: a label you can edit at any time.
 - **Scopes**: the capabilities this key may use. Each feature area is a separate scope.
 - **Storage mode**:
@@ -32,7 +38,7 @@ curl -H "X-API-Key: <your-key>" https://your-site/api/key/help
 curl -H "Authorization: Bearer <your-key>" https://your-site/api/key/help
 ```
 
-Keys are 32 characters. A missing or invalid key returns `401`; a valid key without the required scope returns `403`.
+Keys are 32 characters. A missing or invalid key returns `401`; a valid key without the required scope returns `403`. Using a key against the other key type also returns `403`, for example a REST API key calling `/mcp`.
 
 ## Inspecting the current key
 
@@ -79,12 +85,13 @@ The response lists the key's scopes and the endpoints available for each one:
 
 ## MCP server
 
-The site exposes an MCP (Model Context Protocol) server at the root path `/mcp`, so MCP-capable clients (Claude Code, Cursor, MCP Inspector, and similar tools) manage site content with the same API key.
+The site exposes an MCP (Model Context Protocol) server at the root path `/mcp`, so MCP-capable clients (Claude Code, Cursor, MCP Inspector, and similar tools) manage site content with an MCP key.
 
 - Transport: Streamable HTTP
 - Endpoint: `https://your-site/mcp`
-- Authentication: send the key in the `X-API-Key` or `Authorization: Bearer <your-key>` header, sharing the same key and scopes as the REST endpoints
+- Authentication: send the key in the `X-API-Key` or `Authorization: Bearer <your-key>` header; the key must be an MCP key, and a REST API key calling `/mcp` gets `403`
 - Scope filtering: the server registers only the tools the key is allowed to use, so unauthorized tools never appear in `tools/list` and direct calls are rejected as well
+- Available scopes: MCP keys can hold `content.read` plus the write and config scopes, so one key can both read and maintain content; REST API keys cannot select `content.read`
 
 ### Tools and scopes
 
@@ -355,7 +362,7 @@ Articles and moments created through the API are attributed to user ID `1`. To u
 | --- | --- |
 | `400` | Invalid parameters, or a config key outside the granted section |
 | `401` | Missing, invalid, rotated or deleted API key |
-| `403` | Valid key without the required scope |
+| `403` | Valid key without the required scope, or the key type does not match the endpoint |
 | `404` | Resource or config section not found |
 
 ## Security notes

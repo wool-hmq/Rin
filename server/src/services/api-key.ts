@@ -9,7 +9,15 @@ import {
     ForbiddenError,
     NotFoundError,
 } from "../errors";
-import { API_KEY_SCOPES, API_KEY_SCOPE_NAMES, isApiKeyScope } from "../utils/api-key-scopes";
+import {
+    API_KEY_SCOPES,
+    API_KEY_SCOPE_NAMES,
+    API_KEY_TYPE_MCP,
+    API_KEY_TYPE_REST,
+    getApiKeyScopesForType,
+    isApiKeyScope,
+    type ApiKeyType,
+} from "../utils/api-key-scopes";
 import { generateApiKey, hashApiKey, encryptApiKey, decryptApiKey } from "../utils/api-key";
 
 const MAX_KEYS_PER_USER = 20;
@@ -24,14 +32,32 @@ function parseScopes(raw: string): string[] {
     }
 }
 
-function normalizeScopes(input: unknown): string[] {
+function parseKeyType(raw: unknown, fallback: ApiKeyType = API_KEY_TYPE_REST): ApiKeyType {
+    if (raw === undefined || raw === null || raw === "") {
+        return fallback;
+    }
+    const value = typeof raw === "number" ? raw : Number(raw);
+    if (value === API_KEY_TYPE_REST) {
+        return API_KEY_TYPE_REST;
+    }
+    if (value === API_KEY_TYPE_MCP) {
+        return API_KEY_TYPE_MCP;
+    }
+    throw new BadRequestError("type must be 1 (API) or 2 (MCP)");
+}
+
+function normalizeScopes(input: unknown, type: ApiKeyType): string[] {
     if (!Array.isArray(input)) {
         throw new BadRequestError("scopes must be an array");
     }
+    const allowed = new Set(getApiKeyScopesForType(type).map((item) => item.scope));
     const result: string[] = [];
     for (const item of input) {
         if (typeof item !== "string" || !isApiKeyScope(item)) {
             throw new BadRequestError(`Unknown scope: ${String(item)}`);
+        }
+        if (!allowed.has(item)) {
+            throw new BadRequestError(`Scope ${item} is not available for this key type`);
         }
         if (!result.includes(item)) {
             result.push(item);
@@ -47,6 +73,7 @@ function serializeKey(row: {
     id: number;
     name: string;
     visible: number;
+    key_type: number;
     scopes: string;
     last_used_at: number | null;
     createdAt: Date;
@@ -56,6 +83,7 @@ function serializeKey(row: {
         id: row.id,
         name: row.name,
         visible: row.visible === 1,
+        type: row.key_type,
         scopes: parseScopes(row.scopes),
         last_used_at: row.last_used_at,
         created_at: row.createdAt,
@@ -82,8 +110,13 @@ export function ApiKeyService(): Hono {
             throw new ForbiddenError("Administrator permission required");
         }
 
+        const typeParam = c.req.query("type");
+        const type = typeParam ? parseKeyType(typeParam) : undefined;
+
         const rows = await profileAsync(c, "api_key_list", () => db.query.apiKeys.findMany({
-            where: eq(apiKeys.uid, uid),
+            where: type === undefined
+                ? eq(apiKeys.uid, uid)
+                : and(eq(apiKeys.uid, uid), eq(apiKeys.key_type, type)),
             orderBy: (table, { desc }) => [desc(table.createdAt)],
         }));
 
@@ -100,9 +133,13 @@ export function ApiKeyService(): Hono {
 
     // GET /api/key/manage/scopes - Available scopes for the settings UI
     app.get("/scopes", async (c: AppContext) => {
+        const typeParam = c.req.query("type");
+        const type = typeParam ? parseKeyType(typeParam) : undefined;
+        const source = type === undefined ? API_KEY_SCOPES : getApiKeyScopesForType(type);
         return c.json({
             success: true,
-            scopes: API_KEY_SCOPES.map((item) => ({
+            type: type ?? null,
+            scopes: source.map((item) => ({
                 scope: item.scope,
                 title: item.title,
                 description: item.description,
@@ -127,6 +164,7 @@ export function ApiKeyService(): Hono {
             name?: unknown;
             scopes?: unknown;
             visible?: unknown;
+            type?: unknown;
         };
 
         const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -134,7 +172,8 @@ export function ApiKeyService(): Hono {
             throw new BadRequestError("name is required and must be at most 64 characters");
         }
 
-        const scopes = normalizeScopes(body.scopes);
+        const type = parseKeyType(body.type);
+        const scopes = normalizeScopes(body.scopes, type);
         const visible = body.visible === true || body.visible === "true";
 
         const existing = await profileAsync(c, "api_key_count", () => db.query.apiKeys.findMany({
@@ -155,6 +194,7 @@ export function ApiKeyService(): Hono {
             key_hash: keyHash,
             key_encrypted: keyEncrypted,
             visible: visible ? 1 : 0,
+            key_type: type,
             scopes: JSON.stringify(scopes),
         }).returning());
 
@@ -200,7 +240,13 @@ export function ApiKeyService(): Hono {
             name?: unknown;
             scopes?: unknown;
             visible?: unknown;
+            type?: unknown;
         };
+
+        const existingType = parseKeyType(existing.key_type);
+        if (body.type !== undefined && parseKeyType(body.type) !== existingType) {
+            throw new BadRequestError("Key type cannot be changed after creation");
+        }
 
         const updates: Partial<typeof apiKeys.$inferInsert> = {};
 
@@ -213,7 +259,7 @@ export function ApiKeyService(): Hono {
         }
 
         if (body.scopes !== undefined) {
-            updates.scopes = JSON.stringify(normalizeScopes(body.scopes));
+            updates.scopes = JSON.stringify(normalizeScopes(body.scopes, existingType));
         }
 
         const wantsVisible = body.visible === true || body.visible === "true";

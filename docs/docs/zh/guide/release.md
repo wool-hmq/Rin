@@ -22,6 +22,16 @@ Rin 使用[语义化版本控制](https://semver.org/lang/zh-CN/)，并遵循结
 
 预发布版本可以用连字符标记，例如 `v1.0.0-beta.1`。
 
+### 二创版版本线
+
+羊角快车二创版不参与上游的 `vX.Y.Z` 自动发版流程，改用独立的 `yjvX.Y.Z` 版本线，按改动规模递增：
+
+- **`X`（超大更新）**：大量新功能或整体重构，`Y` 与 `Z` 归零
+- **`Y`（普通更新）**：新增 1-2 个功能，或多个简单功能，`Z` 归零
+- **`Z`（补丁）**：缺陷修复与小改动
+
+发布时同步更新 `CHANGELOG.md`、`docs/docs/{zh,en}/guide/changelog.md` 的版本说明，并在 `docs/docs/{zh,en}/blog/` 下新增发布公告、在 `_nav.json` 的博客导航中登记。
+
 ## 提交信息规范
 
 我们遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范。这使我们能够自动生成发布说明。

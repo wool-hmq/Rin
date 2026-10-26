@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { AppContext } from "../core/hono-types";
 import { apiKeyAuthMiddleware } from "../core/api-key-middleware";
+import { API_KEY_TYPE_MCP } from "../utils/api-key-scopes";
 import { guardMcpRequest } from "../features/mcp/guard";
 import { createRinMcpHandler } from "../features/mcp/server";
 
@@ -15,7 +16,7 @@ export function McpService(): Hono {
         return next();
     });
 
-    app.use("*", apiKeyAuthMiddleware());
+    app.use("*", apiKeyAuthMiddleware({ keyType: API_KEY_TYPE_MCP }));
 
     app.all("/", async (c: AppContext) => {
         const env = c.get("env");

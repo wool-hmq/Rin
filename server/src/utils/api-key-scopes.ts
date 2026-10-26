@@ -120,6 +120,55 @@ export const API_KEY_SCOPES: ApiKeyScopeDefinition[] = [
 
 export const API_KEY_SCOPE_NAMES = API_KEY_SCOPES.map((item) => item.scope);
 
+export const API_KEY_TYPE_REST = 1;
+export const API_KEY_TYPE_MCP = 2;
+
+export type ApiKeyType = typeof API_KEY_TYPE_REST | typeof API_KEY_TYPE_MCP;
+
+export interface ApiKeyTypeDefinition {
+    type: ApiKeyType;
+    title: string;
+    description: string;
+}
+
+export const API_KEY_TYPES: ApiKeyTypeDefinition[] = [
+    {
+        type: API_KEY_TYPE_REST,
+        title: "API 接口",
+        description: "用于外部脚本调用 /api/key/* 接口读写内容。",
+    },
+    {
+        type: API_KEY_TYPE_MCP,
+        title: "MCP",
+        description: "用于 MCP 客户端调用 /mcp 端点。",
+    },
+];
+
+// content.read only powers the MCP read tools, so REST keys skip it.
+const MCP_ONLY_SCOPE_NAMES = new Set<string>(["content.read"]);
+
+export function isApiKeyType(value: unknown): value is ApiKeyType {
+    return value === API_KEY_TYPE_REST || value === API_KEY_TYPE_MCP;
+}
+
+export function isScopeAllowedForApiKeyType(scope: string, type: ApiKeyType): boolean {
+    if (!isApiKeyScope(scope)) {
+        return false;
+    }
+    if (type === API_KEY_TYPE_MCP) {
+        return true;
+    }
+    return !MCP_ONLY_SCOPE_NAMES.has(scope);
+}
+
+export function getApiKeyScopesForType(type: ApiKeyType): ApiKeyScopeDefinition[] {
+    return API_KEY_SCOPES.filter((item) => isScopeAllowedForApiKeyType(item.scope, type));
+}
+
+export function describeApiKeyType(type: ApiKeyType): string {
+    return type === API_KEY_TYPE_MCP ? "MCP" : "API";
+}
+
 export function isApiKeyScope(value: string): boolean {
     return API_KEY_SCOPE_NAMES.includes(value);
 }

@@ -6,19 +6,26 @@ import { Button } from "../components/button";
 import type { ApiKeyRecord, ApiKeyScopeInfo } from "../api/client";
 import { ItemTitle } from "./settings-items";
 
+const KEY_TYPE_REST = 1;
+const KEY_TYPE_MCP = 2;
+
+type KeyType = typeof KEY_TYPE_REST | typeof KEY_TYPE_MCP;
+
 interface KeyFormState {
   name: string;
   scopes: string[];
   visible: boolean;
+  type: KeyType;
 }
 
-const EMPTY_FORM: KeyFormState = { name: "", scopes: [], visible: false };
+const emptyForm = (type: KeyType): KeyFormState => ({ name: "", scopes: [], visible: false, type });
 
 export function ApiKeysSettings() {
   const { t } = useTranslation();
 
+  const [keyType, setKeyType] = useState<KeyType>(KEY_TYPE_REST);
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
-  const [scopes, setScopes] = useState<ApiKeyScopeInfo[]>([]);
+  const [scopes, setScopes] = useState<Record<number, ApiKeyScopeInfo[]>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -26,21 +33,21 @@ export function ApiKeysSettings() {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<KeyFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<KeyFormState>(() => emptyForm(KEY_TYPE_REST));
 
   const [revealed, setRevealed] = useState<Record<number, string>>({});
   const [plaintext, setPlaintext] = useState<string | null>(null);
 
   useEffect(() => {
-    void loadAll();
-  }, []);
+    void loadAll(keyType);
+  }, [keyType]);
 
-  const loadAll = async () => {
+  const loadAll = async (type: KeyType) => {
     setLoading(true);
     try {
       const [keysRes, scopesRes] = await Promise.all([
-        client.user.listApiKeys(),
-        client.user.listApiKeyScopes(),
+        client.user.listApiKeys(type),
+        client.user.listApiKeyScopes(type),
       ]);
       if (keysRes.error) {
         setError(String(keysRes.error.value));
@@ -49,7 +56,7 @@ export function ApiKeysSettings() {
         setError(String(scopesRes.error.value));
       }
       setKeys(keysRes.data?.keys ?? []);
-      setScopes(scopesRes.data?.scopes ?? []);
+      setScopes((prev) => ({ ...prev, [type]: scopesRes.data?.scopes ?? [] }));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -66,17 +73,22 @@ export function ApiKeysSettings() {
     setError("");
     setSuccess("");
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm(emptyForm(keyType));
     setEditorOpen(true);
-    if (scopes.length === 0) {
-      void loadAll();
+    if (!scopes[keyType]) {
+      void loadAll(keyType);
     }
   };
 
   const openEdit = (key: ApiKeyRecord) => {
     resetMessages();
     setEditingId(key.id);
-    setForm({ name: key.name, scopes: key.scopes, visible: key.visible });
+    setForm({
+      name: key.name,
+      scopes: key.scopes,
+      visible: key.visible,
+      type: key.type === KEY_TYPE_MCP ? KEY_TYPE_MCP : KEY_TYPE_REST,
+    });
     setEditorOpen(true);
   };
 
@@ -107,6 +119,7 @@ export function ApiKeysSettings() {
           name: form.name.trim(),
           scopes: form.scopes,
           visible: form.visible,
+          type: form.type,
         });
         if (res.error) {
           setError(String(res.error.value));
@@ -127,7 +140,7 @@ export function ApiKeysSettings() {
         setSuccess(t("api_keys.updated"));
       }
       setEditorOpen(false);
-      await loadAll();
+      await loadAll(keyType);
     } finally {
       setSaving(false);
     }
@@ -147,7 +160,7 @@ export function ApiKeysSettings() {
       }
       setPlaintext(res.data?.plaintext ?? null);
       setSuccess(t("api_keys.rotated"));
-      await loadAll();
+      await loadAll(keyType);
     } finally {
       setSaving(false);
     }
@@ -166,7 +179,7 @@ export function ApiKeysSettings() {
         return;
       }
       setSuccess(t("api_keys.deleted"));
-      await loadAll();
+      await loadAll(keyType);
     } finally {
       setSaving(false);
     }
@@ -186,7 +199,7 @@ export function ApiKeysSettings() {
       setRevealed((prev) => ({ ...prev, [key.id]: key.key as string }));
       return;
     }
-    const res = await client.user.listApiKeys();
+    const res = await client.user.listApiKeys(key.type === KEY_TYPE_MCP ? KEY_TYPE_MCP : KEY_TYPE_REST);
     if (res.error) {
       setError(String(res.error.value));
       return;
@@ -208,13 +221,42 @@ export function ApiKeysSettings() {
     }
   };
 
+  const scopeOptions = scopes[form.type] ?? [];
+  const keyTypeLabel = (type: number) => (type === KEY_TYPE_MCP ? t("api_keys.tab_mcp") : t("api_keys.tab_rest"));
+
   return (
     <div className="w-full space-y-2">
       <ItemTitle title={t("api_keys.title")} />
 
+      <div className="flex gap-2">
+        {([KEY_TYPE_REST, KEY_TYPE_MCP] as KeyType[]).map((type) => (
+          <button
+            key={type}
+            onClick={() => {
+              resetMessages();
+              setKeyType(type);
+            }}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              keyType === type ? "bg-theme text-white" : "bg-w-secondary t-secondary"
+            }`}
+          >
+            {keyTypeLabel(type)}
+          </button>
+        ))}
+      </div>
+
       <SettingsCard>
         <SettingsCardRow
-          header={<SettingsCardHeader title={t("api_keys.title")} description={t("api_keys.description")} />}
+          header={
+            <SettingsCardHeader
+              title={keyType === KEY_TYPE_MCP ? t("api_keys.title_mcp") : t("api_keys.title_rest")}
+              description={
+                keyType === KEY_TYPE_MCP
+                  ? t("api_keys.description_mcp", { url: `${window.location.origin}/mcp` })
+                  : t("api_keys.description_rest")
+              }
+            />
+          }
           action={<Button title={t("api_keys.create")} onClick={openCreate} />}
         />
         <SettingsCardBody>
@@ -250,6 +292,9 @@ export function ApiKeysSettings() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-medium t-primary">{key.name}</span>
+                        <span className="rounded-full bg-theme/10 px-2 py-0.5 text-xs text-theme">
+                          {keyTypeLabel(key.type)}
+                        </span>
                         <span className="rounded-full bg-w-secondary px-2 py-0.5 text-xs t-secondary">
                           {key.visible ? t("api_keys.visible") : t("api_keys.encrypted")}
                         </span>
@@ -312,13 +357,18 @@ export function ApiKeysSettings() {
             />
           </div>
 
+          <div className="rounded-lg border border-black/10 p-3 text-sm dark:border-white/10">
+            <p className="t-primary">{keyTypeLabel(form.type)}</p>
+            <p className="mt-1 text-xs t-secondary">{t("api_keys.type_locked")}</p>
+          </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium t-secondary">{t("api_keys.scopes")}</label>
             <div className="grid max-h-64 grid-cols-1 gap-2 overflow-auto pr-1">
-              {scopes.length === 0 && (
+              {scopeOptions.length === 0 && (
                 <p className="text-xs t-secondary">{t("api_keys.scopes_empty")}</p>
               )}
-              {scopes.map((scope) => (
+              {scopeOptions.map((scope) => (
                 <label
                   key={scope.scope}
                   className="flex cursor-pointer items-start gap-2 rounded-lg border border-black/10 p-2 text-sm dark:border-white/10"

@@ -118,6 +118,7 @@ export const apiKeys = sqliteTable("api_keys", {
     key_hash: text("key_hash").notNull().unique(),
     key_encrypted: text("key_encrypted"),
     visible: integer("visible").default(0).notNull(),
+    key_type: integer("key_type").default(1).notNull(),
     scopes: text("scopes").default("[]").notNull(),
     last_used_at: integer("last_used_at"),
     createdAt: created_at,
