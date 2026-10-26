@@ -1,4 +1,4 @@
-![Cover](./docs/docs/public/rin-logo.png)
+![Cover](./docs/docs/public/rin-logo-en.png)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wool-hmq/Rin)
 
