@@ -112,6 +112,9 @@ See the [changelog](../guide/changelog) for the full change list and the [API gu
 
 ## Feedback
 
-- [Secondary edition issues](https://github.com/wool-hmq/Rin/issues)
-- [Secondary edition discussions](https://github.com/wool-hmq/Rin/discussions)
-- Official upstream issues: [openRin/Rin Issues](https://github.com/openRin/Rin/issues)
+If you find issues while validating `yjv-1.0.2`, report them through:
+
+- 🐛 [Yangjiao Express Secondary Development Edition issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [Yangjiao Express Secondary Development Edition discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 Official upstream issues: [openRin/Rin issues](https://github.com/openRin/Rin/issues)
+- 💬 Official upstream discussions: [openRin/Rin discussions](https://github.com/openRin/Rin/discussions)
