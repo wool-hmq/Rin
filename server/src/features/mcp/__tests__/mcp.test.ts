@@ -5,7 +5,7 @@ import { setupTestApp, type TestContext } from "../../../../tests/fixtures";
 import { McpService } from "../../../services/mcp";
 import { hashApiKey } from "../../../utils/api-key";
 import { feeds } from "../../../db/schema";
-import { guardMcpRequest, resolveMcpAllowedHosts } from "../guard";
+import { guardMcpRequest, resolveMcpAllowedHostRules, resolveMcpAllowedHosts } from "../guard";
 
 const READ_KEY = "read-key-000000000000000000000";
 const WRITE_KEY = "write-key-000000000000000000000";
@@ -286,5 +286,79 @@ describe("MCP request guard", () => {
         const rejected = guardMcpRequest(request, env);
         expect(rejected).not.toBeNull();
         expect(rejected?.status).toBe(403);
+    });
+
+    it("allows a custom domain listed in MCP_ALLOWED_HOSTS", () => {
+        const env = { MCP_ALLOWED_HOSTS: "jiaoblog.dpdns.org" } as Env;
+        const request = new Request("https://jiaoblog.dpdns.org/mcp", {
+            headers: { Host: "jiaoblog.dpdns.org" },
+        });
+
+        expect(resolveMcpAllowedHosts(env, request)).toContain("jiaoblog.dpdns.org");
+        expect(guardMcpRequest(request, env)).toBeNull();
+    });
+
+    it("accepts allowlist entries written with a scheme or a port", () => {
+        const env = { MCP_ALLOWED_HOSTS: "https://jiaoblog.dpdns.org:443, blog.example.com:8080" } as Env;
+        const request = new Request("https://jiaoblog.dpdns.org/mcp", {
+            headers: { Host: "jiaoblog.dpdns.org" },
+        });
+
+        const rules = resolveMcpAllowedHostRules(env, request);
+        expect(rules.exactHosts).toContain("jiaoblog.dpdns.org");
+        expect(rules.exactHosts).toContain("blog.example.com");
+        expect(guardMcpRequest(request, env)).toBeNull();
+    });
+
+    it("allows wildcard domains and rejects unrelated hosts", () => {
+        const env = { MCP_ALLOWED_HOSTS: "*.dpdns.org" } as Env;
+        const allowed = new Request("https://jiaoblog.dpdns.org/mcp", {
+            headers: { Host: "jiaoblog.dpdns.org" },
+        });
+        const rejected = new Request("https://jiaoblog.dpdns.org/mcp", {
+            headers: { Host: "attacker.example.com" },
+        });
+
+        expect(resolveMcpAllowedHostRules(env, allowed).wildcardSuffixes).toContain(".dpdns.org");
+        expect(guardMcpRequest(allowed, env)).toBeNull();
+        expect(guardMcpRequest(rejected, env)?.status).toBe(403);
+    });
+
+    it("allows browser origins matching a wildcard domain", () => {
+        const env = { MCP_ALLOWED_HOSTS: "*.dpdns.org" } as Env;
+        const request = new Request("https://jiaoblog.dpdns.org/mcp", {
+            headers: {
+                Host: "jiaoblog.dpdns.org",
+                Origin: "https://jiaoblog.dpdns.org",
+            },
+        });
+
+        expect(guardMcpRequest(request, env)).toBeNull();
+    });
+
+    it("allows every host when MCP_ALLOWED_HOSTS is a wildcard", () => {
+        const env = { MCP_ALLOWED_HOSTS: "*" } as Env;
+        const request = new Request("https://jiaoblog.dpdns.org/mcp", {
+            headers: { Host: "jiaoblog.dpdns.org" },
+        });
+
+        expect(resolveMcpAllowedHostRules(env, request).allowAnyHost).toBe(true);
+        expect(guardMcpRequest(request, env)).toBeNull();
+    });
+
+    it("explains how to allow a host when the request is rejected", async () => {
+        const env = { FRONTEND_URL: "https://rin.lab.j3.ink" } as Env;
+        const request = new Request("https://rin.lab.j3.ink/mcp", {
+            headers: { Host: "jiaoblog.dpdns.org" },
+        });
+
+        const rejected = guardMcpRequest(request, env);
+        expect(rejected?.status).toBe(403);
+
+        const body = await rejected?.json() as {
+            error: { message: string; data: { hint: string } };
+        };
+        expect(body.error.message).toContain("jiaoblog.dpdns.org");
+        expect(body.error.data.hint).toContain("MCP_ALLOWED_HOSTS");
     });
 });

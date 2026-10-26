@@ -9,22 +9,22 @@ This file contains **detailed** changelog information for each release.
 For a quick overview of changes, see the [GitHub Releases](https://github.com/openRin/Rin/releases) page
 which automatically generates release notes from commit messages.
 
-## [Unreleased]
+## [yjv1.0.2] - 2026-10-26
 
 ### Added
 
-- **MCP server**: New `/mcp` endpoint that exposes articles, moments, friend links and settings as MCP tools. It reuses the existing API keys for authentication (`X-API-Key` or `Authorization: Bearer`) and filters the tool list by key scopes, with a new `content.read` scope for reading content. Host and Origin validation blocks DNS rebinding attacks; extra hostnames can be allowed through `MCP_ALLOWED_HOSTS`.
-- **MCP 服务端**：新增 `/mcp` 端点，把文章、动态、友链与设置以 MCP 工具形式暴露。沿用现有 API Key 鉴权（`X-API-Key` 或 `Authorization: Bearer`），按密钥权限裁剪工具列表，并新增 `content.read` 读取权限。Host 与 Origin 校验用于阻断 DNS rebinding 攻击，额外域名可通过 `MCP_ALLOWED_HOSTS` 放行。
-
-### Changed
-
-### Deprecated
-
-### Removed
+- **MCP server**: New `/mcp` endpoint exposing articles, moments, friend links and settings as MCP tools, authenticated with API keys and filtered by scopes.
+- **MCP 服务端**：新增 `/mcp` 端点，把文章、动态、友链与设置以 MCP 工具形式暴露，沿用 API Key 鉴权并按权限裁剪工具。
 
 ### Fixed
 
+- **MCP custom domain access**: `MCP_ALLOWED_HOSTS` accepts scheme/port entries, wildcards and `*`, and the deploy command exports it with `FRONTEND_URL`.
+- **MCP 自定义域名访问**：`MCP_ALLOWED_HOSTS` 支持协议/端口写法、通配与 `*`，部署命令会同时写入 `FRONTEND_URL`。
+
 ### Security
+
+- **MCP host validation**: Host and Origin checks run before authentication to block DNS rebinding; `content.read` limits read-only keys.
+- **MCP 域名校验**：Host 与 Origin 校验先于鉴权执行以阻断 DNS rebinding，`content.read` 限定只读密钥范围。
 
 ## [v0.3.0] - 2026-03-12
 

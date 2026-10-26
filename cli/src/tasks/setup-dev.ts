@@ -64,6 +64,8 @@ RSS_DESCRIPTION = "${env.RSS_DESCRIPTION || "Development Environment"}"
 CACHE_STORAGE_MODE = "${env.CACHE_STORAGE_MODE || "s3"}"
 ADMIN_USERNAME = "${env.ADMIN_USERNAME}"
 ADMIN_PASSWORD = "${env.ADMIN_PASSWORD}"
+FRONTEND_URL = "${env.FRONTEND_URL || ""}"
+MCP_ALLOWED_HOSTS = "${env.MCP_ALLOWED_HOSTS || ""}"
 
 [[d1_databases]]
 binding = "DB"

@@ -3,6 +3,7 @@ import {
   buildWranglerObservabilityConfig,
   buildWranglerQueueConfig,
   buildWranglerTriggersConfig,
+  buildWranglerVarsConfig,
   collectWorkerSecrets,
 } from "./deploy-cf";
 
@@ -85,5 +86,58 @@ describe("buildWranglerObservabilityConfig", () => {
 
   it("omits observability overrides for production deploys", () => {
     expect(buildWranglerObservabilityConfig(false)).toBe("");
+  });
+});
+
+describe("buildWranglerVarsConfig", () => {
+  const baseVars = {
+    s3Folder: "images/",
+    s3CacheFolder: "cache/",
+    s3Region: "auto",
+    s3Endpoint: "",
+    s3AccessHost: "",
+    s3Bucket: "",
+    s3ForcePathStyle: "false",
+    webhookUrl: "",
+    rssTitle: "",
+    rssDescription: "",
+    cacheStorageMode: "s3",
+    emailResendUrl: "",
+    emailSendUrls: "",
+    name: "Rin",
+    description: "",
+    avatar: "",
+    pageSize: "5",
+    rssEnable: "false",
+    frontendUrl: "",
+    mcpAllowedHosts: "",
+  };
+
+  it("exports the frontend origin and the MCP host allowlist to the worker", () => {
+    const config = buildWranglerVarsConfig({
+      ...baseVars,
+      frontendUrl: "https://jiaoblog.dpdns.org",
+      mcpAllowedHosts: "jiaoblog.dpdns.org,blog.example.com",
+    });
+
+    expect(config).toContain('[vars]');
+    expect(config).toContain('FRONTEND_URL = "https://jiaoblog.dpdns.org"');
+    expect(config).toContain('MCP_ALLOWED_HOSTS = "jiaoblog.dpdns.org,blog.example.com"');
+  });
+
+  it("keeps empty optional values as empty strings", () => {
+    const config = buildWranglerVarsConfig(baseVars);
+
+    expect(config).toContain('FRONTEND_URL = ""');
+    expect(config).toContain('MCP_ALLOWED_HOSTS = ""');
+  });
+
+  it("escapes quotes in configured values", () => {
+    const config = buildWranglerVarsConfig({
+      ...baseVars,
+      mcpAllowedHosts: 'blog"example.com',
+    });
+
+    expect(config).toContain('MCP_ALLOWED_HOSTS = "blog\\"example.com"');
   });
 });

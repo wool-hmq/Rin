@@ -151,6 +151,27 @@ The server validates the `Host` and `Origin` headers to block DNS rebinding atta
 MCP_ALLOWED_HOSTS=blog.example.com,www.example.com
 ```
 
+Entries may include a scheme or port (`https://blog.example.com:443`), use a wildcard domain (`*.example.com`) or `*` to disable the hostname allowlist (internal networks and trusted proxies only). The deploy command writes `MCP_ALLOWED_HOSTS` and `FRONTEND_URL` into the worker variables, so a redeploy applies the change.
+
+### Custom domain troubleshooting
+
+Clients hitting `/mcp` through a custom domain can meet two kinds of rejection:
+
+| Symptom | Source | Fix |
+| --- | --- | --- |
+| `HTTP 421 Misdirected Request` | Cloudflare edge: the request Host does not match a domain or route of that worker | Attach the domain (for example `jiaoblog.dpdns.org`) to the worker as a Custom Domain or a Route in the Cloudflare dashboard |
+| `HTTP 403` with `Invalid Host: <hostname>` in the body | The server-side DNS rebinding protection | Add the hostname to `MCP_ALLOWED_HOSTS` or point `FRONTEND_URL` at the site origin, then redeploy |
+
+Verification command:
+
+```bash
+curl -i -X POST https://jiaoblog.dpdns.org/mcp \
+  -H "X-API-Key: <your key>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1.0.0"}}}'
+```
+
 ## Articles
 
 ### Create an article

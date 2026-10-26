@@ -151,6 +151,27 @@ curl -X POST https://your-site/mcp \
 MCP_ALLOWED_HOSTS=blog.example.com,www.example.com
 ```
 
+域名条目支持带协议或端口的写法（`https://blog.example.com:443`）、通配域名（`*.example.com`）与 `*`（关闭域名白名单，仅限内网或可信代理环境）。部署命令会把 `MCP_ALLOWED_HOSTS` 与 `FRONTEND_URL` 写入 Worker 变量，修改后重新执行部署即可生效。
+
+### 自定义域名排查
+
+通过自定义域名访问 `/mcp` 时，客户端可能遇到两类拒绝：
+
+| 现象 | 来源 | 处理方式 |
+| --- | --- | --- |
+| `HTTP 421 Misdirected Request` | Cloudflare 边缘：请求的 Host 没有匹配到该 Worker 的域名或路由 | 在 Cloudflare 控制台为 Worker 添加自定义域名（Custom Domain）或路由（Route），让 `jiaoblog.dpdns.org` 指向该 Worker |
+| `HTTP 403` 且响应体包含 `Invalid Host: <域名>` | 服务端的 DNS rebinding 防护 | 把该域名加入 `MCP_ALLOWED_HOSTS`，或把 `FRONTEND_URL` 设为站点根地址，然后重新部署 |
+
+验证命令：
+
+```bash
+curl -i -X POST https://jiaoblog.dpdns.org/mcp \
+  -H "X-API-Key: <你的密钥>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1.0.0"}}}'
+```
+
 ## 文章管理
 
 ### 发布文章

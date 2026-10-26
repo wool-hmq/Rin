@@ -4,7 +4,10 @@ import stripIndent from "strip-indent";
 import { fixTopField, getMigrationFileVersion, getMigrationVersion, updateMigrationVersion } from "../lib/db-migration";
 const bunExec = process.execPath;
 
-function env(name: string, defaultValue?: string, required = false) {
+function env(name: string): string | undefined;
+function env(name: string, defaultValue: string): string;
+function env(name: string, defaultValue: string | undefined, required: boolean): string;
+function env(name: string, defaultValue?: string, required = false): string | undefined {
   const value = process.env[name] || defaultValue;
   if (required && !value) {
     throw new Error(`${name} is not defined`);
@@ -167,6 +170,65 @@ export function buildWranglerObservabilityConfig(preview = false) {
   `);
 }
 
+export type WranglerVarsInput = {
+  s3Folder: string;
+  s3CacheFolder: string;
+  s3Region: string;
+  s3Endpoint: string;
+  s3AccessHost: string;
+  s3Bucket: string;
+  s3ForcePathStyle: string;
+  webhookUrl: string;
+  rssTitle: string;
+  rssDescription: string;
+  cacheStorageMode: string;
+  emailResendUrl: string;
+  emailSendUrls: string;
+  name: string;
+  description: string;
+  avatar: string;
+  pageSize: string;
+  rssEnable: string;
+  frontendUrl: string;
+  mcpAllowedHosts: string;
+};
+
+export function buildWranglerVarsConfig(vars: WranglerVarsInput): string {
+  const lines = [
+    "[vars]",
+    `S3_FOLDER = "${tomlEscape(vars.s3Folder)}"`,
+    `S3_CACHE_FOLDER="${tomlEscape(vars.s3CacheFolder)}"`,
+    `S3_REGION = "${tomlEscape(vars.s3Region)}"`,
+    `S3_ENDPOINT = "${tomlEscape(vars.s3Endpoint)}"`,
+    `S3_ACCESS_HOST = "${tomlEscape(vars.s3AccessHost)}"`,
+    `S3_BUCKET = "${tomlEscape(vars.s3Bucket)}"`,
+    `S3_FORCE_PATH_STYLE = "${tomlEscape(vars.s3ForcePathStyle)}"`,
+    `WEBHOOK_URL = "${tomlEscape(vars.webhookUrl)}"`,
+    `RSS_TITLE = "${tomlEscape(vars.rssTitle)}"`,
+    `RSS_DESCRIPTION = "${tomlEscape(vars.rssDescription)}"`,
+    `CACHE_STORAGE_MODE = "${tomlEscape(vars.cacheStorageMode)}"`,
+    `EMAIL_RESEND_URL = "${tomlEscape(vars.emailResendUrl)}"`,
+    `EMAIL_SEND_URLS = "${tomlEscape(vars.emailSendUrls)}"`,
+    `NAME = "${tomlEscape(vars.name)}"`,
+    `DESCRIPTION = "${tomlEscape(vars.description)}"`,
+    `AVATAR = "${tomlEscape(vars.avatar)}"`,
+    `PAGE_SIZE = "${tomlEscape(vars.pageSize)}"`,
+    `RSS_ENABLE = "${tomlEscape(vars.rssEnable)}"`,
+    `FRONTEND_URL = "${tomlEscape(vars.frontendUrl)}"`,
+    `MCP_ALLOWED_HOSTS = "${tomlEscape(vars.mcpAllowedHosts)}"`,
+  ];
+
+  return lines.join("\n");
+}
+
+function indentBlock(content: string, spaces: number): string {
+  const prefix = " ".repeat(spaces);
+  return content
+    .split("\n")
+    .map((line) => (line.length > 0 ? `${prefix}${line}` : line))
+    .join("\n");
+}
+
 async function resolveR2BucketInfo(r2BucketName: string) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   if (!accountId) return null;
@@ -205,6 +267,8 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
   const avatar = env("AVATAR", "");
   const pageSize = env("PAGE_SIZE", "5");
   const rssEnable = env("RSS_ENABLE", "false");
+  const frontendUrl = env("FRONTEND_URL", "");
+  const mcpAllowedHosts = env("MCP_ALLOWED_HOSTS", "");
 
   let finalS3Endpoint = s3Endpoint;
   let finalS3Bucket = s3Bucket;
@@ -240,25 +304,28 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
       ${buildWranglerTriggersConfig(preview)}
       ${buildWranglerObservabilityConfig(preview)}
 
-      [vars]
-      S3_FOLDER = "${s3Folder}"
-      S3_CACHE_FOLDER="${s3CacheFolder}"
-      S3_REGION = "${s3Region}"
-      S3_ENDPOINT = "${finalS3Endpoint}"
-      S3_ACCESS_HOST = "${finalS3AccessHost}"
-      S3_BUCKET = "${finalS3Bucket}"
-      S3_FORCE_PATH_STYLE = "${s3ForcePathStyle}"
-      WEBHOOK_URL = "${webhookUrl}"
-      RSS_TITLE = "${rssTitle}"
-      RSS_DESCRIPTION = "${rssDescription}"
-      CACHE_STORAGE_MODE = "${cacheStorageMode}"
-      EMAIL_RESEND_URL = "${emailResendUrl}"
-      EMAIL_SEND_URLS = "${tomlEscape(emailSendUrls)}"
-      NAME = "${name}"
-      DESCRIPTION = "${description}"
-      AVATAR = "${avatar}"
-      PAGE_SIZE = "${pageSize}"
-      RSS_ENABLE = "${rssEnable}"
+      ${indentBlock(buildWranglerVarsConfig({
+        s3Folder,
+        s3CacheFolder,
+        s3Region,
+        s3Endpoint: finalS3Endpoint,
+        s3AccessHost: finalS3AccessHost,
+        s3Bucket: finalS3Bucket,
+        s3ForcePathStyle,
+        webhookUrl,
+        rssTitle,
+        rssDescription,
+        cacheStorageMode,
+        emailResendUrl,
+        emailSendUrls,
+        name,
+        description,
+        avatar,
+        pageSize,
+        rssEnable,
+        frontendUrl,
+        mcpAllowedHosts,
+      }), 6)}
 
       [placement]
       mode = "smart"

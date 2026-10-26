@@ -7,16 +7,19 @@ import { createRinMcpHandler } from "../features/mcp/server";
 export function McpService(): Hono {
     const app = new Hono();
 
+    app.use("*", async (c: AppContext, next) => {
+        const rejected = guardMcpRequest(c.req.raw, c.get("env"));
+        if (rejected) {
+            return rejected;
+        }
+        return next();
+    });
+
     app.use("*", apiKeyAuthMiddleware());
 
     app.all("/", async (c: AppContext) => {
         const env = c.get("env");
         const request = c.req.raw;
-
-        const rejected = guardMcpRequest(request, env);
-        if (rejected) {
-            return rejected;
-        }
 
         const scopes = c.get("apiKeyScopes") ?? [];
         const keyId = c.get("apiKeyId") ?? 0;
