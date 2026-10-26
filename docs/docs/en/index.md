@@ -4,7 +4,7 @@ pageType: home
 hero:
   tagline: Dynamic blog system based on Cloudflare
   image:
-    src: /rin-logo.png
+    src: /rin-logo-en.png
   actions:
     - theme: brand
       text: Quick Start
