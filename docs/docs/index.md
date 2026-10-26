@@ -4,7 +4,7 @@ pageType: home
 hero:
   tagline: 基于 Cloudflare 的动态博客系统
   image:
-    src: /rin-logo.png
+    src: /rin-logo-zh.png
   actions:
     - theme: brand
       text: 快速开始
