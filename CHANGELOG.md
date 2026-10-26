@@ -9,7 +9,7 @@ This file contains **detailed** changelog information for each release.
 For a quick overview of changes, see the [GitHub Releases](https://github.com/openRin/Rin/releases) page
 which automatically generates release notes from commit messages.
 
-## [yjv1.0.3] - 2026-10-26
+## [yjv1.1.2] - 2026-10-26
 
 ### Added
 
@@ -21,7 +21,7 @@ which automatically generates release notes from commit messages.
 - **Scope boundary**: `content.read` is limited to MCP keys, and REST keys calling `/mcp` or MCP keys calling `/api/key/*` get `403`.
 - **权限边界**：`content.read` 仅限 MCP 密钥，密钥类型与端点不匹配时返回 `403`。
 
-## [yjv1.0.2] - 2026-10-26
+## [yjv1.1.1] - 2026-10-26
 
 ### Added
 

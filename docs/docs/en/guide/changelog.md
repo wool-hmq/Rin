@@ -1,8 +1,8 @@
 # Changelog
 
-> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The numbers follow the size of the change: `X` for a major update (many features or a full refactor), `Y` for a regular update (one or two features or several small ones), and `Z` for a patch (fixes and small changes). The latest release is **yjv1.0.3**. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
+> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The numbers follow the size of the change: `X` for a major update (many features or a full refactor), `Y` for a regular update (one or two features or several small ones), and `Z` for a patch (fixes and small changes). Release announcements are maintained per line: patches merge into that line's page, and when a new line starts the previous line is marked stable while the new one is marked beta. The latest release is **yjv1.1** (stable). The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
 
-## yjv1.0.3 - October 26, 2026
+## yjv1.1.2 - October 26, 2026
 
 Splits REST API keys and MCP keys into two separate types.
 
@@ -20,7 +20,7 @@ Splits REST API keys and MCP keys into two separate types.
 
 - The migration runs automatically: existing keys holding `content.read` become MCP keys, the rest become REST API keys
 
-## yjv1.0.2 - October 26, 2026
+## yjv1.1.1 - October 26, 2026
 
 Adds the MCP server and fixes rejected access through custom domains.
 
@@ -36,13 +36,13 @@ Adds the MCP server and fixes rejected access through custom domains.
 
 ### Documentation
 
-- Added the [yjv1.0.2 release announcement](../blog/yjv1.0.2-release) and documented custom-domain troubleshooting (421 vs 403) in the API guide
+- Added the [yjv1.1 release announcement](../blog/yjv1.1-release) and documented custom-domain troubleshooting (421 vs 403) in the API guide
 
 ### Upgrade notes
 
 - Custom-domain sites must set `MCP_ALLOWED_HOSTS` or `FRONTEND_URL` and redeploy; this release adds no database migrations
 
-## yjv1.0.1 - October 24, 2026
+## yjv1.1.0 - October 24, 2026
 
 The first feature release of the secondary development edition's own version line. It ships the dual friend-link verification methods and keeps the Chinese and English docs in sync.
 

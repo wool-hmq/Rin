@@ -144,4 +144,6 @@ Entries discovered by the Agent during task execution should follow this format:
   - 版本线格式为 `yjvX.Y.Z`：超大更新（大量新功能或整体重构）加 `X`；普通更新（新增 1-2 个功能或多个简单功能）加 `Y`；补丁（缺陷修复与小改动）加 `Z`；低位归零。
   - 发布时同步更新 `docs/docs/{zh,en}/guide/changelog.md` 顶部最新版本说明、`CHANGELOG.md`、`docs/docs/{zh,en}/blog/` 发布公告与 `_nav.json` 博客导航。
   - 更新日志条目保持简短（一行式），详细说明放在 blog 发布公告中。
+  - 发布公告按版本线归档（如 `yjv1.1`）：同一版本线的补丁合并进该线页面，不再为每个补丁新建文件；新版本线才新增页面。
+  - 版本状态：新线开始时上一条线标注为稳定版（Stable），新线标注为 Beta；导航条目标注当前状态。
   - 数据库结构变更以 `server/sql/NNNN.sql` 递增编号追加，并在文件末尾更新 `info.migration_version`。

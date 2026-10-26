@@ -7,7 +7,7 @@ sidebar: false
 
 **发布日期**: 2026年10月24日
 
-从今天起，羊角快车二创版（[wool-hmq/Rin](https://github.com/wool-hmq/Rin)）启用独立的 `yjvX.Y.Z` 版本线，与官方原版（[openRin/Rin](https://github.com/openRin/Rin)，上游）的 `vX.Y.Z` 版本线分开维护。首个版本为 `yjv1.0.0`，后续功能更新以 `yjv1.0.1`、`yjv1.0.2` 的形式递增。
+从今天起，羊角快车二创版（[wool-hmq/Rin](https://github.com/wool-hmq/Rin)）启用独立的 `yjvX.Y.Z` 版本线，与官方原版（[openRin/Rin](https://github.com/openRin/Rin)，上游）的 `vX.Y.Z` 版本线分开维护。首个版本为 `yjv1.0.0`，后续版本线以 `yjv1.1`、`yjv1.2` 的形式递增。
 
 ## 版本线约定
 

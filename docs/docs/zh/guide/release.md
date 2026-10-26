@@ -30,7 +30,7 @@ Rin 使用[语义化版本控制](https://semver.org/lang/zh-CN/)，并遵循结
 - **`Y`（普通更新）**：新增 1-2 个功能，或多个简单功能，`Z` 归零
 - **`Z`（补丁）**：缺陷修复与小改动
 
-发布时同步更新 `CHANGELOG.md`、`docs/docs/{zh,en}/guide/changelog.md` 的版本说明，并在 `docs/docs/{zh,en}/blog/` 下新增发布公告、在 `_nav.json` 的博客导航中登记。
+发布时同步更新 `CHANGELOG.md`、`docs/docs/{zh,en}/guide/changelog.md` 的版本说明，并按版本线维护发布公告（如 `yjv1.1`）：同一版本线的补丁合并到该线页面，新版本线才新增页面；页面在 `_nav.json` 的博客导航中登记，新线开始时上一条标为稳定版、新线标为 Beta。
 
 ## 提交信息规范
 

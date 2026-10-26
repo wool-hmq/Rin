@@ -30,7 +30,7 @@ The Yangjiao Express secondary development edition stays outside the upstream `v
 - **`Y` (regular update)**: one or two features or several small ones, with `Z` reset
 - **`Z` (patch)**: fixes and small changes
 
-Each release updates `CHANGELOG.md` and the version note in `docs/docs/{zh,en}/guide/changelog.md`, and adds a release post under `docs/docs/{zh,en}/blog/` registered in the blog section of `_nav.json`.
+Each release updates `CHANGELOG.md` and the version note in `docs/docs/{zh,en}/guide/changelog.md`, and keeps release posts per line (such as `yjv1.1`): patches merge into that line's page and only a new line gets a new page, registered in the blog section of `_nav.json`, with the previous line marked stable and the new one beta.
 
 ## Commit Message Convention
 

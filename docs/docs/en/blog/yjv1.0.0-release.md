@@ -7,7 +7,7 @@ sidebar: false
 
 **Release Date**: October 24, 2026
 
-Starting today, the Yangjiao Express secondary development edition ([wool-hmq/Rin](https://github.com/wool-hmq/Rin)) runs its own `yjvX.Y.Z` version line, maintained separately from the official upstream ([openRin/Rin](https://github.com/openRin/Rin)) `vX.Y.Z` line. The first release is `yjv1.0.0`, and follow-up releases continue as `yjv1.0.1`, `yjv1.0.2`, and so on.
+Starting today, the Yangjiao Express secondary development edition ([wool-hmq/Rin](https://github.com/wool-hmq/Rin)) runs its own `yjvX.Y.Z` version line, maintained separately from the official upstream ([openRin/Rin](https://github.com/openRin/Rin)) `vX.Y.Z` line. The first release is `yjv1.0.0`, and follow-up lines continue as `yjv1.1`, `yjv1.2`, and so on.
 
 ## Version line conventions
 
