@@ -13,7 +13,7 @@
     "preview": "wrangler pages dev dist --compatibility-date=2023-12-20",
     "migrate:visits": "bun run scripts/migrate-visits.ts",
     "test": "bun test",
-    "test:coverage": "bun test --coverage",
+    "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "check": "tsc --noEmit"
   },
   "devDependencies": {

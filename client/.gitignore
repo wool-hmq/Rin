@@ -25,3 +25,5 @@ dist-ssr
 *.sw?
 
 public/locales/**/*_old.json
+# test coverage
+coverage

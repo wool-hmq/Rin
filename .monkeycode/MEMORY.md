@@ -134,7 +134,9 @@ Entries discovered by the Agent during task execution should follow this format:
   - 线上功能验证改用本地 `bunx wrangler dev`（workerd 运行时）：先 `bun run build:client` 生成 `dist/client` 供 assets 绑定，再按 `server/sql/*.sql` 逐个 `bunx wrangler d1 execute rin --local --file ...` 建本地库。
   - `wrangler d1 execute --local` 不会建 `users` 行，插入 `api_keys` 前需先插入 `users(id=1, ...)`，否则触发外键约束失败。
   - 本地冒烟端口需避开已被占用的 11499/11498，沙箱内占用端口的服务会统一返回 `{"id":"upstream-msg-001"}`，容易误判为应用返回。
-  - CI 的 `CI - Test and Type Check` 工作流中 `coverage` 作业（客户端覆盖率）长期失败，与服务端改动无关，判读 CI 结果时按该基线处理。
+  - CI `coverage` 作业通过根 `test:coverage` 依次运行客户端 vitest 覆盖率与服务端 bun 覆盖率；根目录 `bun test` 会把客户端 vitest 用例交给 bun 执行并因缺少 DOM 报错，根 `test` 脚本已改为按工作区分组执行。
+  - 客户端覆盖率依赖与 vitest 同版本的 `@vitest/coverage-v8`，报告输出到 `client/coverage/lcov.info`；服务端必须在脚本里显式传 `--coverage-reporter=lcov`（Bun 不读取 `server/bunfig.json`），报告输出到 `server/coverage/lcov.info`。
+  - Bun 的 `bun test <参数>` 把参数当路径子串过滤，`cli` 会误匹配 `client/**`，需要写成 `cli/src` 这类精确路径。
 
 
 [User Instruction Summary]
