@@ -104,6 +104,8 @@ DNS 方式会下发 `_jiaofriend` 主机记录、`TXT` 类型、验证码作为�
 
 ## 反馈
 
+如果你在验证 `yjv1.1.0~yjv1.1.2` 时发现问题，建议直接通过以下方式反馈：
+
 - 二创版 Issues：<https://github.com/wool-hmq/Rin/issues>
 - 二创版 Discussions：<https://github.com/wool-hmq/Rin/discussions>
 - 官方原版 Issues（上游）：<https://github.com/openRin/Rin/issues>

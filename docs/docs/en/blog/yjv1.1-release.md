@@ -104,6 +104,8 @@ See the [API guide](../guide/api-guide) for endpoint details and the [changelog]
 
 ## Feedback
 
+If you find issues while validating `yjv1.1.0~yjv1.1.2`, report them through:
+
 - Secondary edition issues: <https://github.com/wool-hmq/Rin/issues>
 - Secondary edition discussions: <https://github.com/wool-hmq/Rin/discussions>
 - Official upstream issues: <https://github.com/openRin/Rin/issues>
