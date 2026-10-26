@@ -56,7 +56,7 @@
     "text": "博客",
     "items": [
       {
-        "text": "二创版 yjv1.0.2 发布（新增 MCP）",
+        "text": "二创版 yjv1.0.2 发布",
         "link": "/blog/yjv1.0.2-release"
       },
       {
@@ -64,7 +64,7 @@
         "link": "/blog/yjv1.0.0-release"
       },
       {
-        "text": "官方原版 v0.3.0 发布（上游）",
+        "text": "官方原版 v0.3.0 发布",
         "link": "/blog/v0.3.0-release"
       }
     ]
