@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body {
+  @apply bg-background-light dark:bg-background-dark text-gray-800;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+.wmde-markdown {
+  @apply bg-w;
+}
+
+.w-md-editor {
+  @apply bg-w;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: initial;
+}
+
+.bg-w {
+  @apply bg-white dark:bg-dark;
+}
+
+.bg-hover {
+  @apply hover:bg-neutral-200 dark:hover:bg-neutral-600;
+}
+
+.shadow-color {
+  @apply shadow-neutral-200/30 dark:shadow-black/10;
+}
+
+.t-primary {
+  @apply text-black dark:text-white;
+}
+
+.t-secondary {
+  @apply text-neutral-800 dark:text-neutral-200;
+}
+
+.wauto {
+  @apply w-full md:w-11/12 lg:w-10/12 xl:w-8/12 2xl:w-6/12 duration-300;
+}
+
+.writeauto {
+  @apply w-full md:w-7/12 lg:w-8/12 xl:w-10/12 2xl:w-full duration-300;
+}
+
+.markdown-alert {
+  @apply !border-l-0 border-0 rounded-lg !py-4 my-4 !px-4 !leading-snug;
+}
+.markdown-alert-note {
+  @apply !border-indigo-100 bg-indigo-50 !text-indigo-400  ;
+}
+.markdown-alert-warning {
+  @apply !border-yellow-100 bg-yellow-50 !text-yellow-400 ;
+}
+.markdown-alert-tip {
+  @apply !border-green-100 bg-green-50 !text-green-400 ;
+}
+.markdown-alert-important {
+  @apply !border-purple-100 bg-purple-50 !text-purple-400 ;
+}
+.markdown-alert-caution {
+  @apply !border-red-100 bg-red-50 !text-red-400 ;
+}
+.markdown-alert-title {
+  @apply !mb-2 !text-inherit !font-bold;
+}

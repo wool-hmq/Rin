@@ -1,0 +1,18 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "rin-server"
+main = "src/_worker.ts"
+compatibility_date = "2024-05-29"
+# compatibility_flags = ["nodejs_compat"]
+node_compat = true
+
+[triggers]
+crons = ["*/20 * * * *"]
+
+[vars]
+FRONTEND_URL = "https://xeu.life"
+S3_FOLDER = "images/"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "YourDatabaseName"
+database_id = "YourDatabaseID"
