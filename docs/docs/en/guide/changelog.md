@@ -1,8 +1,8 @@
 # Changelog
 
-> **Versioning**: The Yangjiao Express secondary development edition uses its own `yjvX.Y.Z` line, starting at **yjv1.0.0**, to stay distinct from the official upstream openRin/Rin `vX.Y.Z` line. The numbers follow the size of the change: `X` for a major update (many features or a full refactor), `Y` for a regular update (one or two features or several small ones), and `Z` for a patch (fixes and small changes). Release announcements are maintained per line: patches merge into that line's page, and when a new line starts the previous line is marked stable while the new one is marked beta. The latest release is **yjv1.1** (stable). The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
+> **Versioning**: The Yangjiao Express secondary development edition follows standard semantic versioning on its own line, starting at **v1.0.0**, with release tags in the form `vX.Y.Z` and prereleases marked by a suffix such as `-beta` or `-rc.1` (for example `v1.2.0-beta.1`). `MAJOR` covers incompatible changes, `MINOR` covers backward-compatible features and `PATCH` covers fixes and small changes. Every release is recorded in this changelog. Announcement pages are maintained according to the size and the need of the change: a new or updated page is written for larger changes, and several releases of one line can share a page. When an entry mentions both an official upstream openRin/Rin version and this project's version, this project's version is written as `yjvX.Y.Z` to keep them apart. The latest release is **v1.1.2**. The `v0.3.0` / `v0.2.0` entries below are the official upstream history.
 
-## yjv1.1.2 - October 26, 2026
+## v1.1.2 - October 26, 2026
 
 Splits REST API keys and MCP keys into two separate types.
 
@@ -21,7 +21,7 @@ Splits REST API keys and MCP keys into two separate types.
 
 - The migration runs automatically: existing keys holding `content.read` become MCP keys, the rest become REST API keys
 
-## yjv1.1.1 - October 26, 2026
+## v1.1.1 - October 26, 2026
 
 Adds the MCP server and fixes rejected access through custom domains.
 
@@ -37,13 +37,13 @@ Adds the MCP server and fixes rejected access through custom domains.
 
 ### Documentation
 
-- Added the [yjv1.1 release announcement](../blog/yjv1.1-release) and documented custom-domain troubleshooting (421 vs 403) in the API guide
+- Added the [v1.1 release announcement](../blog/v1.1-release) and documented custom-domain troubleshooting (421 vs 403) in the API guide
 
 ### Upgrade notes
 
 - Custom-domain sites must set `MCP_ALLOWED_HOSTS` or `FRONTEND_URL` and redeploy; this release adds no database migrations
 
-## yjv1.1.0 - October 24, 2026
+## v1.1.0 - October 24, 2026
 
 The first feature release of the secondary development edition's own version line. It ships the dual friend-link verification methods and keeps the Chinese and English docs in sync.
 
@@ -69,7 +69,7 @@ The first feature release of the secondary development edition's own version lin
 
 - Rewrote the deployment guide against the current implementation: repository order, site variables, workflow inventory, migration script paths, and deployment URL notes
 - Documentation directory restructure: `env.md` and `database.md` moved into `configuration/`
-- Added the [yjv1.0.0 release announcement](../blog/yjv1.0.0-release); the secondary edition entry comes before the official upstream entry in the blog navigation
+- Added the [v1.0.0 release announcement](../blog/v1.0.0-release); the secondary edition entry comes before the official upstream entry in the blog navigation
 - Documented the `users.password` hashing rule in the database guide: SHA-256 without salt, so manual D1 password updates must store the hashed value
 - Wherever both repositories appear, the **secondary development edition (this repository)** is listed first and labeled, followed by the **official upstream openRin/Rin**
 - Chinese and English docs updated together
@@ -79,7 +79,7 @@ The first feature release of the secondary development edition's own version lin
 - The verification method choice does not affect existing friend links: pre-upgrade `verifying` states fall back to HTML file verification
 - The remaining features need no extra environment variables
 
-## yjv1.0.0 - October 24, 2026
+## v1.0.0 - October 24, 2026
 
 The starting point of the secondary development edition's own version line. It carries the capabilities of official upstream openRin/Rin `v0.3.0` and adds the features and infrastructure already landed in this edition.
 

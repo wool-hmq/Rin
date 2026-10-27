@@ -6,10 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 This file contains **detailed** changelog information for each release.
-For a quick overview of changes, see the [GitHub Releases](https://github.com/openRin/Rin/releases) page
+For a quick overview of changes, see the [GitHub Releases](https://github.com/wool-hmq/Rin/releases) page
 which automatically generates release notes from commit messages.
 
-## [yjv1.1.2] - 2026-10-26
+The project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) on its own line,
+starting at `v1.0.0`, with release tags in the form `vX.Y.Z`. When an entry mentions both an
+official upstream openRin/Rin version and this project's version, this project's version is written
+as `yjvX.Y.Z` to keep them apart.
+
+## [v1.1.2] - 2026-10-26
 
 ### Added
 
@@ -21,7 +26,34 @@ which automatically generates release notes from commit messages.
 - **Scope boundary**: `content.read` is limited to MCP keys, and REST keys calling `/mcp` or MCP keys calling `/api/key/*` get `403`.
 - **权限边界**：`content.read` 仅限 MCP 密钥，密钥类型与端点不匹配时返回 `403`。
 
-## [yjv1.1.1] - 2026-10-26
+## [v1.1.0] - 2026-10-24
+
+### Added
+
+- **Friend link verification with two methods**: after the JSON payload is parsed the visitor chooses DNS TXT or HTML file verification, TXT records are queried over Cloudflare DNS-over-HTTPS and HTML uploads keep the strict body check.
+- **友链双方式验证**：JSON 解析后由访客选择 DNS TXT 或 HTML 文件验证，TXT 记录经 Cloudflare DNS-over-HTTPS 查询，文件方式保留严格正文校验。
+
+### Fixed
+
+- Friend link verification passed by mistake on SPA fallback, custom 404 pages and 403 / 500 / 30x responses
+- The `awaiting_json` stage rejected non-JSON bodies as malformed and aborted the application
+- The `friends-sitemap.xml` route was swallowed by the SPA fallback
+- Viewing a key switched encrypted storage back to plaintext storage
+- Repeated CAPTCHA initialization crashed the application
+- Email parsing failed on CJS / ESM builds
+- 修复友链验证被 SPA 回退、自定义 404 页面与 403 / 500 / 30x 重定向误判通过
+- 修复 `awaiting_json` 阶段把非 JSON 正文误判为格式错误并终止申请
+- 修复 `friends-sitemap.xml` 路由被前端 SPA 拦截
+- 修复点击查看密钥会把加密存储改成明文存储
+- 修复验证码图片重复初始化导致申请崩溃
+- 修复邮件解析在 CJS / ESM 产物下的兼容性
+
+### Documentation
+
+- Deployment guide rewritten for the current implementation, docs directory restructured, `v1.0.0` announcement added and Chinese / English docs synchronized
+- 部署指南按当前实现重写，文档目录重构，新增 `v1.0.0` 发布公告，中英文文档同步更新
+
+## [v1.1.1] - 2026-10-26
 
 ### Added
 
@@ -330,7 +362,10 @@ If you're upgrading from v0.1.0, follow these steps:
 - Dark mode support
 - Scheduled tasks via Cloudflare Cron Triggers
 
-[Unreleased]: https://github.com/openRin/Rin/compare/v0.3.0-rc.2...HEAD
+[Unreleased]: https://github.com/wool-hmq/Rin/compare/v1.1.2...HEAD
+[v1.1.2]: https://github.com/wool-hmq/Rin/compare/v1.1.1...v1.1.2
+[v1.1.1]: https://github.com/wool-hmq/Rin/compare/v1.1.0...v1.1.1
+[v1.1.0]: https://github.com/wool-hmq/Rin/releases/tag/v1.1.0
 [v0.3.0-rc.2]: https://github.com/openRin/Rin/compare/v0.3.0-rc.1...v0.3.0-rc.2
 [v0.3.0-rc.1]: https://github.com/openRin/Rin/compare/v0.2.0...v0.3.0-rc.1
 [v0.2.0]: https://github.com/openRin/Rin/compare/v0.1.0...v0.2.0

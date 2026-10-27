@@ -154,7 +154,7 @@ async function updateChangelogLinks(version: string, dryRun: boolean) {
   if (!existsSync("CHANGELOG.md")) return;
   const content = await readFile("CHANGELOG.md", "utf-8");
   if (content.includes(`[v${version}]:`)) return;
-  const next = `${content.trimEnd()}\n[v${version}]: https://github.com/openRin/Rin/releases/tag/v${version}\n`;
+  const next = `${content.trimEnd()}\n[v${version}]: https://github.com/wool-hmq/Rin/releases/tag/v${version}\n`;
   if (!dryRun) {
     await writeFile("CHANGELOG.md", next);
   }

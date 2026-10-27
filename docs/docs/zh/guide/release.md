@@ -22,15 +22,18 @@ Rin 使用[语义化版本控制](https://semver.org/lang/zh-CN/)，并遵循结
 
 预发布版本可以用连字符标记，例如 `v1.0.0-beta.1`。
 
-### 二创版版本线
+### 本项目版本线
 
-羊角快车二创版不参与上游的 `vX.Y.Z` 自动发版流程，改用独立的 `yjvX.Y.Z` 版本线，按改动规模递增：
+本项目使用标准语义化版本，独立版本线从 `v1.0.0` 开始，发布标签为 `vX.Y.Z`：
 
-- **`X`（超大更新）**：大量新功能或整体重构，`Y` 与 `Z` 归零
-- **`Y`（普通更新）**：新增 1-2 个功能，或多个简单功能，`Z` 归零
-- **`Z`（补丁）**：缺陷修复与小改动
+- **MAJOR**：不兼容的变更，`X` 加 1，低位归零
+- **MINOR**：向后兼容的新功能，`Y` 加 1，`Z` 归零
+- **PATCH**：缺陷修复与小改动，`Z` 加 1
+- **预发布**：使用 `-beta`、`-rc.1` 等后缀，例如 `v1.2.0-beta.1`
 
-发布时同步更新 `CHANGELOG.md`、`docs/docs/{zh,en}/guide/changelog.md` 的版本说明，并按版本线维护发布公告（如 `yjv1.1`）：同一版本线的补丁合并到该线页面，新版本线才新增页面；页面在 `_nav.json` 的博客导航中登记，新线开始时上一条标为稳定版、新线标为 Beta。
+每次发布都要更新 `CHANGELOG.md` 与 `docs/docs/{zh,en}/guide/changelog.md`；发布公告页按改动规模与说明需要维护：改动较大或需要重点说明时新建或更新公告页，同一版本线的多次发布可合并到同一页，页面在 `_nav.json` 的博客导航中登记。
+
+同一条目同时涉及官方原版（上游）的版本与本项目版本时，本项目版本写作 `yjvX.Y.Z` 以示区分。
 
 ## 提交信息规范
 
@@ -60,20 +63,20 @@ Rin 使用[语义化版本控制](https://semver.org/lang/zh-CN/)，并遵循结
 ### 2. 运行发布脚本
 
 ```bash
-# 升级补丁版本（0.1.0 -> 0.1.1）
+# 升级补丁版本（1.1.2 -> 1.1.3）
 bun cli/bin/rin.ts release patch
 
-# 升级次要版本（0.1.0 -> 0.2.0）
+# 升级次要版本（1.1.2 -> 1.2.0）
 bun cli/bin/rin.ts release minor
 
-# 升级主要版本（0.1.0 -> 1.0.0）
+# 升级主要版本（1.1.2 -> 2.0.0）
 bun cli/bin/rin.ts release major
 
 # 或设置特定版本
 bun cli/bin/rin.ts release 1.2.3
 
 # 预发布版本
-bun cli/bin/rin.ts release 0.3.0-rc.1
+bun cli/bin/rin.ts release 1.2.0-rc.1
 ```
 
 脚本将：
@@ -113,7 +116,7 @@ bun cli/bin/rin.ts release minor --dry-run
 git push origin main
 
 # 推送标签（触发发布工作流）
-git push origin v0.3.0-rc.1
+git push origin v1.2.0-rc.1
 ```
 
 ### 6. 自动发布流程
@@ -142,7 +145,7 @@ GitHub Releases 将包含：
 ```markdown
 ## 变更内容
 
-**完整变更日志**：v0.1.0...v0.2.0
+**完整变更日志**：v1.1.0...v1.1.2
 
 ### 🚀 功能
 - feat(auth): 添加 GitHub OAuth 登录 (abc1234)
@@ -220,7 +223,7 @@ git push origin main
 
 ```bash
 # 从最新标签创建热修复分支
-git checkout -b fix/critical-bug v0.2.0
+git checkout -b fix/critical-bug v1.1.2
 
 # 应用修复并使用常规格式提交
 git commit -m "fix(api): 解决严重安全问题"
@@ -230,7 +233,7 @@ bun cli/bin/rin.ts release patch
 
 # 推送（热修复不需要合并到 main）
 git push origin fix/critical-bug
-git push origin v0.2.1
+git push origin v1.1.3
 ```
 
 ## 故障排除
@@ -250,7 +253,7 @@ git push origin v0.2.1
 
 **解决方案**：
 1. 确保提交遵循常规格式（`feat:`、`fix:` 等）
-2. 检查标签之间是否存在提交：`git log v0.1.0..v0.2.0 --oneline`
+2. 检查标签之间是否存在提交：`git log v1.1.0..v1.1.2 --oneline`
 3. 非常规提交不会出现在分类列表中
 
 ### 部署失败
@@ -301,13 +304,13 @@ fixed bug
 
 ### 版本升级
 
-- **Patch** (0.0.1)：仅 Bug 修复
-- **Minor** (0.1.0)：新功能，向后兼容
-- **Major** (1.0.0)：破坏性变更
+- **Patch** (1.1.3)：仅 Bug 修复
+- **Minor** (1.2.0)：新功能，向后兼容
+- **Major** (2.0.0)：破坏性变更
 
 不确定时，对新功能使用 **minor**。
 
-> **二创版版本号**：羊角快车二创版的发布说明与 tag 使用 `yjvX.Y.Z` 前缀，从 `yjv1.0.0` 开始，用于与官方原版的 `vX.Y.Z` 版本线区分。
+> **版本号**：本项目使用标准语义化版本，版本线从 `v1.0.0` 开始，发布标签为 `vX.Y.Z`，预发布版本使用 `-beta`、`-rc.1` 等后缀；同一条目同时涉及官方原版版本与本项目版本时，本项目版本写作 `yjvX.Y.Z` 以示区分。
 
 ## 有问题？
 

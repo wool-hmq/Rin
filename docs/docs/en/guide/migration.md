@@ -172,7 +172,7 @@ After successful migration, you can:
 
 If migration fails and you need to rollback:
 
-1. Switch to the previous stable tag (the secondary development edition uses a `yjv` prefix, e.g. `yjv1.0.0`): `git checkout yjv1.0.0`
+1. Switch to the previous stable tag (release tags use a `v` prefix, e.g. `v1.0.0`): `git checkout v1.0.0`
 2. Force push to main (⚠️ destructive): `git push origin HEAD:main --force`
 3. Redeploy from Actions
 

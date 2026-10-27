@@ -6,7 +6,7 @@ export default defineConfig({
   lang: 'zh',
   // 1. 修改标题和描述，体现二创版特色
   title: 'Rin (羊角快车二创版)',
-  description: '基于 openRin/Rin 的二次开发版博客系统。基于 Cloudflare Pages + Workers + D1 + R2，无需服务器即可部署。',
+  description: '基于 openRin/Rin 的二次开发版博客系统。基于 Cloudflare Workers + D1 + R2，无需服务器即可部署。',
   icon: '/rin-icon.png',
   // 2. 指定 GitHub Pages 的子路径 (如果是自己域名则写 '/')
   base: '/', 

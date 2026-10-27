@@ -1,6 +1,6 @@
 {
   "name": "rin-server",
-  "version": "0.3.0",
+  "version": "1.1.2",
   "module": "index.ts",
   "type": "module",
   "scripts": {

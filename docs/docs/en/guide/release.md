@@ -22,15 +22,18 @@ Versions follow the format `MAJOR.MINOR.PATCH`:
 
 Pre-release versions can be tagged with a hyphen, e.g., `v1.0.0-beta.1`.
 
-### Secondary edition version line
+### Project version line
 
-The Yangjiao Express secondary development edition stays outside the upstream `vX.Y.Z` automated release flow and uses its own `yjvX.Y.Z` line, incremented by the size of the change:
+The project follows standard semantic versioning on its own line, starting at `v1.0.0`, with release tags in the form `vX.Y.Z`:
 
-- **`X` (major update)**: many new features or a full refactor, with `Y` and `Z` reset
-- **`Y` (regular update)**: one or two features or several small ones, with `Z` reset
-- **`Z` (patch)**: fixes and small changes
+- **MAJOR**: incompatible changes, `X` increases and the lower numbers reset
+- **MINOR**: backward-compatible features, `Y` increases and `Z` resets
+- **PATCH**: fixes and small changes, `Z` increases
+- **Prerelease**: a suffix such as `-beta` or `-rc.1`, for example `v1.2.0-beta.1`
 
-Each release updates `CHANGELOG.md` and the version note in `docs/docs/{zh,en}/guide/changelog.md`, and keeps release posts per line (such as `yjv1.1`): patches merge into that line's page and only a new line gets a new page, registered in the blog section of `_nav.json`, with the previous line marked stable and the new one beta.
+Every release updates `CHANGELOG.md` and `docs/docs/{zh,en}/guide/changelog.md`. Announcement pages are maintained according to the size and the need of the change: a new or updated page is written for larger changes, several releases of one line can share a page, and pages are registered in the blog section of `_nav.json`.
+
+When an entry mentions both an official upstream version and this project's version, this project's version is written as `yjvX.Y.Z` to keep them apart.
 
 ## Commit Message Convention
 
@@ -60,20 +63,20 @@ See [Commit Convention](./commit-convention.md) for detailed guidelines.
 ### 2. Run the Release Script
 
 ```bash
-# Bump patch version (0.1.0 -> 0.1.1)
+# Bump patch version (1.1.2 -> 1.1.3)
 bun cli/bin/rin.ts release patch
 
-# Bump minor version (0.1.0 -> 0.2.0)
+# Bump minor version (1.1.2 -> 1.2.0)
 bun cli/bin/rin.ts release minor
 
-# Bump major version (0.1.0 -> 1.0.0)
+# Bump major version (1.1.2 -> 2.0.0)
 bun cli/bin/rin.ts release major
 
 # Or set a specific version
 bun cli/bin/rin.ts release 1.2.3
 
-# Pre-release version
-bun cli/bin/rin.ts release 0.3.0-rc.1
+# Prerelease version
+bun cli/bin/rin.ts release 1.2.0-rc.1
 ```
 
 The script will:
@@ -113,7 +116,7 @@ bun cli/bin/rin.ts release minor --dry-run
 git push origin main
 
 # Push the tag (triggers release workflow)
-git push origin v0.3.0-rc.1
+git push origin v1.2.0-rc.1
 ```
 
 ### 6. Automated Release Process
@@ -142,7 +145,7 @@ GitHub Releases will contain:
 ```markdown
 ## What's Changed
 
-**Full Changelog**: v0.1.0...v0.2.0
+**Full Changelog**: v1.1.0...v1.1.2
 
 ### 🚀 Features
 - feat(auth): add GitHub OAuth login (abc1234)
@@ -223,7 +226,7 @@ For critical bugs requiring immediate release:
 
 ```bash
 # Create hotfix branch from latest tag
-git checkout -b fix/critical-bug v0.2.0
+git checkout -b fix/critical-bug v1.1.2
 
 # Apply fix and commit with conventional format
 git commit -m "fix(api): resolve critical security issue"
@@ -253,7 +256,7 @@ git push origin v0.2.1
 
 **Solution**:
 1. Ensure commits follow conventional format (`feat:`, `fix:`, etc.)
-2. Check that commits exist between tags: `git log v0.1.0..v0.2.0 --oneline`
+2. Check that commits exist between tags: `git log v1.1.0..v1.1.2 --oneline`
 3. Non-conventional commits won't appear in categorized lists
 
 ### Failed Deployment
@@ -304,13 +307,13 @@ fixed bug
 
 ### Version Bumping
 
-- **Patch** (0.0.1): Bug fixes only
-- **Minor** (0.1.0): New features, backward compatible
-- **Major** (1.0.0): Breaking changes
+- **Patch** (1.1.3): Bug fixes only
+- **Minor** (1.2.0): New features, backward compatible
+- **Major** (2.0.0): Breaking changes
 
 When in doubt, use **minor** for new features.
 
-> **Secondary development versioning**: Release notes and tags for the Yangjiao Express secondary development edition use the `yjvX.Y.Z` prefix, starting at `yjv1.0.0`, to keep them distinct from the official upstream `vX.Y.Z` line.
+> **Versioning**: The project follows standard semantic versioning, its version line starts at `v1.0.0`, release tags use `vX.Y.Z` and prereleases add a suffix such as `-beta` or `-rc.1`. When an entry mentions both an official upstream version and this project's version, this project's version is written as `yjvX.Y.Z`.
 
 ## Questions?
 

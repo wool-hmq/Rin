@@ -56,12 +56,12 @@
     "text": "Blog",
     "items": [
       {
-        "text": "Secondary edition yjv1.1 release (Stable)",
-        "link": "/blog/yjv1.1-release"
+        "text": "Secondary edition v1.1 release (v1.1.2)",
+        "link": "/blog/v1.1-release"
       },
       {
-        "text": "Secondary edition yjv1.0.0 release",
-        "link": "/blog/yjv1.0.0-release"
+        "text": "Secondary edition v1.0.0 release",
+        "link": "/blog/v1.0.0-release"
       },
       {
         "text": "Official upstream v0.3.0 release",

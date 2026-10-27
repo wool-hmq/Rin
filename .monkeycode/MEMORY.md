@@ -92,7 +92,7 @@ Entries discovered by the Agent during task execution should follow this format:
 - Context: 用户要求开始维护更新日志并统一二创版/官方原版的文档标注方式
 - Instructions:
   - 从 2026-10-24 起维护更新日志，文档写入 docs/docs/zh/guide/changelog.md 与 docs/docs/en/guide/changelog.md，中英文内容保持同步。
-  - 二创版使用独立版本线 yjvX.Y.Z，首个版本为 yjv1.0.0（2026-10-24）；官方原版继续使用 vX.Y.Z，两者分开记录。
+  - 本项目使用标准语义化版本，版本线从 v1.0.0 开始，发布标签为 vX.Y.Z；官方原版继续使用 vX.Y.Z，两者分开记录，同一条目同时出现两个仓库的版本时本项目写作 yjvX.Y.Z 以示区分。
   - 文档中同时出现两个仓库时，羊角快车二创版（wool-hmq/Rin）排在前面并标注身份，官方原版（openRin/Rin）排在后面并标注为官方原版/上游。
   - README.md 保持纯英文，README_zh_CN.md 使用中文，两者分别维护。
   - 部署、迁移、发布等说明文档需与仓库实际状态保持一致（工作流清单、CLI 默认值、环境变量名等），过时内容需同步修正。
@@ -140,12 +140,12 @@ Entries discovered by the Agent during task execution should follow this format:
 
 
 [User Instruction Summary]
-- Date: 2026-10-26
+- Date: 2026-10-26（2026-10-27 修订版本编号规则）
 - Context: 用户确定二创版版本号递增规则，并要求据此发布改动
 - Instructions:
-  - 版本线格式为 `yjvX.Y.Z`：超大更新（大量新功能或整体重构）加 `X`；普通更新（新增 1-2 个功能或多个简单功能）加 `Y`；补丁（缺陷修复与小改动）加 `Z`；低位归零。
+  - 版本线使用标准语义化版本，从 v1.0.0 开始：MAJOR 用于不兼容变更，MINOR 用于向后兼容的新功能，PATCH 用于缺陷修复与小改动；版本号直接递增，不自创预发布标识，特殊标识用 -beta、-rc.1 等后缀。
+  - 发布标签为 vX.Y.Z；同一条目同时涉及官方原版版本与本项目版本时，本项目版本写作 yjvX.Y.Z 以示区分。
   - 发布时同步更新 `docs/docs/{zh,en}/guide/changelog.md` 顶部最新版本说明、`CHANGELOG.md`、`docs/docs/{zh,en}/blog/` 发布公告与 `_nav.json` 博客导航。
-  - 更新日志条目保持简短（一行式），详细说明放在 blog 发布公告中。
-  - 发布公告按版本线归档（如 `yjv1.1`）：同一版本线的补丁合并进该线页面，不再为每个补丁新建文件；新版本线才新增页面。
-  - 版本状态：新线开始时上一条线标注为稳定版（Stable），新线标注为 Beta；导航条目标注当前状态。
+  - 更新日志每次发布都要写，条目保持简短（一行式），详细说明放在 blog 发布公告中。
+  - 发布公告按需要维护：改动较大或需要重点说明时新建或更新公告页，同一版本线的多次发布可合并到同一页；页面不再使用 Stable / Beta 标签，预发布由版本号后缀表达。
   - 数据库结构变更以 `server/sql/NNNN.sql` 递增编号追加，并在文件末尾更新 `info.migration_version`。

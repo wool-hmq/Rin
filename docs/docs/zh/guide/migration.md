@@ -175,7 +175,7 @@ const feeds = await client.feed.list({ page: 1 });
 
 如果迁移失败需要回滚：
 
-1. 切换到上一个稳定版本标签（二创版使用 `yjv` 前缀，例如 `yjv1.0.0`）：`git checkout yjv1.0.0`
+1. 切换到上一个稳定版本标签（发布标签使用 `v` 前缀，例如 `v1.0.0`）：`git checkout v1.0.0`
 2. 强制推送到 main（⚠️ 破坏性）：`git push origin HEAD:main --force`
 3. 从 Actions 重新部署
 
