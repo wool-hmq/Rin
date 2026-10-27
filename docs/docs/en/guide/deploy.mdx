@@ -10,6 +10,8 @@ This document guides you through deploying the **Yangjiao Express secondary deve
 
 ## Deployment Steps
 
+> **Architecture**: The current version uses a single Worker deployment. The built client assets are uploaded together with the Worker and served through its static assets binding, so pages and the API share the same origin. You do **not** need to create a separate Cloudflare Pages project. Tutorials from before 0.3.0 that deploy the frontend to Pages and the backend to a Worker separately describe the old architecture.
+
 ### Step 1: Fork the Repository
 
 This repository is the **Yangjiao Express secondary development edition of Rin**. It adds features that the official upstream does not have, including self-service friend links over email, TOTP two-factor authentication, and API keys. Fork this repository directly:
@@ -74,7 +76,7 @@ If you want to use your GitHub account to log in, please refer to the [Advanced 
 
 The deployment process takes approximately 3-5 minutes. After **Build** succeeds it triggers the **Deploy** workflow through `workflow_run`. A manual Deploy run requires a build artifact URL.
 
-> **Tip**: The deployment script configures frontend environment variables automatically. Site name, description, Worker name, and similar values can be customized with GitHub Variables (see "Site Variables" below).
+> **Tip**: Site name, description, and similar values are read by the client from the server at runtime, so no build-time environment variables are needed. Customize them with GitHub Variables (see "Site Variables" below).
 
 ### Step 4: Access Your Blog
 
@@ -118,8 +120,8 @@ Email login, email verification codes, and self-service friend links over email 
 ### Custom Domain
 
 1. Log in to the Cloudflare Dashboard
-2. Go to **Pages** > Your Project > **Custom Domains**
-3. Follow the prompts to add your domain
+2. Go to **Workers & Pages** > your Worker (default `rin-server`) > **Settings** > **Domains & Routes**
+3. Click **Add** > **Custom Domain** and follow the prompts to add your domain
 
 ### Image Storage Configuration
 
@@ -186,7 +188,7 @@ If you want Rin to send comment and friend-link notifications to a bot, chat ser
 
 1. Check if GitHub Secrets are configured correctly
 2. View the Actions logs for detailed error messages
-3. Ensure your Cloudflare account has permissions for Workers, Pages, and D1
+3. Ensure your Cloudflare account has permissions for Workers and D1
 
 ### Cannot Log In
 
@@ -229,8 +231,8 @@ Runs on pushes to `main` / `master` / `trunk`, on pull requests, or manually:
 
 ### Deploy Workflow (`deploy.yml`)
 Triggered automatically after a successful Build, or manually with a build artifact URL:
-- Deploys the frontend to Cloudflare Pages
-- Deploys the backend to Cloudflare Workers
+- Builds the client and uploads it as static assets of the Worker
+- Deploys a single Worker that serves both the API and the pages
 - Runs D1 database migrations
 - Prints the deployed App URL in the Actions log
 

@@ -15,6 +15,7 @@
 ### 文档
 
 - API 指南补充密钥类型说明；迁移 `0021.sql` 自动为历史密钥归类
+- 部署指南与 README 统一为单 Worker 架构说明：前端静态资源随 Worker 发布，无需创建 Cloudflare Pages 项目
 
 ### 升级说明
 

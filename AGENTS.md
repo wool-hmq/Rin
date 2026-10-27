@@ -22,9 +22,7 @@ bun run format:check      # Check formatting
 bun run format:write      # Fix formatting
 
 # Deployment (using Rin CLI)
-bun run deploy            # Deploy both frontend (Pages) and backend (Workers)
-bun run deploy:server     # Deploy backend only
- bun run deploy:client     # Deploy frontend only
+bun run deploy            # Build client and deploy the single Worker (API + static assets)
 
 # Release (using Rin CLI)
 bun run release <version> # Create a new release (patch/minor/major/x.y.z)

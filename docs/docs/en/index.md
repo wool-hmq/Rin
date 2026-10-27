@@ -17,7 +17,7 @@ features:
     details: 30s build & deploy
     icon: 🏃🏻
   - title: All Cloudflare
-    details: Based on Cloudflare Workers + D1 + R2 + Pages
+    details: Based on Cloudflare Workers (API and static assets) + D1 + R2
     icon: ☁️
   - title: Dynamic
     details: No build for write, just write and edit real-time

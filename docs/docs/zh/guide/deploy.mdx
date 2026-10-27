@@ -10,6 +10,8 @@
 
 ## 部署步骤
 
+> **架构说明**：当前版本采用单 Worker 部署。构建出的前端静态资源会随 Worker 一起上传，由 Worker 的静态资源绑定提供，页面与 API 同域，**不需要单独创建 Cloudflare Pages 项目**。如果看到的是 0.3.0 之前「前端 Pages + 后端 Worker」分开部署的教程，那属于旧架构。
+
 ### 第一步：Fork 仓库
 
 本仓库是 **羊角快车二创版 Rin**，在官方原版基础上增加了邮箱自助友链、TOTP 双因素认证、API Key 等能力，推荐直接 Fork 本仓库：
@@ -75,7 +77,7 @@ Rin 目前支持账号密码登录与 Github OAuth 登录，可二选一或同�
 
 部署过程大约需要 3-5 分钟。**Build** 成功后会通过 `workflow_run` 自动触发 **Deploy** 工作流，手动触发 Deploy 时需要提供构建产物 URL。
 
-> **提示**: 部署脚本会自动配置前端环境变量，无需手动配置。站点名称、描述、Worker 名称等可以在 GitHub Variables 中自定义（见下方「站点基础变量」）。
+> **提示**: 站点名称、描述等配置在运行时由前端从服务端读取，无需在构建阶段注入环境变量。这些值可以在 GitHub Variables 中自定义（见下方「站点基础变量」）。
 
 ### 第四步：访问您的博客
 
@@ -119,8 +121,8 @@ Rin 目前支持账号密码登录与 Github OAuth 登录，可二选一或同�
 ### 自定义域名
 
 1. 登录 Cloudflare Dashboard
-2. 进入 **Pages** > 您的项目 > **自定义域**
-3. 按照提示添加您的域名
+2. 进入 **Workers 和 Pages** > 您的 Worker（默认 `rin-server`） > **设置** > **域和路由**
+3. 点击 **添加** > **自定义域**，按提示添加您的域名
 
 ### 图片存储配置
 
@@ -187,7 +189,7 @@ Rin 支持两种存储方式：**Cloudflare R2**（推荐）或 **S3 兼容存�
 
 1. 检查 GitHub Secrets 是否正确配置
 2. 查看 Actions 日志获取详细错误信息
-3. 确保 Cloudflare 账户有 Workers、Pages、D1 的权限
+3. 确保 Cloudflare 账户有 Workers、D1 的权限
 
 ### 无法登录
 
@@ -230,8 +232,8 @@ Rin 支持两种存储方式：**Cloudflare R2**（推荐）或 **S3 兼容存�
 
 ### 部署工作流 (`deploy.yml`)
 由 Build 成功后自动触发，或手动提供构建产物 URL 触发：
-- 部署前端到 Cloudflare Pages
-- 部署后端到 Cloudflare Workers
+- 构建前端并将其作为静态资源随 Worker 一起发布
+- 部署单个 Worker，由它同时提供 API 与页面
 - 执行 D1 数据库迁移
 - 在 Actions 日志中输出部署后的 App URL
 

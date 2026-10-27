@@ -1,6 +1,6 @@
 # 简介
 
-Rin（羊角快车二创版）是一个基于 Cloudflare Pages + Workers + D1 + R2 全家桶的博客，只需要一个解析到 Cloudflare 的域名即可部署。本版基于官方原版 openRin/Rin（上游）二次开发，并加入邮箱自助友链、TOTP、API Key 等能力。
+Rin（羊角快车二创版）是一个基于 Cloudflare Workers + D1 + R2 全家桶的博客，前端静态资源与 API 由同一个 Worker 提供，只需要一个解析到 Cloudflare 的域名即可部署。本版基于官方原版 openRin/Rin（上游）二次开发，并加入邮箱自助友链、TOTP、API Key 等能力。
 
 ## 演示地址
 

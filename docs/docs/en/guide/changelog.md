@@ -15,6 +15,7 @@ Splits REST API keys and MCP keys into two separate types.
 ### Documentation
 
 - The API guide documents both key types, and migration `0021.sql` classifies existing keys automatically
+- The deployment guide and README now describe the single-Worker architecture: client assets ship with the Worker, so no Cloudflare Pages project is needed
 
 ### Upgrade notes
 

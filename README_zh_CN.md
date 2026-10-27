@@ -14,7 +14,7 @@
 
 ## 项目简介
 
-Rin 是一个基于 Cloudflare 开发者平台构建的现代化、无服务器博客系统，完全利用 Cloudflare Pages 托管、Workers 提供无服务器函数、D1 作为 SQLite 数据库、R2 进行对象存储。仅需一个指向 Cloudflare 的域名即可部署你的个人博客，无需服务器运维。
+Rin 是一个基于 Cloudflare 开发者平台构建的现代化、无服务器博客系统，完全利用 Cloudflare Workers 提供无服务器函数并托管前端静态资源、D1 作为 SQLite 数据库、R2 进行对象存储。仅需一个指向 Cloudflare 的域名即可部署你的个人博客，无需服务器运维。
 
 ## 在线演示
 
@@ -78,17 +78,11 @@ bun run test:coverage
 
 ### 一键部署
 
-使用一条命令即可将前端和后端同时部署到 Cloudflare：
+构建前端后会将其作为静态资源随 Worker 一起上传，因此一个 Worker 同时提供 API 与网页：
 
 ```bash
-# 部署所有内容（前端+后端）
+# 构建前端、部署 Worker、同步密钥并执行数据库迁移
 bun run deploy
-
-# 仅部署后端
-bun run deploy:server
-
-# 仅部署前端
-bun run deploy:client
 ```
 
 **必需的环境变量：**
@@ -98,8 +92,7 @@ bun run deploy:client
 
 **可选的环境变量：**
 
-- `WORKER_NAME` - 后端工作进程名称（默认值：`rin-server`）
-- `PAGES_NAME` - 前端页面名称（默认值：`rin-client`）
+- `WORKER_NAME` - Worker 名称（默认值：`rin-server`）
 - `DB_NAME` - D1 数据库名称（默认值：`rin`）
 - `R2_BUCKET_NAME` - R2 存储桶名称。设置后，部署会自动推导对应的 `S3_*` 配置；未设置时，不会自动选择任何 bucket。
 
@@ -107,8 +100,7 @@ bun run deploy:client
 
 - 自动检测并创建 D1 数据库如果不存在
 - 仅在显式设置 `R2_BUCKET_NAME` 时，自动推导对应的 `S3_*` 存储配置
-- 部署后端到 Workers
-- 构建前端并将其部署到 Pages
+- 构建前端并部署单个 Worker，由它同时提供 API 与静态资源
 - 运行数据库迁移
 
 ### GitHub Actions Workflows
@@ -118,11 +110,11 @@ bun run deploy:client
 - **`ci.yml`** - 每次推送/PR 都会运行类型检查和格式验证
 - **`test.yml`** - 运行全面的测试（服务器+客户端），并生成覆盖率报告
 - **`build.yml`** - 构建项目并触发部署
-- **`deploy.yml`** - 部署到 Cloudflare Pages 和 Workers
+- **`deploy.yml`** - 部署 Worker，由它同时提供 API 与静态资源
 
 **必备变量 (Repository Settings → Secrets and variables → Actions):**
 
-- `CLOUDFLARE_API_TOKEN` - 您的 Cloudflare API 令牌，包含 Workers 和 Pages 权限
+- `CLOUDFLARE_API_TOKEN` - 您的 Cloudflare API 令牌，包含 Workers 和 D1 权限
 - `CLOUDFLARE_ACCOUNT_ID` - 您的 Cloudflare 帐户 ID
 
 **可选配置(Repository Settings → Secrets and variables → Variables):**

@@ -1,6 +1,6 @@
 # Introduction
 
-Rin (Yangjiao Express secondary development edition) is a blog based on Cloudflare Pages + Workers + D1 + R2. It does not require a server to deploy. It can be deployed with just a domain name that resolves to Cloudflare. This edition is built on the official upstream openRin/Rin and adds self-service friend links over email, TOTP, and API keys.
+Rin (Yangjiao Express secondary development edition) is a blog based on Cloudflare Workers + D1 + R2. A single Worker serves both the static frontend assets and the API. It does not require a server to deploy. It can be deployed with just a domain name that resolves to Cloudflare. This edition is built on the official upstream openRin/Rin and adds self-service friend links over email, TOTP, and API keys.
 
 ## Demo
 

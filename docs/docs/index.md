@@ -17,7 +17,7 @@ features:
     details: 30秒构建与部署
     icon: 🏃🏻
   - title: Cloudflare
-    details: 基于 Cloudflare Workers + D1 + R2 + Pages
+    details: 基于 Cloudflare Workers（API 与静态资源）+ D1 + R2
     icon: ☁️
   - title: 动态
     details: 写作时无需构建，实时写作和编辑

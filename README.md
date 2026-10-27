@@ -16,7 +16,7 @@ English | [简体中文](./README_zh_CN.md)
 
 ## Introduction
 
-Rin is a modern, serverless blog platform built entirely on Cloudflare's developer platform: Pages for hosting, Workers for serverless functions, D1 for SQLite database, and R2 for object storage. Deploy your personal blog with just a domain name pointed to Cloudflare—no server management required.
+Rin is a modern, serverless blog platform built entirely on Cloudflare's developer platform: Workers for serverless functions and static asset hosting, D1 for SQLite database, and R2 for object storage. Deploy your personal blog with just a domain name pointed to Cloudflare—no server management required.
 
 ## Live Demo
 
@@ -80,17 +80,11 @@ bun run test:coverage
 
 ### One-Command Deployment
 
-Deploy both frontend and backend to Cloudflare with a single command:
+The client is built first and uploaded as static assets of the Worker, so a single Worker serves both the API and the web app:
 
 ```bash
-# Deploy everything (frontend + backend)
+# Build the client, deploy the Worker, sync secrets and run migrations
 bun run deploy
-
-# Deploy only backend
-bun run deploy:server
-
-# Deploy only frontend
-bun run deploy:client
 ```
 
 **Required environment variables:**
@@ -100,8 +94,7 @@ bun run deploy:client
 
 **Optional environment variables:**
 
-- `WORKER_NAME` - Backend worker name (default: `rin-server`)
-- `PAGES_NAME` - Frontend pages name (default: `rin-client`)
+- `WORKER_NAME` - Worker name (default: `rin-server`)
 - `DB_NAME` - D1 database name (default: `rin`)
 - `R2_BUCKET_NAME` - R2 bucket name. If set, deploy derives the matching `S3_*` values automatically. If unset, no bucket is auto-selected.
 
@@ -109,8 +102,7 @@ The deployment script will automatically:
 
 - Create D1 database if it doesn't exist
 - Derive `S3_*` storage settings from `R2_BUCKET_NAME` only when it is explicitly set
-- Deploy backend to Workers
-- Build and deploy frontend to Pages
+- Build the client and deploy a single Worker that serves both the API and the static assets
 - Run database migrations
 
 ### GitHub Actions Workflows
@@ -120,11 +112,11 @@ The repository includes several automated workflows:
 - **`ci.yml`** - Runs type checking and formatting validation on every push/PR
 - **`test.yml`** - Runs comprehensive tests (server + client) with coverage reporting
 - **`build.yml`** - Builds the project and triggers deployment
-- **`deploy.yml`** - Deploys to Cloudflare Pages and Workers
+- **`deploy.yml`** - Deploys the Worker, which serves both the API and the static assets
 
 **Required secrets (Repository Settings → Secrets and variables → Actions):**
 
-- `CLOUDFLARE_API_TOKEN` - Your Cloudflare API token with Workers and Pages permissions
+- `CLOUDFLARE_API_TOKEN` - Your Cloudflare API token with Workers and D1 permissions
 - `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
 
 **Optional configuration (Repository Settings → Secrets and variables → Variables):**
