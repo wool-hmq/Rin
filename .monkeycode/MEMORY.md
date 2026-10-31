@@ -75,6 +75,7 @@ Entries discovered by the Agent during task execution should follow this format:
   - 修改环境变量配置（新增/删除/重命名 env var、修改默认值、修改必填性）后，必须同步更新 docs/docs/zh/configuration/env.md 和 docs/docs/en/configuration/env.md。
   - 修改数据库字段含义（新增/删除/重命名字段、修改字段类型/约束/默认值）后，必须同步更新 docs/docs/zh/configuration/database.md 和 docs/docs/en/configuration/database.md。
   - 以上文档修改应与代码修改在同一 commit 中完成，确保代码与文档始终一致。
+  - 2026-10-31 起文档语言扩展为四种：docs/docs/{zh（默认，根路径）,zh-TW,en,ja}，新增页面时四个语言目录都要同步创建（含 _meta.json/_nav.json）；mailport 仓库对应为 {zh-cn（默认）,zh-TW,en,ja}。
 
 [Project Knowledge Summary]
 - Date: 2026-09-27
@@ -109,14 +110,17 @@ Entries discovered by the Agent during task execution should follow this format:
   - 文档站构建验证命令：`cd docs && bun install && bun run build`（Rspress v2，产物在 docs/doc_build，已被 gitignore）；中英文文档改动后必须重新构建确认无死链。
 
 [Project Knowledge Summary]
-- Date: 2026-10-25
-- Context: 为 MailPort 仓库新建 Rspress v2 双语文档站时验证出的路由与导航规则
+- Date: 2026-10-25（2026-10-31 补充多语言规则）
+- Context: 为 MailPort/Rin 文档站接入多语言时验证出的 Rspress v2 路由、导航与锚点规则
 - Category: Build Methods | Troubleshooting & Debugging
 - Instructions:
-  - Rspress v2 中 `lang`（默认语言）对应目录的内容输出到站点根路径，其余语言保留语言前缀；MailPort 配置 `lang: 'zh-cn'` 后，简体中文位于 `/`，English 位于 `/en/`。
-  - 语言目录根部的 `_nav.json` 声明顶部导航栏；根部 `_meta.json` 声明全局侧边栏，且条目必须用 v2 对象格式（`{"type": "file", "name": "api.md", "label": "..."}`），沿用带 `text` 键的旧格式会触发 Rspress v2 迁移校验并终止构建。
-  - Rspress v2 内置界面文案只提供 en/zh，zh-cn 需在 `i18nSource` 中补齐，否则主题文案回退为英文并产生构建警告。
-  - `base` 会自动加到首页动作链接等绝对路径前，链接应写站点内路径（如 `/api.html`），不要自行拼接 base。
+  - Rspress v2 中 `lang`（默认语言）对应目录的内容输出到站点根路径，其余语言保留语言前缀（MailPort：zh-cn 在 `/`、en 在 `/en/`；Rin：zh 在 `/`、zh-TW/en/ja 带前缀）。
+  - 语言目录根部 `_nav.json` 声明顶部导航栏，其链接会被自动加 locale 前缀，因此只写站点内路径（如 `/guide/deploy`），写死 `/en/...` 会产生 `/en/en/...` 双前缀 404。
+  - 首页 hero action 链接不会被自动加前缀，非默认语言首页必须显式写 `/ja/guide/`、`/zh-TW/guide/` 这样的带前缀链接。
+  - 根部 `_meta.json` 条目必须用 v2 对象格式（`{"type": "file", "name": "api.md", "label": "..."}`），带 `text` 键的旧格式会触发迁移校验并终止构建。
+  - Rspress 内置界面文案只含 en/zh；zh-cn/zh-TW 需在 `i18nSource` 补齐，否则回退英文并产生构建警告。
+  - `base` 会自动加到首页动作链接等绝对路径前，链接写站点内路径即可。
+  - 标题锚点由 github-slugger 生成：序号后的 `.` `、` 被删除且不留空格，如 "6. General troubleshooting"→`#6-general-troubleshooting`、"六、通用排错"→`#六通用排错`；跨页锚点链接必须与目标语言标题逐字一致。
 
 [User Instruction Summary]
 - Date: 2026-10-25
@@ -149,3 +153,12 @@ Entries discovered by the Agent during task execution should follow this format:
   - 更新日志每次发布都要写，条目保持简短（一行式），详细说明放在 blog 发布公告中。
   - 发布公告按需要维护：改动较大或需要重点说明时新建或更新公告页，同一版本线的多次发布可合并到同一页；页面不再使用 Stable / Beta 标签，预发布由版本号后缀表达。
   - 数据库结构变更以 `server/sql/NNNN.sql` 递增编号追加，并在文件末尾更新 `info.migration_version`。
+
+[Project Knowledge Summary]
+- Date: 2026-10-31
+- Context: 为文档站新增 zh-TW/ja 语言时确认的翻译与协议约束
+- Category: Workflow & Collaboration
+- Instructions:
+  - Rin 邮件自助友链的邮件指令字面量固定为简体（`友链申请`/`友链修改`/`友链删除`/`结束本次友链申请`/`请你进行下一步验证`，见 server/src/services/friend-email.ts），zh-TW/ja 文档中这些指令必须保留简体原文，其余说明文字正常翻译。
+  - zh-TW 以 zh/zh-cn 为基准做简繁转换 + 台湾用语润色（工具 /tmp/opencode/tools/s2tw.py，opencc s2twp + 术语覆写）；ja 以 en 为基准人工翻译。
+  - 翻译保留代码块、行内代码、URL、表格结构与 `:::tip/:::warning` 容器语法；新语言复用 en 版 logo，不新增图片。
