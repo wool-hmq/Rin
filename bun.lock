@@ -14,7 +14,7 @@
     },
     "cli": {
       "name": "rin-cli",
-      "version": "0.3.0",
+      "version": "1.1.2",
       "bin": {
         "rin": "./bin/rin.ts",
       },
@@ -30,7 +30,7 @@
     },
     "client": {
       "name": "client",
-      "version": "0.3.0",
+      "version": "1.1.2",
       "dependencies": {
         "@astroimg/timeago": "^1.1.6",
         "@monaco-editor/react": "^4.6.0",
@@ -104,14 +104,14 @@
     },
     "packages/api": {
       "name": "@rin/api",
-      "version": "0.3.0",
+      "version": "1.1.2",
       "devDependencies": {
         "typescript": "^5.7.3",
       },
     },
     "packages/config": {
       "name": "@rin/config",
-      "version": "0.3.0",
+      "version": "1.1.2",
       "dependencies": {
         "@rin/api": "workspace:*",
       },
@@ -121,7 +121,7 @@
     },
     "packages/ui": {
       "name": "@rin/ui",
-      "version": "0.3.0",
+      "version": "1.1.2",
       "dependencies": {
         "react-loading": "^2.0.3",
         "react-modal": "^3.16.1",
@@ -137,7 +137,7 @@
     },
     "server": {
       "name": "rin-server",
-      "version": "0.3.0",
+      "version": "1.1.2",
       "dependencies": {
         "@modelcontextprotocol/server": "^2.4.0",
         "@rin/api": "workspace:*",
