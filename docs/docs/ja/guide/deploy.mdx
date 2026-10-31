@@ -1,0 +1,295 @@
+# Rin（羊角快車二次創作版）デプロイガイド
+
+このドキュメントでは、**Rin の羊角快車二次創作版**をゼロから Cloudflare にデプロイする手順を説明します。
+
+## 前提条件
+
+- GitHub アカウント
+- Cloudflare アカウント（無料枠で十分です）
+- 所要時間は約 10〜15 分
+
+## デプロイ手順
+
+> **アーキテクチャ**: 現在のバージョンは単一 Worker デプロイを使用しています。ビルドされたクライアントアセットは Worker と一緒にアップロードされ、Worker の静的アセットバインディングを通じて配信されるため、ページと API は同じオリジンを共有します。別途 Cloudflare Pages プロジェクトを作成する必要は**ありません**。フロントエンドを Pages に、バックエンドを Worker に別々にデプロイする 0.3.0 以前のチュートリアルは、旧アーキテクチャを説明したものです。
+
+### ステップ 1: リポジトリをフォーク
+
+このリポジトリは **Rin の羊角快車二次創作版**です。公式アップストリームにはない機能（メールによるセルフサービス友だちリンク、TOTP 二要素認証、API キーなど）が追加されています。このリポジトリを直接フォークしてください：
+
+1. **羊角快車二次創作版（本リポジトリ、推奨）** にアクセス: [https://github.com/wool-hmq/Rin](https://github.com/wool-hmq/Rin)
+2. 右上隅の **「Fork」** ボタンをクリック
+   ![1000000657](https://github.com/OXeu/Rin/assets/36541432/df3607ca-a8a9-49b8-92ce-6b348afeb13f)
+3. 個人アカウントを選択し、デフォルト設定のまま **「Create fork」** をクリック
+
+> **公式アップストリーム**: [openRin/Rin](https://github.com/openRin/Rin)。本エディションで追加された機能は含まれていません。明示的にアップストリームに従いたい場合のみ使用してください。このガイドの残りの部分は二次創作版を前提としています。
+
+### アカウント ID と API トークンの取得
+
+GitHub Actions に必要な Cloudflare ログイン環境変数の設定については https://developers.cloudflare.com/workers/wrangler/ci-cd/ を参照してください。
+
+**アカウント ID**: バインド済みの任意のドメインをクリックします。入った後、右側に `Account ID` があります（少し下にスクロールする必要があります）。
+
+**API トークンの作成**: 右上の `Profile` アイコン > `My Profile` > `API Tokens` > `Create Token` をクリックし、`Edit Cloudflare Workers` テンプレートを選択します：
+![1000000663](/cloudflare-api-key-en.png)
+
+作成後、トークンを保存してください。
+
+### ステップ 2: GitHub Secrets の設定
+
+1. フォークしたリポジトリのページで **「Settings」** タブをクリック
+2. 左メニューで **「Secrets and variables」** を展開し、**「Actions」** を選択
+3. **「New repository secret」** ボタンをクリックして以下のシークレットを追加：
+
+#### 必須のシークレット
+
+| シークレット名 | 値 | 説明 |
+|-------------|-------|-------------|
+| `CLOUDFLARE_API_TOKEN` | `ThEApiKeyIsRaNdomStR1ngNearly40CharsLong` | Cloudflare API トークン |
+| `CLOUDFLARE_ACCOUNT_ID` | `0123456789abcdef0123456789abcdef` | Cloudflare アカウント ID |
+| `JWT_SECRET` | 任意のランダム文字列 | JWT 署名キー |
+
+> **ヒント**: `JWT_SECRET` は任意の長さのランダム文字列で構いません。例：`MySecretKey123!@#`
+
+#### ログイン設定のシークレット
+
+Rin は現在、ユーザー名/パスワードログインと GitHub OAuth ログインをサポートしています。どちらか一方を選択するか、両方を設定できます。
+
+**ユーザー名/パスワードログイン（推奨）**
+
+| シークレット名 | 値 | 説明 |
+|-------------|-------|-------------|
+| `ADMIN_USERNAME` | 希望するユーザー名 | ログインユーザー名 |
+| `ADMIN_PASSWORD` | 希望するパスワード | ログインパスワード |
+
+**GitHub OAuth ログイン（任意）**
+
+GitHub アカウントでログインする場合は、[詳細設定](#github-oauth-設定)セクションを参照して OAuth 設定を追加してください。
+
+> **ヒント**: ユーザー名/パスワードログインと GitHub OAuth ログインは同時に有効にできます。ユーザーはログインページで好みのログイン方法を自由に選択できます。
+
+### ステップ 3: デプロイのトリガー
+
+1. リポジトリの **「Actions」** タブに移動
+2. 左側の **「Build」** ワークフローを選択
+3. **「Run workflow」** ボタンをクリック
+4. デフォルトブランチ（main）のまま **「Run workflow」** をクリック
+
+デプロイプロセスには約 3〜5 分かかります。**Build** が成功すると、`workflow_run` を介して **Deploy** ワークフローがトリガーされます。手動で Deploy を実行する場合は、ビルドアーティファクトの URL が必要です。
+
+> **ヒント**: サイト名、説明などは実行時にクライアントがサーバーから読み取るため、ビルド時の環境変数は不要です。GitHub Variables（下記の「サイト変数」を参照）でカスタマイズできます。
+
+### ステップ 4: ブログへのアクセス
+
+デプロイが完了すると、Deploy ワークフローのログに **App URL** が表示されます。フロントエンドページとバックエンド API の両方がそのアドレスから提供されます。デフォルトの Worker 名は `rin-server` で、`WORKER_NAME` 変数で上書きできます。
+
+### ステップ 5: 初回ログイン
+
+1. フロントエンドページにアクセス
+2. 右上隅のログインアイコンをクリック
+3. Secrets で設定した `ADMIN_USERNAME` と `ADMIN_PASSWORD` を使用してログイン
+4. ログイン後、アバターをクリックして **Profile** ページに入り、ニックネームの変更やアバターのアップロードができます
+
+### サイト変数（任意）
+
+以下の GitHub Variables はデプロイのデフォルト値を上書きします：
+
+| 変数名 | 説明 | デフォルト |
+|--------------|-------------|---------|
+| `NAME` | サイト名 | `Rin` |
+| `DESCRIPTION` | サイトの説明 | `A lightweight personal blogging system` |
+| `AVATAR` | サイトアバター URL | 空 |
+| `PAGE_SIZE` | 1 ページあたりの項目数 | `5` |
+| `RSS_ENABLE` | RSS を有効化 | `false` |
+| `WORKER_NAME` | Worker 名 | `rin-server` |
+| `DB_NAME` | D1 データベース名 | `rin` |
+
+メールログイン、メール認証コード、メールによるセルフサービス友だちリンクには `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS` も必要です。[環境変数](../configuration/env) を参照してください。
+
+## 最初の投稿を公開する
+
+1. ログイン後、右上隅の **「Write」** ボタンをクリック
+2. 記事のタイトルと本文を入力
+3. **「Publish」** ボタンをクリック
+
+🎉 おめでとうございます！Rin ブログのデプロイが成功し、最初の投稿が公開されました！
+
+---
+
+## 詳細設定
+
+### カスタムドメイン
+
+1. Cloudflare ダッシュボードにログイン
+2. **Workers & Pages** > あなたの Worker（デフォルト `rin-server`）> **Settings** > **Domains & Routes** に移動
+3. **Add** > **Custom Domain** をクリックし、プロンプトに従ってドメインを追加
+
+### 画像ストレージの設定
+
+Rin は **Cloudflare R2**（推奨）または **S3 互換ストレージ**の 2 つのストレージ方法をサポートしています。
+
+#### Cloudflare R2 の使用（推奨）
+
+S3 環境変数が設定されていない場合、デプロイスクリプトは自動的に Cloudflare R2 の使用を試みます。GitHub Variables で以下を設定するだけです：
+
+| 変数名 | 説明 | 例 |
+|--------------|-------------|---------|
+| `R2_BUCKET_NAME` | R2 バケット名 | `my-blog-images` |
+
+デプロイスクリプトは R2 エンドポイントとアクセスホストを自動的に構築します。画像にカスタムドメインを使用する場合は、以下を追加設定できます：
+
+| 変数名 | 説明 | 例 |
+|--------------|-------------|---------|
+| `S3_ACCESS_HOST` | 画像アクセスドメイン（任意） | `https://images.myblog.com` |
+
+#### S3 互換ストレージの使用
+
+他の S3 互換ストレージ（AWS S3、MinIO など）を使用する必要がある場合は、以下の Secrets を完全に設定する必要があります：
+
+| シークレット名 | 説明 |
+|-------------|-------------|
+| `S3_ENDPOINT` | S3 エンドポイントアドレス |
+| `S3_ACCESS_KEY_ID` | アクセスキー ID |
+| `S3_SECRET_ACCESS_KEY` | シークレットアクセスキー |
+| `S3_BUCKET` | バケット名 |
+
+および以下の Variables（任意）：
+
+| 変数名 | 説明 | デフォルト |
+|--------------|-------------|---------|
+| `S3_ACCESS_HOST` | 画像アクセスドメイン | `S3_ENDPOINT` と同じ |
+| `S3_REGION` | ストレージリージョン | `auto` |
+| `S3_FOLDER` | 画像ストレージパス | `images/` |
+| `S3_FORCE_PATH_STYLE` | path-style URL を使用 | `false` |
+
+### GitHub OAuth 設定
+
+GitHub アカウントでログインする場合：
+
+1. GitHub Settings > Developer settings > OAuth Apps にアクセス
+2. **「New OAuth App」** をクリック
+3. アプリケーション情報を入力：
+    - **Application name**: Rin Blog
+    - **Homepage URL**: フロントエンドページのアドレス
+    - **Authorization callback URL**: `https://your-worker-name.your-account-id.workers.dev/api/user/github/callback`
+4. 作成後、Client ID と Client Secret を取得
+5. GitHub Secrets に追加：
+    - `RIN_GITHUB_CLIENT_ID`
+    - `RIN_GITHUB_CLIENT_SECRET`
+
+### Webhook 通知
+
+Rin からコメントや友だちリンクの通知をボット、チャットサービス、自動化プラットフォームに送信する場合は、[Webhook ガイド](./webhook) を参照してください。
+
+---
+
+## トラブルシューティング
+
+### デプロイに失敗した
+
+1. GitHub Secrets が正しく設定されているか確認
+2. 詳細なエラーメッセージについては Actions ログを確認
+3. Cloudflare アカウントに Workers と D1 の権限があることを確認
+
+### ログインできない
+
+1. `ADMIN_USERNAME` と `ADMIN_PASSWORD` が正しく設定されていることを確認
+2. Worker ログで認証エラーを確認
+3. ブラウザのキャッシュをクリアして再試行
+
+### データベースマイグレーションに失敗した
+
+デプロイスクリプトはデータベースマイグレーションを自動的に実行します。失敗した場合：
+
+1. 手動で Cloudflare ダッシュボード > D1 に移動
+2. データベースを見つけて **「Console」** をクリック
+3. マイグレーション SQL を手動で実行（`server/sql/` 内のファイルを番号順に参照）
+
+---
+
+## GitHub Actions ワークフロー
+
+リポジトリには、テスト、ビルド、デプロイを自動化するいくつかの GitHub Actions ワークフローが含まれています：
+
+### CI ワークフロー（`ci.yml`）
+`main` / `trunk` へのプッシュ時およびプルリクエスト時に実行：
+- TypeScript 型チェック
+- フォーマット検証
+
+### Test ワークフロー（`test.yml`）
+`main` / `trunk` へのプッシュ時およびプルリクエスト時に実行：
+- **サーバーテスト**: Bun を使用したユニットテストと統合テスト
+- **クライアントテスト**: Vitest を使用したコンポーネントテスト
+- **型チェック**: クライアントとサーバーの両方で `tsc --noEmit`
+- **ビルド検証**: 本番クライアントビルド
+
+### Build ワークフロー（`build.yml`）
+`main` / `master` / `trunk` へのプッシュ時、プルリクエスト時、または手動で実行：
+- 型チェック
+- クライアントビルド
+- Wrangler dry-run によるサーバービルド
+- ビルドアーティファクトをアップロードし、成功時に Deploy をトリガー
+
+### Deploy ワークフロー（`deploy.yml`）
+Build の成功後に自動的にトリガーされるか、ビルドアーティファクト URL を指定して手動で実行：
+- クライアントをビルドし、Worker の静的アセットとしてアップロード
+- API とページの両方を提供する単一 Worker をデプロイ
+- D1 データベースマイグレーションを実行
+- デプロイされた App URL を Actions ログに出力
+
+### Docs ワークフロー（`docs.yml`）
+`docs/**` に触れる `main` へのプッシュ時に実行：
+- Rspress ドキュメントサイトをビルド
+- GitHub Pages に公開
+
+### Release ワークフロー（`release.yml`）
+`vX.Y.Z` タグがプッシュされたときに実行：
+- ワークスペース間のバージョン整合性を検証
+- 型チェックとビルドを実行
+- ビルドアーティファクトをパッケージ化して公開
+
+### PR プレビュー
+プルリクエストには自動的にプレビューデプロイが作成されます。`clean.yml` は PR がクローズされたときにプレビュー Worker を削除します。
+
+---
+
+## ブログの更新
+
+新しいバージョンがリリースされた場合：
+
+1. フォークしたリポジトリのページで **「Sync fork」** をクリック
+2. **「Update branch」** をクリック
+3. デプロイが自動的にトリガーされます
+
+### 羊角快車二次創作版の更新（推奨）
+
+```bash
+# 二次創作リポジトリを upstream として追加
+git remote add upstream https://github.com/wool-hmq/Rin.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+### 公式アップストリームの同期（任意）
+
+公式アップストリームからの変更をマージしたい場合にのみ使用します。公式アップストリームには本エディションの機能は含まれていません：
+
+```bash
+git remote add upstream https://github.com/openRin/Rin.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+---
+
+## ヘルプが必要ですか？
+
+- 📖 [羊角快車二次創作版ドキュメント](https://rin.lab.j3.ink)
+- 🐛 [羊角快車二次創作版 issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [羊角快車二次創作版 discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 [公式アップストリームドキュメント](https://docs.openrin.org)
+- 🐛 [公式アップストリーム issues](https://github.com/openRin/Rin/issues)
+- 💬 [公式アップストリーム discussions](https://github.com/openRin/Rin/discussions)

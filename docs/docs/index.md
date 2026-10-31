@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: 快速开始
-      link: /zh/guide/
+      link: /guide/
     - theme: alt
       text: GitHub
       link: https://github.com/wool-hmq/Rin

@@ -1,0 +1,85 @@
+[
+  {
+    "text": "指南",
+    "items": [
+      {
+        "text": "簡介",
+        "link": "/guide/"
+      },
+      {
+        "text": "部署",
+        "link": "/guide/deploy"
+      },
+      {
+        "text": "本機開發",
+        "link": "/guide/development"
+      },
+      {
+        "text": "Webhook",
+        "link": "/guide/webhook"
+      },
+      {
+        "text": "RSS",
+        "link": "/guide/rss"
+      },
+      {
+        "text": "API 使用指南",
+        "link": "/guide/api-guide"
+      },
+      {
+        "text": "遷移指南",
+        "link": "/guide/migration"
+      },
+      {
+        "text": "更新日誌",
+        "link": "/guide/changelog"
+      },
+      {
+        "text": "測試指南",
+        "link": "/guide/testing"
+      },
+      {
+        "text": "貢獻指南",
+        "link": "/guide/contribution"
+      },
+      {
+        "text": "提交規範",
+        "link": "/guide/commit-convention"
+      },
+      {
+        "text": "發布流程",
+        "link": "/guide/release"
+      }
+    ]
+  },
+  {
+    "text": "部落格",
+    "items": [
+      {
+        "text": "二創版 v1.1 發布（v1.1.2）",
+        "link": "/blog/v1.1-release"
+      },
+      {
+        "text": "二創版 v1.0.0 發布",
+        "link": "/blog/v1.0.0-release"
+      },
+      {
+        "text": "官方原版 v0.3.0 發布",
+        "link": "/blog/v0.3.0-release"
+      }
+    ]
+  },
+  {
+    "text": "設定",
+    "items": [
+      {
+        "text": "環境變數說明",
+        "link": "/configuration/env"
+      },
+      {
+        "text": "資料庫結構說明",
+        "link": "/configuration/database"
+      }
+    ]
+  }
+]

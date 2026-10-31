@@ -1,0 +1,296 @@
+# Rin（羊角快車二創版）部署指南
+
+本文件會引導您從零開始將 **羊角快車二創版 Rin** 部署到 Cloudflare。
+
+## 前置需求
+
+- 一個 GitHub 帳號
+- 一個 Cloudflare 帳號（免費版即可）
+- 大約 10-15 分鐘時間
+
+## 部署步驟
+
+> **架構說明**：目前版本採用單 Worker 部署。建置出的前端靜態資源會隨 Worker 一起上傳，由 Worker 的靜態資源繫結提供，頁面與 API 同網域，**不需要另外建立 Cloudflare Pages 專案**。如果您看到的是 0.3.0 之前「前端 Pages + 後端 Worker」分開部署的教學，那屬於舊架構。
+
+### 第一步：Fork 倉庫
+
+本倉庫是 **羊角快車二創版 Rin**，在官方原版基礎上增加了信箱自助友連、TOTP 雙因素驗證、API Key 等能力，建議直接 Fork 本倉庫：
+
+1. 存取 **羊角快車二創版 Rin（本倉庫，建議）**：[https://github.com/wool-hmq/Rin](https://github.com/wool-hmq/Rin)
+2. 點擊右上角的 **"Fork"** 按鈕
+![1000000657](https://github.com/OXeu/Rin/assets/36541432/df3607ca-a8a9-49b8-92ce-6b348afeb13f)
+3. 選擇您的個人帳戶，保持預設設定，點擊 **"Create fork"**
+
+> **官方原版（上游）**：[openRin/Rin](https://github.com/openRin/Rin)。它不包含本版新增功能；只有在您明確需要跟隨上游時再使用它。本文件後續步驟預設以二創版為準。
+
+### 取得使用者 ID 與 API 權杖
+
+參照 https://developers.cloudflare.com/workers/wrangler/ci-cd/ 來設定 GitHub Actions 所需的 Cloudflare 登入環境變數
+
+ID 隨意點擊一個自己綁定的網域，進入後在右側（需要向下滑動一段距離）可以找到`帳戶ID`
+
+建立 API 權杖：點擊右上角`頭像` > `我的個人資料` > `API 權杖` > `建立權杖`，範本選擇`編輯 Cloudflare Workers`：
+![1000000663](/cloudflare-api-key-cn.png)
+
+建立完成後保存權杖
+
+### 第二步：設定 GitHub Secrets
+
+1. 在您 fork 的倉庫頁面，點擊 **"Settings"** 分頁
+2. 在左側選單中，展開 **"Secrets and variables"**，選擇 **"Actions"**
+3. 點擊 **"New repository secret"** 按鈕，新增以下 Secrets：
+
+#### 必要 Secrets
+
+| Secret 名稱 | 值                                           | 說明 |
+|------------|---------------------------------------------|------|
+| `CLOUDFLARE_API_TOKEN` | `ThEApiKeyIsRaNdomStR1ngNearly40CharsLong` | Cloudflare API 權杖 |
+| `CLOUDFLARE_ACCOUNT_ID` | `0123456789abcdef0123456789abcdef`          | Cloudflare 帳戶 ID |
+| `JWT_SECRET` | 任意隨機字串 | JWT 簽章金鑰 |
+
+> **提示**：JWT_SECRET 可以是任意長度的隨機字串，例如：`MySecretKey123!@#`
+
+#### 登入設定 Secrets
+
+Rin 目前支援帳號密碼登入與 Github OAuth 登入，可二選一或同時設定
+
+**帳號密碼登入（建議）**
+
+| Secret 名稱 | 值 | 說明 |
+|------------|-----|------|
+| `ADMIN_USERNAME` | 您想設定的使用者名稱 | 登入使用者名稱 |
+| `ADMIN_PASSWORD` | 您想設定的密碼 | 登入密碼 |
+
+
+**GitHub OAuth 登入（選用）**
+
+如果您想使用 GitHub 帳號登入，請參考[進階設定](#github-oauth-設定)部分新增 OAuth 設定。
+
+> **提示**：帳號密碼登入與 GitHub OAuth 登入可以同時啟用，使用者可以在登入頁面自由選擇登入方式。
+
+### 第三步：觸發部署
+
+1. 進入倉庫的 **"Actions"** 分頁
+2. 在左側選擇 **"Build"** 工作流程
+3. 點擊 **"Run workflow"** 按鈕
+4. 保持預設分支（main），點擊 **"Run workflow"**
+
+部署過程大約需要 3-5 分鐘。**Build** 成功後會透過 `workflow_run` 自動觸發 **Deploy** 工作流程，手動觸發 Deploy 時需要提供建置產物 URL。
+
+> **提示**：站台名稱、描述等設定在執行時由前端從服務端讀取，無需在建置階段注入環境變數。這些值可以在 GitHub Variables 中自訂（見下方「站台基礎變數」）。
+
+### 第四步：存取您的部落格
+
+部署完成後，Deploy 工作流程的日誌會列印 **App URL**，前端頁面與後端 API 都透過該位址存取。預設 Worker 名稱為 `rin-server`，可透過 Variables 中的 `WORKER_NAME` 覆寫。
+
+### 第五步：首次登入
+
+1. 存取前端頁面
+2. 點擊右上角的登入圖示
+3. 使用您在 Secrets 中設定的 `ADMIN_USERNAME` 與 `ADMIN_PASSWORD` 登入
+4. 登入後，點擊頭像進入 **個人資料** 頁面，可以修改暱稱與上傳頭像
+
+### 站台基礎變數（選用）
+
+以下 GitHub Variables 用於覆寫部署預設值：
+
+| Variable 名稱 | 說明 | 預設值 |
+|--------------|------|--------|
+| `NAME` | 站台名稱 | `Rin` |
+| `DESCRIPTION` | 站台描述 | `A lightweight personal blogging system` |
+| `AVATAR` | 站台頭像 URL | 空 |
+| `PAGE_SIZE` | 列表每頁數量 | `5` |
+| `RSS_ENABLE` | 是否啟用 RSS | `false` |
+| `WORKER_NAME` | Worker 名稱 | `rin-server` |
+| `DB_NAME` | D1 資料庫名稱 | `rin` |
+
+信箱登入、電子郵件驗證碼與郵件自助友連還需要設定 `EMAIL_SEND_URLS` / `EMAIL_SEND_KEYS`，詳見 [環境變數說明](../configuration/env)。
+
+## 發布第一篇文章
+
+1. 登入後，點擊右上角的 **"寫作"** 按鈕
+2. 填寫文章標題與內容
+3. 點擊 **"發布"** 按鈕
+
+恭喜！您的 Rin 部落格已成功部署並發布了第一篇文章！
+
+---
+
+## 進階設定
+
+### 自訂網域
+
+1. 登入 Cloudflare Dashboard
+2. 進入 **Workers 和 Pages** > 您的 Worker（預設 `rin-server`） > **設定** > **網域與路由**
+3. 點擊 **新增** > **自訂網域**，依提示新增您的網域
+
+### 圖片儲存設定
+
+Rin 支援兩種儲存方式：**Cloudflare R2**（建議）或 **S3 相容儲存**。
+
+#### 使用 Cloudflare R2（建議）
+
+如果未設定任何 S3 環境變數，部署指令碼會自動嘗試使用 Cloudflare R2。您只需在 GitHub Variables 中設定：
+
+| Variable 名稱 | 說明 | 範例 |
+|--------------|------|------|
+| `R2_BUCKET_NAME` | R2 儲存桶名稱 | `my-blog-images` |
+
+部署指令碼會自動建構 R2 的 endpoint 與 access host。如果您希望使用自訂網域存取圖片，可以額外設定：
+
+| Variable 名稱 | 說明 | 範例 |
+|--------------|------|------|
+| `S3_ACCESS_HOST` | 圖片存取網域（選用） | `https://images.myblog.com` |
+
+#### 使用 S3 相容儲存
+
+如果您需要使用其他 S3 相容儲存（如 AWS S3、MinIO 等），需要完整設定以下 Secrets：
+
+| Secret 名稱 | 說明 |
+|------------|------|
+| `S3_ENDPOINT` | S3 端點位址 |
+| `S3_ACCESS_KEY_ID` | Access Key ID |
+| `S3_SECRET_ACCESS_KEY` | Secret Access Key |
+| `S3_BUCKET` | 儲存桶名稱 |
+
+以及以下 Variable（選用）：
+
+| Variable 名稱 | 說明 | 預設值 |
+|--------------|------|--------|
+| `S3_ACCESS_HOST` | 圖片存取網域 | 同 `S3_ENDPOINT` |
+| `S3_REGION` | 儲存區域 | `auto` |
+| `S3_FOLDER` | 圖片存放路徑 | `images/` |
+| `S3_FORCE_PATH_STYLE` | 是否使用路徑樣式 | `false` |
+
+### GitHub OAuth 設定
+
+如果您想使用 GitHub 帳號登入：
+
+1. 存取 GitHub Settings > Developer settings > OAuth Apps
+2. 點擊 **"New OAuth App"**
+3. 填寫應用程式資訊：
+   - **Application name**: Rin Blog
+   - **Homepage URL**: 您的前端頁面位址
+   - **Authorization callback URL**: `https://your-worker-name.your-account-id.workers.dev/api/user/github/callback`
+4. 建立後，取得 Client ID 與 Client Secret
+5. 在 GitHub Secrets 中新增：
+   - `RIN_GITHUB_CLIENT_ID`
+   - `RIN_GITHUB_CLIENT_SECRET`
+
+### Webhook 通知
+
+如果您希望 Rin 將留言通知與友連申請通知傳送到機器人、聊天工具或自動化平台，請繼續閱讀 [Webhook 指南](./webhook)。
+
+---
+
+## 疑難排解
+
+### 部署失敗
+
+1. 檢查 GitHub Secrets 是否正確設定
+2. 查看 Actions 日誌取得詳細錯誤訊息
+3. 確保 Cloudflare 帳戶具有 Workers、D1 的權限
+
+### 無法登入
+
+1. 確認 `ADMIN_USERNAME` 與 `ADMIN_PASSWORD` 已正確設定
+2. 檢查 Worker 日誌查看驗證錯誤
+3. 清除瀏覽器快取後重試
+
+### 資料庫遷移失敗
+
+部署指令碼會自動執行資料庫遷移。如果失敗：
+
+1. 手動進入 Cloudflare Dashboard > D1
+2. 找到您的資料庫，點擊 **"Console"**
+3. 手動執行遷移 SQL（參考 `server/sql/` 目錄下的檔案，依編號順序執行）
+
+---
+
+## GitHub Actions 工作流程
+
+倉庫包含多個 GitHub Actions 工作流程，用於自動化測試、建置與部署：
+
+### CI 工作流程 (`ci.yml`)
+在推送到 `main` / `trunk` 或提交 PR 時執行：
+- TypeScript 型別檢查
+- 程式碼格式化驗證
+
+### 測試工作流程 (`test.yml`)
+在推送到 `main` / `trunk` 或提交 PR 時執行：
+- **服務端測試**：使用 Bun 的單元測試與整合測試
+- **用戶端測試**：使用 Vitest 的元件測試
+- **型別檢查**：用戶端與服務端分別執行 `tsc --noEmit`
+- **建置驗證**：用戶端正式建置
+
+### 建置工作流程 (`build.yml`)
+在推送到 `main` / `master` / `trunk`、提交 PR 或手動觸發時執行：
+- 型別檢查
+- 建置前端
+- 透過 Wrangler dry-run 建置後端
+- 上傳建置產物；成功後自動觸發 Deploy
+
+### 部署工作流程 (`deploy.yml`)
+由 Build 成功後自動觸發，或手動提供建置產物 URL 觸發：
+- 建置前端並將其作為靜態資源隨 Worker 一起發布
+- 部署單一 Worker，由它同時提供 API 與頁面
+- 執行 D1 資料庫遷移
+- 在 Actions 日誌中輸出部署後的 App URL
+
+### 文件工作流程 (`docs.yml`)
+推送到 `main` 且變動涉及 `docs/**` 時執行：
+- 使用 Rspress 建置文件站
+- 發布到 GitHub Pages
+
+### 發布工作流程 (`release.yml`)
+推送 `vX.Y.Z` 形式的 tag 時執行：
+- 驗證各 workspace 版本一致性
+- 執行型別檢查與建置
+- 打包並發布建置產物
+
+### PR 預覽
+建立 Pull Request 時會自動產生預覽部署；PR 關閉後由 `clean.yml` 清理預覽 Worker。
+
+---
+
+## 更新部落格
+
+當有新版本發布時：
+
+1. 在您的 fork 倉庫頁面點擊 **"Sync fork"**
+2. 點擊 **"Update branch"**
+3. 部署會自動觸發
+
+### 更新羊角快車二創版（建議）
+
+```bash
+# 新增二創版倉庫為上游
+git remote add upstream https://github.com/wool-hmq/Rin.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+### 同步官方原版（上游，選用）
+
+只在需要合併官方原版變動時使用。官方原版不包含本版新增功能：
+
+```bash
+git remote add upstream https://github.com/openRin/Rin.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+---
+
+## 需要協助？
+
+- 📖 [羊角快車二創版線上文件](https://rin.lab.j3.ink)
+- 🐛 [羊角快車二創版 Issues](https://github.com/wool-hmq/Rin/issues)
+- 💬 [羊角快車二創版 Discussions](https://github.com/wool-hmq/Rin/discussions)
+- 📖 [官方原版文件（上游）](https://docs.openrin.org)
+- 🐛 [官方原版 Issues（上游）](https://github.com/openRin/Rin/issues)
+- 💬 [官方原版 Discussions（上游）](https://github.com/openRin/Rin/discussions)

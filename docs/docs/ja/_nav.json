@@ -1,0 +1,85 @@
+[
+  {
+    "text": "ガイド",
+    "items": [
+      {
+        "text": "はじめに",
+        "link": "/guide/"
+      },
+      {
+        "text": "デプロイ",
+        "link": "/guide/deploy"
+      },
+      {
+        "text": "開発",
+        "link": "/guide/development"
+      },
+      {
+        "text": "Webhook",
+        "link": "/guide/webhook"
+      },
+      {
+        "text": "RSS",
+        "link": "/guide/rss"
+      },
+      {
+        "text": "API ガイド",
+        "link": "/guide/api-guide"
+      },
+      {
+        "text": "移行",
+        "link": "/guide/migration"
+      },
+      {
+        "text": "変更履歴",
+        "link": "/guide/changelog"
+      },
+      {
+        "text": "テスト",
+        "link": "/guide/testing"
+      },
+      {
+        "text": "コントリビューション",
+        "link": "/guide/contribution"
+      },
+      {
+        "text": "コミット規約",
+        "link": "/guide/commit-convention"
+      },
+      {
+        "text": "リリースプロセス",
+        "link": "/guide/release"
+      }
+    ]
+  },
+  {
+    "text": "ブログ",
+    "items": [
+      {
+        "text": "二次創作版 v1.1 リリース（v1.1.2）",
+        "link": "/blog/v1.1-release"
+      },
+      {
+        "text": "二次創作版 v1.0.0 リリース",
+        "link": "/blog/v1.0.0-release"
+      },
+      {
+        "text": "公式オリジナル v0.3.0 リリース",
+        "link": "/blog/v0.3.0-release"
+      }
+    ]
+  },
+  {
+    "text": "設定",
+    "items": [
+      {
+        "text": "環境変数",
+        "link": "/configuration/env"
+      },
+      {
+        "text": "データベーススキーマ",
+        "link": "/configuration/database"
+      }
+    ]
+  }
+]
