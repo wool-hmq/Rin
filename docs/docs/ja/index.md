@@ -23,7 +23,7 @@ features:
     details: 執筆時のビルド不要、リアルタイムに執筆・編集
     icon: 🪶
   - title: 型安全性
-    details: @rin/api の共有型によるエンドツーエンドの型安全性
+    details: 共有型 @rin/api によるエンドツーエンドの型安全性
     icon: 🛡️
   - title: ヘルスチェック
     details: 20分ごとに友だちリンクの状態をチェック
