@@ -1,8 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: 📘Rin Docs
-    url: https://docs.openrin.org/en
+    url: https://rin.lab.j3.ink/en
     about: Please check the documentation for answers to common questions.
-  - name: 💬Discord
+  - name: 📖Ask DeepWiki
+    url: https://deepwiki.com/wool-hmq/Rin
+    about: Ask questions and get clear, source-grounded answers about this repository’s code, architecture, and documentation.
+  - name: 💬Discord(Official Upstream)
     url: https://discord.gg/JWbSTHvAPN
     about: Join the Discord server to ask questions and get help from the community.
