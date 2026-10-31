@@ -162,3 +162,11 @@ Entries discovered by the Agent during task execution should follow this format:
   - Rin 邮件自助友链的邮件指令字面量固定为简体（`友链申请`/`友链修改`/`友链删除`/`结束本次友链申请`/`请你进行下一步验证`，见 server/src/services/friend-email.ts），zh-TW/ja 文档中这些指令必须保留简体原文，其余说明文字正常翻译。
   - zh-TW 以 zh/zh-cn 为基准做简繁转换 + 台湾用语润色（工具 /tmp/opencode/tools/s2tw.py，opencc s2twp + 术语覆写）；ja 以 en 为基准人工翻译。
   - 翻译保留代码块、行内代码、URL、表格结构与 `:::tip/:::warning` 容器语法；新语言复用 en 版 logo，不新增图片。
+
+[Project Knowledge Summary]
+- Date: 2026-10-31
+- Context: 本地复现 CI flaky 测试时确认的 bun 环境配置
+- Category: Environment Configuration | Troubleshooting & Debugging
+- Instructions:
+  - 沙箱内无预装 bun 且 bun.sh/npm 源不可达；CI 锁定 bun 1.3.13。本地复现 server 测试用 /root/.bun/bin/bun（1.3.13，用户从镜像下载提供）。
+  - bun test 单文件跑通过但 CI 失败时，先怀疑概率性 bug 与并行文件时序，再查 mock.module 跨文件污染；直接用 `gh run view <run-id> --log-failed` 拉断言详情最快。
