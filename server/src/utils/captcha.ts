@@ -75,7 +75,9 @@ const IMAGE_WIDTH = 320;
 const IMAGE_HEIGHT = 110;
 
 function randomInt(min: number, max: number): number {
-    const r = crypto.getRandomValues(new Uint8Array(1))[0] / 255;
+    // /256 保证 r < 1:若用 /255,随机字节为 255 时 r === 1,
+    // 索引会越界到 max+1(对 CAPTCHA_CHARS 取到 undefined)。
+    const r = crypto.getRandomValues(new Uint8Array(1))[0] / 256;
     return Math.floor(min + r * (max - min + 1));
 }
 
