@@ -6,7 +6,7 @@ export default defineConfig({
   lang: 'zh',
   title: 'Rin (羊角快车二创版)',
   description: '基于 openRin/Rin 的二次开发版博客系统。基于 Cloudflare Workers + D1 + R2，无需服务器即可部署。',
-  icon: '/rin-logo-en.png',
+  icon: '/rin-icon.png',
   base: '/',
   locales: [
     {
