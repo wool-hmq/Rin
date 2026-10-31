@@ -1,7 +1,7 @@
-name: 友链申请
-description: 提交友链交换申请，系统将自动进行域名所有权验证。
-title: "[友链申请] "
-labels: ["友链申请", "待验证"]
+name: Friend Link Request
+description: Submit a friend link exchange application; the system will automatically verify domain ownership.
+title: "[Friend Request] "
+labels: ["friend-request", "pending-verification"]
 body:
   - type: markdown
     attributes:
